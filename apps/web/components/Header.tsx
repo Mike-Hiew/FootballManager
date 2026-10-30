@@ -72,7 +72,7 @@ export function Header({ team, role, tabs, approvalCount, me, myTeams, initialUn
       setOpen(false);
       if (!n.teamId) return;
       const base = `/t/${n.teamId}`;
-      if (n.matchId) router.push(`${base}/lich?tran=${n.matchId}&tab=${n.kind === 'vote' ? 'att' : n.kind === 'claim' && n.view === 'duyet' ? 'res' : n.kind === 'mvp' ? 'res' : 'att'}`);
+      if (n.matchId) router.push(`${base}/lich?tran=${n.matchId}&tab=${n.kind === 'vote' ? 'att' : n.kind === 'claim' && n.view === 'duyet' ? 'res' : n.kind === 'mvp' || n.kind === 'result' ? 'res' : 'att'}`);
       else router.push(`${base}/${n.view || 'doi'}`);
     });
 
@@ -82,7 +82,7 @@ export function Header({ team, role, tabs, approvalCount, me, myTeams, initialUn
       <div className="brand">
         {team ? <TeamCrest name={team.name} photoUrl={team.photoUrl} /> : <TeamCrest name="San7" />}
         <div style={{ minWidth: 0 }}>
-          <h1><span className="tname">{team?.name ?? process.env.NEXT_PUBLIC_APP_NAME ?? 'Sân 7 Manager'}</span></h1>
+          <h1><span className="tname">{team?.name ?? process.env.NEXT_PUBLIC_APP_NAME ?? 'Đom Đóm FC'}</span></h1>
         </div>
       </div>
       <div className="userbar">

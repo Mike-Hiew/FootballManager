@@ -2,7 +2,7 @@
  * REST API (BRD 9.2). Mọi route gọi chung lớp service với Server Actions; quyền kiểm ở service.
  * 403 sai quyền · 409 trùng · 422 dữ liệu sai.
  */
-import type { NextRequest } from 'next/server';
+import { after, type NextRequest } from 'next/server';
 import { prisma } from '@san7/db';
 import { autoPick, buildPlan, inferStats, seasonTable, teamSeason, type Ratings } from '@san7/core';
 import { assertSameOrigin, handle, json } from '@/server/http';
@@ -22,7 +22,7 @@ import * as tactics from '@/server/services/tactics';
 import * as admin from '@/server/services/admin';
 import { approvals, teamView } from '@/server/services/view';
 import { listNotifications, markAllRead } from '@/server/services/notify';
-import { saveSubscription } from '@/server/services/push';
+import { dispatchOutbox, saveSubscription } from '@/server/services/push';
 import { toSeasonMatch, statsOf } from '@/server/services/mappers';
 import { effectivePayType } from '@/server/services/player';
 
@@ -153,6 +153,8 @@ const routes: Array<[string, H]> = [
   ['POST /teams/:id/fund/entries', async ({ p, body }) => ({ id: (await fund.addManualEntry(await tc(p[0]), await body())).id })],
   ['DELETE /teams/:id/fund/entries/:entryId', async ({ p }) => { await fund.deleteManualEntry(await tc(p[0]), p[1]); return { ok: true }; }],
 
+  ['GET /version', async () => ({ version: process.env.NEXT_PUBLIC_BUILD_ID ?? 'dev' })],
+
   // Thông báo
   ['GET /notifications', async () => listNotifications((await requireUser()).id)],
   ['POST /notifications/read-all', async () => { await markAllRead((await requireUser()).id, now()); return { ok: true }; }],
@@ -194,6 +196,8 @@ async function dispatch(req: NextRequest, { params }: { params: Promise<{ path: 
       const vals: string[] = [];
       if (!r.parts.every((s, i) => (s.startsWith(':') ? (vals.push(decodeURIComponent(path[i])), true) : s === path[i]))) continue;
       let cached: Record<string, unknown> | null = null;
+      // Ghi có thể sinh thông báo (outbox): đẩy Web Push sau khi phản hồi, như Server Actions.
+      if (req.method !== 'GET') after(() => dispatchOutbox(50).catch((e) => console.error('push', e)));
       return r.h({
         req,
         p: vals,

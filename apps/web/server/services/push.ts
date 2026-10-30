@@ -33,7 +33,7 @@ export async function dispatchOutbox(limit = 200): Promise<number> {
     if (!claimed.count || !enabled) continue;
     const subs = await prisma.pushSubscription.findMany({ where: { userId: n.userId } });
     const payload = JSON.stringify({
-      title: 'Sân 7', body: n.text, teamId: n.teamId, matchId: n.matchId, view: n.view, kind: n.kind,
+      title: process.env.APP_NAME ?? 'Đom Đóm FC', body: n.text, teamId: n.teamId, matchId: n.matchId, view: n.view, kind: n.kind,
       actions: n.kind === 'vote' && n.matchId && !n.text.startsWith('Nhắc') ? [{ action: 'di', title: 'Đi' }, { action: 'nghi', title: 'Nghỉ' }] : [],
     });
     for (const s of subs) {

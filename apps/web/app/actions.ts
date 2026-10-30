@@ -82,6 +82,7 @@ export async function submitJoinAction(code: string, input: unknown) {
   return run(async () => {
     const user = await requireUser().catch(() => null);
     await join.submitJoin(code, input, user);
+    after(() => dispatchOutbox(50).catch((e) => console.error('push', e)));
     return null;
   });
 }

@@ -117,6 +117,8 @@ export async function saveResult(ctx: Ctx, matchId: string, raw: unknown) {
   if (!before) throw notFound('Không tìm thấy trận');
   const ids = new Set((await prisma.player.findMany({ where: { teamId: ctx.teamId }, select: { id: true } })).map((x) => x.id));
   const events = d.events.filter((e) => ids.has(e.playerId) && (e.goals || e.assists));
+  const scoreChanged = d.scoreUs != null && (d.scoreUs !== before.scoreUs || d.scoreThem !== before.scoreThem);
+  const recipients = scoreChanged ? await activeMemberUserIds(ctx.teamId) : [];
   await prisma.$transaction(async (tx) => {
     await tx.match.update({ where: { id: matchId }, data: { scoreUs: d.scoreUs, scoreThem: d.scoreThem, voteState: d.scoreUs != null && before.voteState === 'open' ? 'closed' : before.voteState } });
     await tx.matchEvent.deleteMany({ where: { matchId } });
@@ -127,6 +129,10 @@ export async function saveResult(ctx: Ctx, matchId: string, raw: unknown) {
       await tx.match.update({ where: { id: matchId }, data: { mvpPlayerId: null } });
     }
     await syncPitch(tx, matchId, ctx.now);
+    if (scoreChanged) {
+      const verb = before.scoreUs == null ? 'Kết quả' : 'Cập nhật tỉ số';
+      await emit(tx, { kind: 'result', teamId: ctx.teamId, recipients, actorId: ctx.user.id, matchId, text: `${verb} ${matchLabel(before)}: ${d.scoreUs} - ${d.scoreThem}` });
+    }
     await audit(tx, ctx, 'match.result', 'match', matchId, { scoreUs: before.scoreUs, scoreThem: before.scoreThem, events: before.events }, d);
   });
   const goals = events.reduce((a, e) => a + e.goals, 0);

@@ -1,7 +1,7 @@
 /* Service worker Sân 7 (ARCHITECTURE D10, BRD 9.4):
  * - cài lên màn hình chính, xem trang/dữ liệu lần cuối khi mất mạng (network-first, rơi về cache)
  * - Web Push: hiển thị thông báo, nút Đi/Nghỉ gọi thẳng API điểm danh. */
-const CACHE = 'san7-v1';
+const CACHE = 'san7-v2';
 const OFFLINE_URL = '/offline.html';
 
 self.addEventListener('install', (e) => {
@@ -48,7 +48,7 @@ self.addEventListener('push', (e) => {
     d = { body: e.data && e.data.text() };
   }
   e.waitUntil(
-    self.registration.showNotification(d.title || 'Sân 7', {
+    self.registration.showNotification(d.title || 'Đom Đóm FC', {
       body: d.body || '',
       icon: '/icon.svg',
       badge: '/icon.svg',

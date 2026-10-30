@@ -3,7 +3,7 @@ import { Be_Vietnam_Pro, Jost } from 'next/font/google';
 import { connection } from 'next/server';
 import './prototype.css';
 import './app.css';
-import { RegisterSW } from '@/components/Pwa';
+import { RegisterSW, UpdateBanner } from '@/components/Pwa';
 
 // Cùng subset và chuỗi font dự phòng với prototype: Jost không có chữ tiếng Việt (Ư, Ộ…) nên các
 // ký tự đó rơi xuống font sau. Font "Fallback" co giãn của next/font sẽ làm chữ khác prototype và khác theo máy.
@@ -17,10 +17,10 @@ const display = Jost({
 });
 
 export const metadata: Metadata = {
-  title: { default: process.env.APP_NAME ?? 'Sân 7 Manager', template: `%s · ${process.env.APP_NAME ?? 'Sân 7 Manager'}` },
+  title: { default: process.env.APP_NAME ?? 'Đom Đóm FC', template: `%s · ${process.env.APP_NAME ?? 'Đom Đóm FC'}` },
   description: 'Quản lý đội bóng phong trào sân 7: cầu thủ, chiến thuật, lịch đấu, điểm danh, MVP và quỹ đội.',
   manifest: '/manifest.webmanifest',
-  appleWebApp: { capable: true, title: 'Sân 7', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: process.env.APP_NAME ?? 'Đom Đóm FC', statusBarStyle: 'black-translucent' },
 };
 
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#08090b' };
@@ -37,6 +37,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </div>
         {children}
         <RegisterSW />
+        <UpdateBanner />
       </body>
     </html>
   );

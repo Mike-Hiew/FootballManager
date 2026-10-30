@@ -13,7 +13,7 @@ export async function Frame({ active, children }: { active: string; children: Re
     return (
       <div className="wrap" id="app">
         <header className="top">
-          <div className="brand"><h1><span className="tname">{process.env.APP_NAME ?? 'Sân 7 Manager'}</span></h1></div>
+          <div className="brand"><h1><span className="tname">{process.env.APP_NAME ?? 'Đom Đóm FC'}</span></h1></div>
           <div className="userbar"><Link className="btn primary sm" href={`/dang-nhap?next=/${active}`}>Đăng nhập</Link></div>
         </header>
         {children}

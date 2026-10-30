@@ -1,6 +1,10 @@
 import type { NextConfig } from 'next';
 
+// Mã bản build: client so với /api/version để báo "Có phiên bản mới".
+const BUILD_ID = process.env.VERCEL_DEPLOYMENT_ID ?? process.env.VERCEL_GIT_COMMIT_SHA ?? 'dev';
+
 const config: NextConfig = {
+  env: { NEXT_PUBLIC_BUILD_ID: BUILD_ID },
   transpilePackages: ['@san7/core', '@san7/db'],
   serverExternalPackages: ['@node-rs/argon2', 'web-push', 'pg'],
   poweredByHeader: false,

@@ -15,7 +15,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         <div className="auth-brand">
           <Crest />
           <div>
-            <b>{process.env.APP_NAME ?? 'Sân 7 Manager'}</b>
+            <b>{process.env.APP_NAME ?? 'Đom Đóm FC'}</b>
             <span>Quản lý đội bóng phong trào</span>
           </div>
         </div>

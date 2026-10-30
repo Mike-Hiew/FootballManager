@@ -20,6 +20,41 @@ export function RegisterSW() {
   return null;
 }
 
+/** Báo "Có phiên bản mới" khi server đã chạy bản build khác (kiểm khi mở lại app và mỗi 5 phút). */
+export function UpdateBanner() {
+  const [stale, setStale] = useState(false);
+  useEffect(() => {
+    const mine = process.env.NEXT_PUBLIC_BUILD_ID;
+    if (process.env.NODE_ENV !== 'production' || !mine || mine === 'dev') return;
+    let found = false;
+    const check = async () => {
+      if (found || document.visibilityState !== 'visible') return;
+      try {
+        const { version } = (await (await fetch('/api/version', { cache: 'no-store' })).json()) as { version?: string };
+        if (version && version !== 'dev' && version !== mine) {
+          found = true;
+          setStale(true);
+        }
+      } catch {}
+    };
+    const timer = setInterval(check, 5 * 60_000);
+    document.addEventListener('visibilitychange', check);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', check);
+    };
+  }, []);
+  if (!stale) return null;
+  return (
+    <div className="toast" role="status" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+      <span>Có phiên bản mới</span>
+      <button type="button" className="btn primary sm" onClick={() => location.reload()}>
+        Cập nhật
+      </button>
+    </div>
+  );
+}
+
 /**
  * Bật thông báo đẩy + hướng dẫn cài PWA trên iPhone (iOS chỉ nhận push khi đã
  * "Thêm vào màn hình chính" — ARCHITECTURE 7.1).
