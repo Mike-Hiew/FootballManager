@@ -10,6 +10,7 @@ import { MatchModal } from '../matches/MatchModal';
 import { byKick, isPlayed, isSettled, seasonOf } from '@/lib/season';
 import { setAttendanceAction } from '@/app/actions';
 import { PushPrompt } from '../Pwa';
+import { PaymentReminders } from '../PaymentReminders';
 
 /** Màn Của tôi (BRD 8.4). */
 export function MeView({ duesMonths }: { duesMonths: string[] }) {
@@ -48,6 +49,7 @@ export function MeView({ duesMonths }: { duesMonths: string[] }) {
         </div>
 
         <PushPrompt />
+        <PaymentReminders />
         {nextOpen && (
           <div className="note" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <span>Bạn chưa điểm danh trận <b>vs {nextOpen.opponent}</b> ({dm(nextOpen.date)}{nextOpen.time ? ' ' + nextOpen.time : ''}).</span>

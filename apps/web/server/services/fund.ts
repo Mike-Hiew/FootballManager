@@ -3,10 +3,11 @@ import { prisma, type Db } from '@san7/db';
 import {
   currentMonth, dateSchema, duesAmount, monthLabel, moneySchema, outstanding, sortLedger, todayVN,
 } from '@san7/core';
-import { type Ctx, requireInsider, requireManager } from '../authz';
+import { type Ctx, canManage, requireInsider, requireManager } from '../authz';
 import { audit } from '../audit';
 import { invalid, notFound, zodMessage } from '../errors';
 import { effectivePayType } from './player';
+import { openRequests, settleNotices } from './payment';
 import { randomUUID } from 'node:crypto';
 
 /**
@@ -83,6 +84,7 @@ export async function setDues(ctx: Ctx, month: string, playerId: string, paid: b
         create: { teamId: ctx.teamId, playerId, month, amount: team.monthlyFee },
         update: {},
       });
+      await settleNotices(tx, ctx, 'dues', month, playerId);
     } else await tx.duesPayment.deleteMany({ where: { teamId: ctx.teamId, playerId, month } });
     await syncDues(tx, ctx.teamId, month);
   });
@@ -101,6 +103,7 @@ export async function setLePaid(ctx: Ctx, matchId: string, playerId: string, pai
   if (!a || a.status !== 'di') throw invalid('Người này chưa điểm danh Đi trận này');
   await prisma.$transaction(async (tx) => {
     await tx.attendance.update({ where: { matchId_playerId: { matchId, playerId } }, data: { lePaid: paid } });
+    if (paid) await settleNotices(tx, ctx, 'le', matchId, playerId);
     await syncLe(tx, matchId);
   });
 }
@@ -163,6 +166,7 @@ export async function fundView(ctx: Ctx) {
   return {
     ...team,
     month,
+    requests: canManage(ctx.role) ? await openRequests(ctx) : [],
     entries: sortLedger(entries).map((e) => ({ id: e.id, date: e.date, amount: e.amount, source: e.source, note: e.note })),
     dues: dues.map((d) => ({ playerId: d.playerId, month: d.month, amount: d.amount })),
     debts: outstanding({ month, monthlyFee: team.monthlyFee, quyPlayerIds: quyIds, paidThisMonth: paidNow, leTurns }),

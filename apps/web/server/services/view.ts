@@ -7,6 +7,7 @@ import { lineupOf, statsOf } from './mappers';
 import { sweepTeamMvp } from './mvp';
 import { effectivePayType } from './player';
 import { postMatch } from './postmatch';
+import { myPayments, pendingNotices } from './payment';
 
 /**
  * Ảnh chụp dữ liệu đội cho giao diện, lọc theo vai trò (BRD 2, 8.5):
@@ -18,7 +19,7 @@ export async function teamView(ctx: Ctx): Promise<TeamView> {
   const manager = canManage(ctx.role);
   const insider = ctx.role !== 'guest';
   const month = currentMonth(ctx.now);
-  const [team, players, matches, captains, invite, myEdit, approvalCount, pendingJoins, after] = await Promise.all([
+  const [team, players, matches, captains, invite, myEdit, approvalCount, pendingJoins, after, myPay] = await Promise.all([
     prisma.team.findUniqueOrThrow({ where: { id: ctx.teamId } }),
     prisma.player.findMany({ where: { teamId: ctx.teamId }, include: { user: { select: { phone: true } } }, orderBy: [{ num: 'asc' }, { fullName: 'asc' }] }),
     prisma.match.findMany({
@@ -32,6 +33,7 @@ export async function teamView(ctx: Ctx): Promise<TeamView> {
     manager ? countApprovals(ctx.teamId) : Promise.resolve(0),
     manager ? prisma.joinRequest.count({ where: { teamId: ctx.teamId, status: 'pending' } }) : Promise.resolve(0),
     postMatch(ctx),
+    insider ? myPayments(ctx) : Promise.resolve([]),
   ]);
 
   const toPlayer = (p: (typeof players)[number]): PlayerDTO => ({
@@ -90,35 +92,39 @@ export async function teamView(ctx: Ctx): Promise<TeamView> {
     approvalCount,
     pendingJoins,
     postMatch: after,
+    myPayments: myPay,
     now: ctx.now.toISOString(),
     year: seasonYear(ctx.now),
   };
 }
 
 export async function countApprovals(teamId: string): Promise<number> {
-  const [j, e, c, m] = await Promise.all([
+  const [j, e, c, m, pay] = await Promise.all([
     prisma.joinRequest.count({ where: { teamId, status: 'pending' } }),
     prisma.profileEdit.count({ where: { teamId, status: 'pending' } }),
     prisma.claim.count({ where: { status: 'pending', match: { teamId, deletedAt: null } } }),
     prisma.mvpVote.count({ where: { status: 'need', match: { teamId, deletedAt: null } } }),
+    pendingNotices(teamId),
   ]);
-  return j + e + c + m;
+  return j + e + c + m + pay.length;
 }
 
 /** Danh sách việc chờ cho tab Duyệt (BRD 8.6). */
 export async function approvals(ctx: Ctx): Promise<ApprovalsDTO> {
-  const [joins, edits, claims, need] = await Promise.all([
+  const [joins, edits, claims, need, payments] = await Promise.all([
     prisma.joinRequest.findMany({ where: { teamId: ctx.teamId, status: 'pending' }, orderBy: { createdAt: 'asc' } }),
     prisma.profileEdit.findMany({ where: { teamId: ctx.teamId, status: 'pending' }, orderBy: { createdAt: 'asc' } }),
     prisma.claim.findMany({ where: { status: 'pending', match: { teamId: ctx.teamId, deletedAt: null } }, orderBy: { createdAt: 'asc' } }),
     prisma.mvpVote.findMany({ where: { status: 'need', match: { teamId: ctx.teamId, deletedAt: null } }, select: { matchId: true } }),
+    pendingNotices(ctx.teamId),
   ]);
   return {
     joins: joins.map((j) => ({ id: j.id, createdAt: j.createdAt.toISOString(), phone: j.phone, payload: j.payload as Record<string, unknown> })),
     edits: edits.map((e) => ({ id: e.id, playerId: e.playerId, createdAt: e.createdAt.toISOString(), payload: e.payload as Record<string, unknown> })),
     claims: claims.map((c) => ({ id: c.id, matchId: c.matchId, playerId: c.playerId, goals: c.goals, assists: c.assists, createdAt: c.createdAt.toISOString() })),
     mvpNeed: need.map((n) => n.matchId),
-    count: joins.length + edits.length + claims.length + need.length,
+    payments,
+    count: joins.length + edits.length + claims.length + need.length + payments.length,
   };
 }
 

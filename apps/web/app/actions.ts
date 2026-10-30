@@ -16,6 +16,7 @@ import * as claim from '@/server/services/claim';
 import * as postmatch from '@/server/services/postmatch';
 import * as mvp from '@/server/services/mvp';
 import * as fund from '@/server/services/fund';
+import * as payment from '@/server/services/payment';
 import * as tactics from '@/server/services/tactics';
 import * as admin from '@/server/services/admin';
 import { listNotifications, markAllRead } from '@/server/services/notify';
@@ -178,6 +179,22 @@ export async function setDuesReminderAction(teamId: string, on: boolean) {
 }
 export async function setDuesAction(teamId: string, month: string, playerId: string, paid: boolean) {
   return run(() => inTeam(teamId, (c) => fund.setDues(c, month, playerId, paid).then(() => null)));
+}
+/* ---------- Yêu cầu đóng tiền ---------- */
+export async function requestDuesAction(teamId: string, month: string, note?: string) {
+  return run(() => inTeam(teamId, (c) => payment.requestDues(c, { month, note }).then((r) => r.sent)));
+}
+export async function requestLeAction(teamId: string, matchId: string, amount: number) {
+  return run(() => inTeam(teamId, (c) => payment.requestLe(c, matchId, { amount }).then((r) => r.sent)));
+}
+export async function remindPaymentAction(teamId: string, requestId: string) {
+  return run(() => inTeam(teamId, (c) => payment.remindRequest(c, requestId)));
+}
+export async function declarePaidAction(teamId: string, requestId: string) {
+  return run(() => inTeam(teamId, (c) => payment.declarePaid(c, requestId).then(() => null)));
+}
+export async function decidePaymentAction(teamId: string, requestId: string, playerId: string, ok: boolean) {
+  return run(() => inTeam(teamId, (c) => payment.decidePayment(c, requestId, playerId, ok).then(() => null)));
 }
 export async function addEntryAction(teamId: string, input: unknown) {
   return run(() => inTeam(teamId, (c) => fund.addManualEntry(c, input).then(() => null)));

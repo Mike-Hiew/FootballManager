@@ -6,7 +6,7 @@ import { useTeam } from '../TeamContext';
 import { Avatar, Modal, Tabs, Tip } from '../ui';
 import {
   assignMvpAction, castBallotAction, decideClaimAction, deleteMatchAction, openMvpAction, remindVoteAction, saveMatchAction,
-  saveResultAction, setAttendanceAction, setLePaidAction, setVoteStateAction, submitClaimAction,
+  requestLeAction, saveResultAction, setAttendanceAction, setLePaidAction, setVoteStateAction, submitClaimAction,
 } from '@/app/actions';
 import { isSettled } from '@/lib/season';
 import type { MatchDTO, PlayerDTO } from '@/lib/types';
@@ -201,6 +201,7 @@ function ResTab({ m }: { m: MatchDTO }) {
       </div>
 
       <ClaimBox m={m} />
+      <LeRequestBox m={m} />
 
       <div>
         <div className="sec-title" style={{ marginBottom: 4 }}>
@@ -255,6 +256,35 @@ function ResTab({ m }: { m: MatchDTO }) {
         )}
       </div>
       <MvpBox m={m} />
+    </div>
+  );
+}
+
+/** Sau khi có tỉ số: ĐT chốt tiền đá lẻ trận này và gửi yêu cầu trả cho người đá lẻ có Đi. */
+function LeRequestBox({ m }: { m: MatchDTO }) {
+  const { players, canEdit, act, teamId } = useTeam();
+  const [amount, setAmount] = useState(m.fee ?? 0);
+  if (!canEdit || m.scoreUs == null) return null;
+  const le = players.filter((p) => p.payType === 'le' && m.attendance[p.id]?.status === 'di');
+  if (!le.length) return null;
+  const unpaid = le.filter((p) => !m.attendance[p.id]?.lePaid);
+  return (
+    <div className="note" style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+      <span style={{ flexBasis: '100%' }}>
+        Tiền đá lẻ trận này: <b>{le.length - unpaid.length}/{le.length}</b> người đã trả.
+        {unpaid.length ? ' Nhập số tiền mỗi người rồi gửi yêu cầu, anh em sẽ nhận thông báo và bấm "Tôi đã đóng" khi chuyển xong.' : ' Đã thu đủ.'}
+      </span>
+      {unpaid.length > 0 && (
+        <>
+          <div className="field" style={{ width: 160, margin: 0 }}>
+            <label htmlFor="leAmt">Số tiền / người (đ)</label>
+            <input id="leAmt" type="number" min={0} step={5000} inputMode="numeric" value={amount} onChange={(e) => setAmount(Number(e.target.value) || 0)} />
+          </div>
+          <button type="button" className="btn primary sm" disabled={!amount} onClick={() => act(() => requestLeAction(teamId, m.id, amount), (n) => `Đã gửi yêu cầu trả ${money(amount)} cho ${n} người`)}>
+            Gửi yêu cầu trả tiền ({unpaid.length} người)
+          </button>
+        </>
+      )}
     </div>
   );
 }

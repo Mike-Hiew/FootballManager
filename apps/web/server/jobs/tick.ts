@@ -4,6 +4,7 @@ import { closeMvpIfDue } from '../services/mvp';
 import { syncPitch } from '../services/fund';
 import { emit } from '../services/notify';
 import { dispatchOutbox } from '../services/push';
+import { autoRemind } from '../services/payment';
 import { snapshotSeason } from '../services/season';
 import { effectivePayType } from '../services/player';
 
@@ -17,7 +18,7 @@ async function once(job: string, key: string): Promise<boolean> {
   }
 }
 
-export interface TickResult { locked: boolean; mvp: number; pitch: number; remind: number; dues: number; season: number; pushed: number }
+export interface TickResult { locked: boolean; mvp: number; pitch: number; remind: number; dues: number; pay: number; season: number; pushed: number }
 
 /**
  * Khoá thuê (lease) 2 phút trên job_runs: advisory lock theo phiên không hợp với pool
@@ -38,7 +39,7 @@ async function releaseLease() {
 
 /** Job chạy mỗi 5 phút (ARCHITECTURE 6.5). Mọi việc idempotent; lease chống chạy chồng. */
 export async function tick(now: Date): Promise<TickResult> {
-  const res: TickResult = { locked: false, mvp: 0, pitch: 0, remind: 0, dues: 0, season: 0, pushed: 0 };
+  const res: TickResult = { locked: false, mvp: 0, pitch: 0, remind: 0, dues: 0, pay: 0, season: 0, pushed: 0 };
   if (!(await acquireLease(now))) return { ...res, locked: true };
   try {
     const today = todayVN(now);
@@ -98,6 +99,9 @@ export async function tick(now: Date): Promise<TickResult> {
         });
       }
     }
+
+    // 4b. Nhắc lại yêu cầu đóng tiền (quỹ / đá lẻ) mỗi 3 ngày, ban ngày
+    if (hhmm >= '09:00' && hhmm < '21:00') res.pay = await autoRemind(now);
 
     // 5. Snapshot mùa cũ (00:05 ngày 1/1 trở đi, idempotent)
     if (today.endsWith('-01-01') && hhmm >= '00:05') {

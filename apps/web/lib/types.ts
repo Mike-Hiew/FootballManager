@@ -94,6 +94,8 @@ export interface ApprovalsDTO {
   edits: Array<{ id: string; playerId: string; createdAt: string; payload: Record<string, unknown> }>;
   claims: Array<{ id: string; matchId: string; playerId: string; goals: number; assists: number; createdAt: string }>;
   mvpNeed: string[];
+  /** thành viên báo đã đóng tiền, chờ ĐT xác nhận */
+  payments: Array<{ requestId: string; playerId: string; label: string; amount: number; declaredAt: string }>;
   count: number;
 }
 
@@ -113,6 +115,8 @@ export interface TeamView {
   pendingJoins: number;
   /** popup tỉ số trận vừa kết thúc + nhắc khai báo (BRD 6.8) */
   postMatch: { resultMatchId: string | null; claimMatchIds: string[] };
+  /** khoản người đang xem còn phải đóng theo yêu cầu của ĐT */
+  myPayments: Array<{ id: string; kind: 'dues' | 'le'; label: string; amount: number; note: string | null; matchId: string | null; status: 'due' | 'pending' | 'rejected' }>;
   now: string;
   year: number;
 }

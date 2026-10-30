@@ -12,6 +12,7 @@ import { Avatar, Tip } from '../ui';
 import { RuleIcon } from '../Icons';
 import { assistSVG, bootSVG, pitchScene } from './art';
 import { TeamInfoModal } from './TeamInfoModal';
+import { PaymentReminders } from '../PaymentReminders';
 import { MatchModal } from '../matches/MatchModal';
 import { remindVoteAction, setAttendanceAction, setVoteStateAction, skipClaimAction } from '@/app/actions';
 import { byKick, isPlayed, isSettled, seasonOf } from '@/lib/season';
@@ -304,6 +305,7 @@ export function Dashboard({ isNew }: { isNew?: boolean }) {
         </div>
 
         <ClaimReminders />
+        <PaymentReminders />
         <NextMatch />
 
         <div className="dash">

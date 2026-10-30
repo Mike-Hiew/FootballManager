@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { FUND_SOURCE_LABEL, dm, monthFlow, monthLabel, money, recentMonths, shortName, todayVN, balance, type FundSource } from '@san7/core';
+import { FUND_SOURCE_LABEL, addMonths, dm, monthFlow, monthLabel, money, recentMonths, shortName, todayVN, balance, type FundSource } from '@san7/core';
 import { useTeam } from './TeamContext';
 import { Avatar } from './ui';
 import { MatchModal } from './matches/MatchModal';
-import { addEntryAction, deleteEntryAction, setDuesAction, setDuesReminderAction, setFeesAction } from '@/app/actions';
+import { addEntryAction, deleteEntryAction, remindPaymentAction, requestDuesAction, setDuesAction, setDuesReminderAction, setFeesAction } from '@/app/actions';
 
 export interface FundData {
   monthlyFee: number;
@@ -16,6 +16,50 @@ export interface FundData {
   dues: Array<{ playerId: string; month: string; amount: number }>;
   debts: { dues: string[]; le: Array<{ playerId: string; matchId: string; fee: number; paid: boolean }>; total: number };
   matchMoney: Array<{ id: string; date: string; opponent: string; cost: number; fee: number; lePaid: number; leTotal: number }>;
+  /** yêu cầu đóng tiền còn người nợ (chỉ ĐT) */
+  requests: Array<{ id: string; kind: 'dues' | 'le'; label: string; amount: number; createdAt: string; remindedAt: string | null; owed: string[]; pending: string[] }>;
+}
+
+/** ĐT gửi yêu cầu đóng quỹ tháng và theo dõi / nhắc các yêu cầu còn người nợ. */
+function PayRequests({ data }: { data: FundData }) {
+  const { nameOf, act, teamId } = useTeam();
+  const months = [addMonths(data.month, -1), data.month, addMonths(data.month, 1)];
+  const names = (ids: string[]) => ids.map((id) => nameOf(id)).join(', ');
+  return (
+    <div className="panel">
+      <h3 className="st">Yêu cầu đóng tiền</h3>
+      <form
+        className="form-inline"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const f = new FormData(e.currentTarget);
+          const month = String(f.get('month'));
+          act(() => requestDuesAction(teamId, month, String(f.get('note') ?? '')), (n) => `Đã gửi yêu cầu đóng quỹ ${monthLabel(month)} cho ${n} người`);
+        }}
+      >
+        <div className="field" style={{ width: 150 }}>
+          <label htmlFor="reqMonth">Quỹ tháng</label>
+          <select id="reqMonth" name="month" defaultValue={data.month}>{months.map((k) => <option key={k} value={k}>{monthLabel(k)}</option>)}</select>
+        </div>
+        <div className="field" style={{ flex: 1, minWidth: 180 }}><label htmlFor="reqNote">Ghi chú (không bắt buộc)</label><input id="reqNote" name="note" maxLength={80} placeholder="VD: CK 0901… Vietcombank, hạn 10/11" /></div>
+        <button className="btn primary" type="submit">Gửi yêu cầu {money(data.monthlyFee)}/người</button>
+      </form>
+      <p className="hint">Gửi cho thành viên <span className="chip quy">Quỹ</span> chưa đóng tháng đó. Tiền đá lẻ gửi ở tab Kết quả của từng trận sau khi nhập tỉ số. App tự nhắc lại 3 ngày một lần cho người chưa đóng.</p>
+      {data.requests.length ? data.requests.map((r) => (
+        <div key={r.id} className="apcard">
+          <span className={`chip ${r.kind === 'dues' ? 'quy' : 'le'}`}>{r.kind === 'dues' ? 'Quỹ' : 'Đá lẻ'}</span>
+          <div className="t">
+            <b>{r.label}</b> · {money(r.amount)}/người
+            {r.owed.length > 0 && <small>Chưa đóng ({r.owed.length}): {names(r.owed)}</small>}
+            {r.pending.length > 0 && <small>Đã báo đóng, chờ bạn xác nhận ở tab Duyệt: {names(r.pending)}</small>}
+          </div>
+          <div className="acts">
+            {r.owed.length > 0 && <button type="button" className="btn sm" onClick={() => act(() => remindPaymentAction(teamId, r.id), (n) => `Đã nhắc ${n} người`)}>Nhắc lại</button>}
+          </div>
+        </div>
+      )) : <div className="empty-list">Không có yêu cầu nào còn người chưa đóng.</div>}
+    </div>
+  );
 }
 
 /** Tab Quỹ đội (BRD 7.3): thành viên chỉ đọc, khách không thấy. */
@@ -78,6 +122,8 @@ export function FundView({ data }: { data: FundData }) {
           </form>
           <p className="hint">Thành viên <span className="chip quy">Quỹ</span> đóng theo tháng. Thành viên <span className="chip le">Đá lẻ</span> trả tiền theo từng trận có đi đá. Giá đá lẻ mới chỉ áp dụng cho các trận tạo sau.</p>
         </div>
+
+        {canEdit && <PayRequests data={data} />}
 
         <div className="grid2">
           <div className="panel">

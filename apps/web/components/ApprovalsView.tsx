@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { STAT_KEYS, dm, fillStats, fmt1, rankedPositions, shortName, type Stats } from '@san7/core';
+import { STAT_KEYS, dm, fillStats, fmt1, money, rankedPositions, shortName, type Stats } from '@san7/core';
 import { useTeam } from './TeamContext';
 import { Avatar, tierColor } from './ui';
 import { InvitePanel } from './InvitePanel';
 import { MatchModal } from './matches/MatchModal';
 import { PlayerModal, type PlayerDraft } from './players/PlayerModal';
 import { profilePayload } from './players/PlayersView';
-import { approveEditAction, approveJoinAction, decideClaimAction, rejectEditAction, rejectJoinAction } from '@/app/actions';
+import { approveEditAction, approveJoinAction, decideClaimAction, decidePaymentAction, rejectEditAction, rejectJoinAction } from '@/app/actions';
 import type { ApprovalsDTO, PlayerDTO } from '@/lib/types';
 
 function ago(iso: string) {
@@ -129,6 +129,26 @@ export function ApprovalsView({ data }: { data: ApprovalsDTO }) {
                 </div>
               );
             }) : <div className="empty-list">Không có khai báo nào.</div>}
+          </div>
+
+          <div className="panel">
+            <h3 className="st">Báo đã đóng tiền ({data.payments.length})</h3>
+            {data.payments.length ? data.payments.map((n) => {
+              const p = byId(n.playerId);
+              return (
+                <div key={n.requestId + n.playerId} className="apcard">
+                  {p && <Avatar p={p} size={40} />}
+                  <div className="t">
+                    <b>{nameOf(n.playerId)}</b> · {n.label}
+                    <small>Báo đã đóng <b style={{ color: 'var(--ink)' }}>{money(n.amount)}</b> · {ago(n.declaredAt)}</small>
+                  </div>
+                  <div className="acts">
+                    <button type="button" className="btn primary sm" onClick={() => act(() => decidePaymentAction(teamId, n.requestId, n.playerId, true), `Đã ghi sổ: ${nameOf(n.playerId)} đóng ${money(n.amount)}`)}>Đã nhận, ghi sổ</button>
+                    <button type="button" className="btn ghost sm danger" onClick={() => act(() => decidePaymentAction(teamId, n.requestId, n.playerId, false), 'Đã báo chưa nhận được tiền')}>Chưa nhận</button>
+                  </div>
+                </div>
+              );
+            }) : <div className="empty-list">Không có ai đang chờ xác nhận.</div>}
           </div>
 
           <div className="panel">

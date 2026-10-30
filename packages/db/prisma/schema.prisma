@@ -118,6 +118,7 @@ model Team {
   fundEntries  FundEntry[]
   dues         DuesPayment[]
   snapshots    SeasonSnapshot[]
+  payRequests  PaymentRequest[]
 
   @@map("teams")
 }
@@ -174,6 +175,7 @@ model Player {
   claims      Claim[]
   dues        DuesPayment[]
   profileEdit ProfileEdit[]
+  payNotices  PaymentNotice[]
 
   @@unique([teamId, userId])
   @@index([teamId, status])
@@ -438,4 +440,42 @@ model MatchReceipt {
   @@id([matchId, userId])
   @@index([userId])
   @@map("match_receipts")
+}
+
+/// ĐT yêu cầu đóng tiền: quỹ một tháng (kind=dues, key='YYYY-MM') hoặc đá lẻ một trận (kind=le, key=matchId).
+/// Ai còn nợ tính từ dữ liệu gốc (dues_payments / attendance.lePaid), bảng này chỉ giữ số tiền và mốc nhắc.
+model PaymentRequest {
+  id          String    @id @default(cuid())
+  teamId      String
+  kind        String // dues | le
+  key         String
+  amount      Int
+  note        String?
+  createdById String?
+  remindedAt  DateTime? @db.Timestamptz
+  createdAt   DateTime  @default(now()) @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @db.Timestamptz
+
+  team    Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  notices PaymentNotice[]
+
+  @@unique([teamId, kind, key])
+  @@map("payment_requests")
+}
+
+/// Thành viên báo "Tôi đã đóng" cho một yêu cầu; ĐT xác nhận (ghi sổ) hoặc báo chưa nhận.
+model PaymentNotice {
+  requestId   String
+  playerId    String
+  status      String // pending | confirmed | rejected
+  declaredAt  DateTime  @db.Timestamptz
+  decidedAt   DateTime? @db.Timestamptz
+  decidedById String?
+
+  request PaymentRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  player  Player         @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@id([requestId, playerId])
+  @@index([playerId])
+  @@map("payment_notices")
 }

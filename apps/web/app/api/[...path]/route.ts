@@ -19,6 +19,7 @@ import * as claim from '@/server/services/claim';
 import * as postmatch from '@/server/services/postmatch';
 import * as mvp from '@/server/services/mvp';
 import * as fund from '@/server/services/fund';
+import * as payment from '@/server/services/payment';
 import * as tactics from '@/server/services/tactics';
 import * as admin from '@/server/services/admin';
 import { approvals, teamView } from '@/server/services/view';
@@ -35,6 +36,7 @@ const teamOf = {
   player: async (id: string) => (await prisma.player.findUnique({ where: { id }, select: { teamId: true } }))?.teamId ?? notFoundT(),
   join: async (id: string) => (await prisma.joinRequest.findUnique({ where: { id }, select: { teamId: true } }))?.teamId ?? notFoundT(),
   edit: async (id: string) => (await prisma.profileEdit.findUnique({ where: { id }, select: { teamId: true } }))?.teamId ?? notFoundT(),
+  payReq: async (id: string) => (await prisma.paymentRequest.findUnique({ where: { id }, select: { teamId: true } }))?.teamId ?? notFoundT(),
   claim: async (id: string) => (await prisma.claim.findUnique({ where: { id }, select: { match: { select: { teamId: true } } } }))?.match.teamId ?? notFoundT(),
 };
 function notFoundT(): never {
@@ -157,6 +159,14 @@ const routes: Array<[string, H]> = [
   ['DELETE /teams/:id/fund/entries/:entryId', async ({ p }) => { await fund.deleteManualEntry(await tc(p[0]), p[1]); return { ok: true }; }],
 
   ['GET /version', async () => ({ version: process.env.NEXT_PUBLIC_BUILD_ID ?? 'dev' })],
+
+  // Yêu cầu đóng tiền
+  ['POST /teams/:id/payment-requests', async ({ p, body }) => payment.requestDues(await tc(p[0]), await body())],
+  ['POST /matches/:id/payment-request', async ({ p, body }) => payment.requestLe(await tc(await teamOf.match(p[0])), p[0], await body())],
+  ['POST /payment-requests/:id/remind', async ({ p }) => ({ sent: await payment.remindRequest(await tc(await teamOf.payReq(p[0])), p[0]) })],
+  ['POST /payment-requests/:id/declare', async ({ p }) => { await payment.declarePaid(await tc(await teamOf.payReq(p[0])), p[0]); return { ok: true }; }],
+  ['POST /payment-requests/:id/notices/:playerId/confirm', async ({ p }) => { await payment.decidePayment(await tc(await teamOf.payReq(p[0])), p[0], p[1], true); return { ok: true }; }],
+  ['POST /payment-requests/:id/notices/:playerId/reject', async ({ p }) => { await payment.decidePayment(await tc(await teamOf.payReq(p[0])), p[0], p[1], false); return { ok: true }; }],
 
   // Thông báo
   ['GET /notifications', async () => listNotifications((await requireUser()).id)],
