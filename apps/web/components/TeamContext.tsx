@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useMemo, useRef, useState, useTransition } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { shortName } from '@san7/core';
 import type { MatchDTO, PlayerDTO, TeamView } from '@/lib/types';
 import type { ActionResult } from '@/server/result';
@@ -35,6 +35,10 @@ export function TeamProvider({ view, children }: { view: TeamView; children: Rea
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pending, start] = useTransition();
   const draft = useRef<{ stats: Record<string, number>; foot: string } | null>(null);
+  // Đánh dấu đã hydrate (listener tooltip/popover của component con đã gắn) — dùng cho E2E.
+  useEffect(() => {
+    document.documentElement.dataset.hydrated = '1';
+  }, []);
 
   const toast = useCallback((m: string) => {
     setToast(m);
