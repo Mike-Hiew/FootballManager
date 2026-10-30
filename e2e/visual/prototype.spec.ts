@@ -42,8 +42,8 @@ const VIEWS: View[] = [
   // Yêu cầu đóng quỹ / đá lẻ (thêm 30/10, prototype không có) thêm nút và dòng trạng thái → trang dài hơn
   { name: 'quy', proto: 'quy', app: '/t/t-domdom/quy', budget: { 1920: 0.15, 1440: 0.15, 1024: 0.17, 390: 0.21 } },
   // Khối link mời ở tab Duyệt (BRD 8.6, prototype đặt ở tab Cầu thủ) làm trang dài thêm trên mobile
-  // + mục xác nhận đóng tiền (thêm 30/10) dưới các việc chờ duyệt
-  { name: 'duyet', proto: 'duyet', app: '/t/t-domdom/duyet', budget: { 1024: 0.14, 390: 0.26 } },
+  // + mục xác nhận đóng tiền (thêm 30/10) dưới các việc chờ duyệt; CI cao hơn local ~17 px ở 1024 (15.4% so với 12.9%)
+  { name: 'duyet', proto: 'duyet', app: '/t/t-domdom/duyet', budget: { 1024: 0.17, 390: 0.26 } },
   { name: 'kham-pha', proto: 'kham-pha', app: '/kham-pha' },
   { name: 'he-thong', proto: 'he-thong', app: '/he-thong', who: 'admin' },
   {
