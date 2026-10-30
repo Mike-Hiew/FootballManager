@@ -102,7 +102,7 @@ model Team {
   planMinutes    Int      @default(80)
   planPeriods    Int      @default(4)
   planMin        Int?
-  fullSquad      Int      @default(7)
+  fullSquad      Int      @default(9) // ngưỡng "đủ người": 7 ra sân + dự bị, ĐT tự chỉnh
   duesReminder   Boolean  @default(true)
   hidden         Boolean  @default(false)
   createdById    String?

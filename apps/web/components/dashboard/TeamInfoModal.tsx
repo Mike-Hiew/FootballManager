@@ -55,7 +55,7 @@ export function TeamInfoModal({ onClose }: { onClose: () => void }) {
           const s = (k: string) => String(f.get(k) ?? '').trim();
           const r = await act(() => updateTeamAction(teamId, {
             name, foundedOn: s('foundedOn') || null, slogan: s('slogan') || null, homeName: s('homeName') || null, homeAddress: s('homeAddress') || null,
-            homeMapUrl: s('homeMapUrl') || null, homeDays: days, homeFrom: s('homeFrom') || null, homeTo: s('homeTo') || null, homeCost: Number(s('homeCost')) || 0,
+            homeMapUrl: s('homeMapUrl') || null, homeDays: days, homeFrom: s('homeFrom') || null, homeTo: s('homeTo') || null, homeCost: Number(s('homeCost')) || 0, fullSquad: Number(s('fullSquad')) || t.fullSquad,
             rulesText: s('rules'), photoUrl: img.photoUrl ?? '', awardBootUrl: img.awardBootUrl ?? '', awardAssistUrl: img.awardAssistUrl ?? '',
           }), 'Đã lưu thông tin đội');
           if (r !== undefined) onClose();
@@ -106,6 +106,11 @@ export function TeamInfoModal({ onClose }: { onClose: () => void }) {
           <div className="field c2 h3"><label htmlFor="hFrom">Giờ bắt đầu</label><input id="hFrom" name="homeFrom" type="time" defaultValue={t.homeFrom ?? ''} /></div>
           <div className="field c2 h3"><label htmlFor="hTo">Giờ kết thúc</label><input id="hTo" name="homeTo" type="time" defaultValue={t.homeTo ?? ''} /></div>
           <div className="field c2"><label htmlFor="hCost">Tiền sân / buổi (đ)</label><input id="hCost" name="homeCost" type="number" min={0} step={10000} inputMode="numeric" defaultValue={t.homeCost} /></div>
+          <div className="field c2">
+            <label htmlFor="tSquad">Đủ người khi có</label>
+            <input id="tSquad" name="fullSquad" type="number" min={7} max={30} step={1} inputMode="numeric" required defaultValue={t.fullSquad} />
+            <small className="hint" style={{ margin: 0 }}>Số người Đi để trận được báo Đủ (7 ra sân + dự bị)</small>
+          </div>
         </div>
         <div className="field">
           <label htmlFor="tRulesIn">Quy định đội bóng <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>· mỗi dòng một quy định · 2 dòng đầu hiện nổi bật, còn lại thu gọn thành icon</span></label>

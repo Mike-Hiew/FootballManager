@@ -320,7 +320,7 @@ Bản thật nên thay bước 3 bằng thuật toán Hungarian (tối đa tổn
 ### 5.5 Trận sắp tới
 
 - Dropdown chọn trận (mặc định trận gần nhất chưa đá). Thanh trận: "vs <Đối thủ> · ngày · giờ · sân", số Đi / Nghỉ / Chưa trả lời, nút "Điểm danh" mở modal trận.
-- Dưới 7 người Đi: cảnh báo "Thiếu N người"; slot trống vẫn hiển thị.
+- Dưới ngưỡng "đủ người" của đội (mặc định 9, ĐT chỉnh trong Thông tin đội): cảnh báo "Thiếu N người"; slot trống vẫn hiển thị.
 - Ô tóm tắt kế hoạch thay người (số đợt, số lượt thay, "ai cũng được ra sân") — bấm mở **popup Đề xuất thay người**.
 
 ### 5.6 Đề xuất thay người (`buildPlan`)
@@ -480,7 +480,7 @@ Desktop chia 3 cột; ≤ 1180 px sân mini lên đầu rồi 2 cột; ≤ 900 p
 
 - **Cột 1**: nhãn "● Trận tới" (chấm nhấp nháy) + chip "Đang điểm danh" khi vote mở; "vs <Đối thủ>" cỡ lớn vàng; dòng thứ-ngày · giờ · sân · icon ₫ (tooltip phí đá lẻ); đồng hồ đếm ngược ngày/giờ/phút (cập nhật 30 giây; qua giờ đá hiện "Đang diễn ra · chờ kết quả").
 - **Cột 2 – sân mini động** (SVG, vòng lặp 6 giây): sân phối cảnh nhìn về khung thành, cầu thủ phe mình là đốm vàng phát sáng (đom đóm), đối thủ xanh ngọc đi qua lại, thủ môn dịch ngang; quả bóng chuyền qua 3 người (nhỏ dần theo chiều sâu, xoay, có bóng đổ), sút bổng vào lưới, lưới rung, thủ môn bay sai hướng, chữ "VÀO!". Ngày đá hiện nhãn "Tối nay". Dừng khi reduced-motion.
-- **Cột 3 – điểm danh**: số lớn "7/12 đi"; chip "Đủ người" hoặc "Thiếu N" (ngưỡng 7, tooltip giải thích); thanh màu đi (xanh) / nghỉ (đỏ) / chưa (xám) có tooltip số lượng; dãy avatar người Đi (tối đa 10 + "+N", hover ra tên).
+- **Cột 3 – điểm danh**: số lớn "7/12 đi"; chip "Đủ người" hoặc "Thiếu N" (ngưỡng theo đội, mặc định 9, tooltip giải thích); thanh màu đi (xanh) / nghỉ (đỏ) / chưa (xám) có tooltip số lượng; dãy avatar người Đi (tối đa 10 + "+N", hover ra tên).
   - Thành viên chưa vote khi vote mở: cả khối viền vàng nhấp nháy 2.4 giây, ô "● Bạn đi không?" + nút vàng lớn "✓ Tôi đi" và nút "Nghỉ".
   - Đã vote: 2 nút "Tôi đi" (xanh khi chọn) / "Tôi nghỉ" (đỏ khi chọn) + ⓘ "Đổi được đến khi đội trưởng đóng điểm danh".
   - Vote chưa mở / đã đóng: dòng trạng thái ngắn.
@@ -780,6 +780,5 @@ Phase 1–2 làm nền dữ liệu và công thức; giao diện theme đầy đ
 ### 11.4 Câu hỏi mở
 
 - Stack chính thức: Next.js + PostgreSQL (đề xuất) hay OutSystems ODC?
-- Ngưỡng "đủ người" cố định 7 hay cho ĐT cấu hình (ví dụ 9 = 7 + 2 dự bị)?
 - Có cần đăng nhập bằng Zalo / Google ở phase 1 không?
 - Tên miền và tên sản phẩm chính thức (prototype dùng "Sân 7 Manager").

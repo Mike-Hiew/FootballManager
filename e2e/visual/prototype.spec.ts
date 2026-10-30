@@ -26,7 +26,8 @@ const VIEWS: View[] = [
   { name: 'doi', proto: 'doi', app: '/t/t-domdom/doi' },
   { name: 'toi', proto: 'toi', app: '/t/t-domdom/toi' },
   { name: 'chien-thuat', proto: 'chien-thuat', app: '/t/t-domdom/chien-thuat' },
-  { name: 'tran-toi', proto: 'tran-toi', app: '/t/t-domdom/tran-toi' },
+  // Ngưỡng "đủ người" mặc định 9 (prototype: 7) → 7 người Đi hiện thêm dòng "Thiếu 2 người", đẩy bố cục mobile
+  { name: 'tran-toi', proto: 'tran-toi', app: '/t/t-domdom/tran-toi', budget: { 390: 0.08 } },
   // Ô tìm + sắp xếp (BRD 4.6, prototype không có) làm thanh công cụ xuống dòng ở màn hẹp
   { name: 'cau-thu', proto: 'cau-thu', app: '/t/t-domdom/cau-thu', budget: { 1024: 0.15, 390: 0.12 } },
   { name: 'lich', proto: 'lich', app: '/t/t-domdom/lich' },

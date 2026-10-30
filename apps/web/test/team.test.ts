@@ -20,6 +20,7 @@ describe('Đội & gia nhập (BRD 3, 11.1 #1–2)', () => {
     expect(t.nameKey).toBe(normName('Sao Băng FC'));
     expect(t.monthlyFee).toBe(200000);
     expect(t.perMatchFee).toBe(80000);
+    expect(t.fullSquad).toBe(9);
     expect(await prisma.teamCaptain.count({ where: { teamId: t.id, userId: u.id } })).toBe(1);
     expect(await prisma.player.findFirst({ where: { teamId: t.id, userId: u.id, isCaptain: true, payType: 'quy' } })).not.toBeNull();
     expect(await team.activeInvite(t.id)).toMatch(/^[a-z0-9]{6}$/);
@@ -69,6 +70,21 @@ describe('Đội & gia nhập (BRD 3, 11.1 #1–2)', () => {
     expect(player.effectivePayType(after, '2026-10')).toBe('quy');
     expect(player.effectivePayType(after, '2026-11')).toBe('le');
     await prisma.player.update({ where: { id: 'p4' }, data: { payType: 'quy', payTypeFrom: null, prevPayType: null } });
+  });
+});
+
+describe('Ngưỡng "đủ người" (đội tự cấu hình)', () => {
+  it('ĐT đổi được, tối thiểu 7; thành viên không đổi được; giữ nguyên khi form không gửi', async () => {
+    const cap = await ctxFor(CAPTAIN, DOM);
+    const t = await prisma.team.findUniqueOrThrow({ where: { id: DOM } });
+    const base = { name: t.name, homeDays: t.homeDays, homeCost: t.homeCost };
+    await team.updateTeam(cap, { ...base, fullSquad: 11 });
+    expect((await teamView(cap)).team.fullSquad).toBe(11);
+    await expectStatus(team.updateTeam(cap, { ...base, fullSquad: 6 }), 422);
+    await team.updateTeam(cap, base);
+    expect((await prisma.team.findUniqueOrThrow({ where: { id: DOM } })).fullSquad).toBe(11);
+    await expectStatus(team.updateTeam(await ctxFor(MEMBER, DOM), { ...base, fullSquad: 8 }), 403);
+    await team.updateTeam(cap, { ...base, fullSquad: t.fullSquad });
   });
 });
 
