@@ -37,7 +37,24 @@ export function diff(proto: Buffer, app: Buffer, name: string) {
   writeFileSync(`${REPORT_DIR}${name}-proto.png`, proto);
   writeFileSync(`${REPORT_DIR}${name}-app.png`, app);
   writeFileSync(`${REPORT_DIR}${name}-diff.png`, PNG.sync.write(d));
-  return { ratio: (n + extra) / total, protoH: a.height, appH: b.height };
+  return { ratio: (n + extra) / total, protoH: a.height, appH: b.height, bands: bands(d) };
+}
+
+/** Các dải hàng (y0–y1) có trên 2 % pixel lệch — in ra log để biết lệch ở đâu khi không mở được báo cáo. */
+function bands(d: PNG) {
+  const out: [number, number][] = [];
+  for (let y = 0; y < d.height; y++) {
+    let n = 0;
+    for (let x = 0; x < d.width; x++) {
+      const i = (y * d.width + x) * 4;
+      if (d.data[i] === 255 && d.data[i + 1] === 0 && d.data[i + 2] === 0) n++;
+    }
+    if (n / d.width <= 0.02) continue;
+    const last = out[out.length - 1];
+    if (last && y - last[1] <= 8) last[1] = y;
+    else out.push([y, y]);
+  }
+  return out;
 }
 
 /** Ghi dồn kết quả ra file (worker bị khởi động lại sau mỗi test fail nên không giữ trong bộ nhớ). */

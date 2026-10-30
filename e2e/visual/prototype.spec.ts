@@ -73,6 +73,20 @@ async function shot(page: Page, fullPage = true) {
   return page.screenshot({ fullPage, animations: 'disabled', caret: 'hide' });
 }
 
+/** Chữ của phần tử ở toạ độ y (theo ảnh chụp) — để đọc log CI. */
+async function textAt(page: Page, y: number, full: boolean) {
+  return page.evaluate(([y, full]) => {
+    if (full) window.scrollTo(0, Math.max(0, y - 100));
+    const vy = full ? y - window.scrollY : y;
+    const seen = new Set<string>();
+    for (const x of [0.15, 0.5, 0.85].map((f) => f * innerWidth)) {
+      const el = document.elementFromPoint(x, vy) as HTMLElement | null;
+      if (el) seen.add(`${el.tagName.toLowerCase()}.${[...el.classList].join('.')} "${(el.innerText || '').replace(/\s+/g, ' ').slice(0, 60)}" ${getComputedStyle(el).fontFamily.slice(0, 40)}`);
+    }
+    if (full) window.scrollTo(0, 0);
+    return [...seen].join(' | ');
+  }, [y, full] as const);
+}
 
 for (const width of WIDTHS) {
   test(`prototype vs app @ ${width}px`, async ({ browser, baseURL }) => {
@@ -106,8 +120,16 @@ for (const width of WIDTHS) {
       const name = `${v.name}-${width}`;
       const r = diff(await shot(proto, !v.prep), await shot(app, !v.prep), name);
       const budget = v.budget?.[width] ?? BUDGET;
-      record({ view: v.name, width, budget, ...r });
-      if (r.ratio > budget) failures.push(`${name}: ${(r.ratio * 100).toFixed(2)}% > ${(budget * 100).toFixed(0)}%`);
+      const { bands, ...res } = r;
+      record({ view: v.name, width, budget, ...res });
+      if (r.ratio > budget) {
+        failures.push(`${name}: ${(r.ratio * 100).toFixed(2)}% > ${(budget * 100).toFixed(0)}%`);
+        console.log(`[visual] ${name} cao ${r.protoH}/${r.appH}, dải lệch: ${bands.slice(0, 12).map(([a, b]) => `${a}-${b}`).join(' ')}`);
+        for (const [y0] of bands.slice(0, 4)) {
+          console.log(`  y=${y0} proto: ${await textAt(proto, y0, !v.prep)}`);
+          console.log(`  y=${y0} app:   ${await textAt(app, y0, !v.prep)}`);
+        }
+      }
       if (v.prep) {
         await proto.keyboard.press('Escape');
         await proto.evaluate(() => document.querySelectorAll('.overlay').forEach((o) => ((o as HTMLElement).hidden = true)));
