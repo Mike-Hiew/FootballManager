@@ -13,7 +13,12 @@ const WIDTHS = [1920, 1440, 1024, 390] as const;
 const NOW = new Date(Math.floor(Date.now() / 3600e3) * 3600e3);
 
 type Who = 'captain' | 'admin';
-interface View { name: string; proto: string; app: string; who?: Who; budget?: Partial<Record<(typeof WIDTHS)[number], number>>; prep?: (p: Page, side: 'proto' | 'app') => Promise<void> }
+interface View {
+  name: string; proto: string; app: string; who?: Who; budget?: Partial<Record<(typeof WIDTHS)[number], number>>;
+  prep?: (p: Page, side: 'proto' | 'app') => Promise<void>;
+  /** CSS selector ẩn ở cả hai bên — phần app thiết kế lại có chủ đích, không còn so với prototype */
+  hide?: string;
+}
 // Modal là lớp position: fixed — chụp đúng khung nhìn thay vì full-page.
 
 // Bấm mở modal làm trang cuộn tới thẻ được bấm, mỗi bên một khác — đưa nền về đầu trang để hai bên giống nhau.
@@ -23,7 +28,8 @@ async function openModal(p: Page, target: ReturnType<Page['locator']>) {
 }
 
 const VIEWS: View[] = [
-  { name: 'doi', proto: 'doi', app: '/t/t-domdom/doi' },
+  // Khối Trận tới thiết kế lại (sân vận động phủ khung, trạng thái trực tiếp) theo yêu cầu 30/10 — so phần còn lại của màn
+  { name: 'doi', proto: 'doi', app: '/t/t-domdom/doi', hide: '.nxb' },
   { name: 'toi', proto: 'toi', app: '/t/t-domdom/toi' },
   { name: 'chien-thuat', proto: 'chien-thuat', app: '/t/t-domdom/chien-thuat' },
   // Ngưỡng "đủ người" mặc định 9 (prototype: 7) → 7 người Đi hiện thêm dòng "Thiếu 2 người", đẩy bố cục mobile
@@ -33,9 +39,11 @@ const VIEWS: View[] = [
   { name: 'lich', proto: 'lich', app: '/t/t-domdom/lich' },
   { name: 'thong-ke', proto: 'thong-ke', app: '/t/t-domdom/thong-ke' },
   // Công tắc nhắc đóng quỹ ngày 5 (BRD 7.4) xuống dòng trên mobile
-  { name: 'quy', proto: 'quy', app: '/t/t-domdom/quy', budget: { 390: 0.08 } },
+  // Yêu cầu đóng quỹ / đá lẻ (thêm 30/10, prototype không có) thêm nút và dòng trạng thái → trang dài hơn
+  { name: 'quy', proto: 'quy', app: '/t/t-domdom/quy', budget: { 1920: 0.15, 1440: 0.15, 1024: 0.17, 390: 0.21 } },
   // Khối link mời ở tab Duyệt (BRD 8.6, prototype đặt ở tab Cầu thủ) làm trang dài thêm trên mobile
-  { name: 'duyet', proto: 'duyet', app: '/t/t-domdom/duyet', budget: { 390: 0.17 } },
+  // + mục xác nhận đóng tiền (thêm 30/10) dưới các việc chờ duyệt; CI cao hơn local ~17 px ở 1024 (15.4% so với 12.9%)
+  { name: 'duyet', proto: 'duyet', app: '/t/t-domdom/duyet', budget: { 1024: 0.17, 390: 0.26 } },
   { name: 'kham-pha', proto: 'kham-pha', app: '/kham-pha' },
   { name: 'he-thong', proto: 'he-thong', app: '/he-thong', who: 'admin' },
   {
@@ -98,8 +106,8 @@ async function appLogin(page: Page, who: Who) {
   await page.waitForURL(/\/t\//);
 }
 
-async function shot(page: Page, fullPage = true) {
-  await page.addStyleTag({ content: HIDE });
+async function shot(page: Page, fullPage = true, hide?: string) {
+  await page.addStyleTag({ content: HIDE + (hide ? `${hide}{display:none!important}` : '') });
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(300);
   return page.screenshot({ fullPage, animations: 'disabled', caret: 'hide' });
@@ -151,7 +159,7 @@ for (const width of WIDTHS) {
         await app.waitForTimeout(500);
       }
       const name = `${v.name}-${width}`;
-      const r = diff(await shot(proto, !v.prep), await shot(app, !v.prep), name);
+      const r = diff(await shot(proto, !v.prep, v.hide), await shot(app, !v.prep, v.hide), name);
       const budget = v.budget?.[width] ?? BUDGET;
       const { bands, crops, ...res } = r;
       record({ view: v.name, width, budget, ...res });

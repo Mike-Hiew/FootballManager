@@ -11,7 +11,9 @@ export function PaymentReminders() {
   return (
     <>
       {view.myPayments.map((p) => (
-        <div key={p.id} className="note pay-remind" role="status" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        // Khoản còn phải đóng thì lắc nhẹ theo nhịp cho dễ thấy; đã báo đóng (chờ ĐT xác nhận) thì đứng yên
+        <div key={p.id} className={`note pay-remind${p.status === 'pending' ? '' : ' attn'}`} role="status" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          {p.status !== 'pending' && <span className="coin" aria-hidden="true">₫</span>}
           {p.status === 'pending' ? (
             <span><span className="chip le">Chờ xác nhận</span> Bạn đã báo đóng <b>{p.label}</b> ({money(p.amount)}). Đội trưởng sẽ xác nhận khi nhận được tiền.</span>
           ) : (
