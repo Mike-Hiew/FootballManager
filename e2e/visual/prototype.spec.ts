@@ -52,7 +52,8 @@ const BUDGET = Number(process.env.VISUAL_BUDGET ?? 0.06);
 const HIDE = `nextjs-portal,[data-nextjs-toast],[data-next-badge-root]{display:none!important}*{caret-color:transparent!important}`;
 
 async function open(browser: Browser, width: number) {
-  const ctx = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce', locale: 'vi-VN', timezoneId: 'Asia/Ho_Chi_Minh', deviceScaleFactor: 1 });
+  // bypassCSP: CSP của app chặn thẻ <style> chèn vào để ẩn overlay dev (CSP có test riêng ở tests/csp.spec.ts)
+  const ctx = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce', locale: 'vi-VN', timezoneId: 'Asia/Ho_Chi_Minh', deviceScaleFactor: 1, bypassCSP: true });
   const page = await ctx.newPage();
   await page.clock.setFixedTime(NOW);
   return page;

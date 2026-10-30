@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Be_Vietnam_Pro, Jost } from 'next/font/google';
+import { connection } from 'next/server';
 import './prototype.css';
 import './app.css';
 import { RegisterSW } from '@/components/Pwa';
@@ -24,7 +25,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#08090b' };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // CSP dùng nonce theo từng request (proxy.ts) nên mọi trang phải render động, không prerender lúc build.
+  await connection();
   return (
     <html lang="vi" data-theme="light" className={`${body.variable} ${display.variable}`}>
       <body>
