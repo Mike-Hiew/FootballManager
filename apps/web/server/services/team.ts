@@ -35,6 +35,8 @@ export const teamInfoSchema = z.object({
   homeTo: timeSchema.optional().nullable().or(z.literal('')),
   homeCost: moneySchema.default(0),
   rulesText: z.string().max(4000).optional(),
+  // Ngưỡng "đủ người": ít nhất 7 (đủ ra sân), mặc định 9 = 7 + 2 dự bị
+  fullSquad: z.number().int().min(7, 'Đủ người tối thiểu là 7').max(30).optional(),
 });
 
 export async function isNameTaken(name: string, excludeTeamId?: string): Promise<boolean> {
@@ -112,9 +114,10 @@ export async function updateTeam(ctx: Ctx, raw: unknown) {
   for (const k of ['photoUrl', 'awardBootUrl', 'awardAssistUrl'] as const) {
     if (p.data[k] !== undefined) data[k] = p.data[k] || null;
   }
+  if (p.data.fullSquad !== undefined) data.fullSquad = p.data.fullSquad;
   try {
     const team = await prisma.team.update({ where: { id: ctx.teamId }, data });
-    await audit(prisma, ctx, 'team.update', 'team', ctx.teamId, { name: before.name }, { name: team.name });
+    await audit(prisma, ctx, 'team.update', 'team', ctx.teamId, { name: before.name, fullSquad: before.fullSquad }, { name: team.name, fullSquad: team.fullSquad });
     return team;
   } catch (e) {
     if (isUniqueViolation(e)) throw conflict('Tên đội đã có, hãy chọn tên khác');

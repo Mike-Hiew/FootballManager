@@ -15,10 +15,11 @@ Toàn bộ P0–P4 và phần chính của P5 đã có code trên nhánh, gom th
 | REST API theo BRD 9.2, job `/api/jobs/tick`, outbox thông báo | Xong |
 | PWA (service worker tự viết, offline, Web Push + nút Đi/Nghỉ) | Xong · cần khoá VAPID để bật push thật |
 | Upload ảnh R2 (presigned PUT) | Xong · chưa có R2 thì dùng data URL (chỉ dev/staging) |
-| Test tích hợp service trên Postgres thật | 28 test xanh (`apps/web/test`) |
-| E2E Playwright theo 11.1 | 14 test xanh (`e2e/tests`) |
+| Test tích hợp service trên Postgres thật | 34 test xanh (`apps/web/test`) |
+| E2E Playwright theo 11.1 | 15 test xanh (`e2e/tests`) |
 | CI GitHub Actions, runbook | Xong (`.github/workflows/ci.yml`, `docs/RUNBOOK.md`) |
 | Bảo mật: CSP có nonce, giới hạn tần suất theo IP | Xong · `apps/web/proxy.ts` + `server/csp.ts` (test E2E không vi phạm CSP trên mọi màn), `server/ratelimit.ts` + bảng `rate_hits` (5 test tích hợp) |
+| Popup tỉ số sau trận + nhắc khai báo (BRD 6.8) | Xong · `server/services/postmatch.ts`, bảng `match_receipts`, cột `matches.resultAt`; popup ăn mừng/buồn `components/matches/ResultPopup.tsx`, nhắc trên tab Đội; 5 test tích hợp + E2E `result-popup.spec.ts` |
 | Hiệu năng (BRD 9.4) | Đo local (bản production, dữ liệu demo): k6 20 req/s → API p95 21 ms (mục tiêu < 300 ms); Lighthouse mobile Slow 4G → LCP trang Đội 904 ms (< 1.5 s), điểm 91; `buildPlan` 20 người < 200 ms có test. Script `e2e/perf/`, workflow `Perf`. Cần đo lại trên staging thật (Vercel `sin1` + Neon) |
 | So giao diện với prototype (11.1 #15) | Xong · `e2e/visual`: 13 màn/modal × 4 độ rộng, ngân sách ≤ 6 % pixel lệch (ngoại lệ có ghi lý do); báo cáo HTML là artifact CI |
 
@@ -34,7 +35,7 @@ Toàn bộ P0–P4 và phần chính của P5 đã có code trên nhánh, gom th
 
 ### Còn lại trước go-live
 
-- Chốt các câu hỏi mở mục 1 còn lại (ngưỡng đủ người, đăng nhập Google, tên miền). MVP 60% đã chốt là ngưỡng số người bỏ phiếu.
+- Chốt các câu hỏi mở mục 1 còn lại (đăng nhập Google, tên miền). Đã chốt: MVP 60% là ngưỡng số người bỏ phiếu; đủ người mặc định 9, đội tự chỉnh.
 - Tạo hạ tầng thật theo `docs/SETUP.md` (phương án miễn phí: Vercel Hobby, Neon, R2, Resend, cron-job.org); tạo admin production bằng `pnpm db:create-admin`. Nối Sentry (`@sentry/nextjs`) khi có DSN.
 - Đo lại k6 + Lighthouse trên staging thật (chạy tay workflow `Perf` với `base_url`).
 
@@ -60,7 +61,7 @@ Toàn bộ P0–P4 và phần chính của P5 đã có code trên nhánh, gom th
 | --- | --- | --- | --- | --- |
 | Q1 | Gói hạ tầng | Free: Vercel Hobby + Neon Free + cron-job.org (đã tick trong ARCHITECTURE 7.3) | env + `vercel.json` | — (đã chốt) |
 | Q2 | MVP 60% | Quorum: số phiếu ≥ ceil(0.6·N người Đi), dẫn đầu không hoà | `core/mvp.ts` → `resolveMvp(rule)` | — (đã chốt 30/10: ngưỡng số người bỏ phiếu) |
-| Q3 | Ngưỡng "đủ người" | Cấu hình theo đội, cột `teams.fullSquad` mặc định 7 | `core/attendance.ts` | PR 3.2 |
+| Q3 | Ngưỡng "đủ người" | Cấu hình theo đội, cột `teams.fullSquad` mặc định 9, ĐT chỉnh trong Thông tin đội (7–30) | `teams.fullSquad` | — (đã chốt 30/10) |
 | Q4 | Đăng nhập Google phase 1 | Không; phase 2 thêm bảng `user_identities` (provider, subject) mà không đổi bảng `users` | `server/auth` | P1 |
 | Q5 | Tên miền / tên sản phẩm | Dùng domain Vercel tạm; `APP_NAME`, `APP_URL` qua env | env | P5 (trước khi bật push production) |
 | Q6 | Độ dài mật khẩu | Theo ARCHITECTURE 7.2: ≥ 8 ký tự + chặn top 1.000 mật khẩu phổ biến; seed demo vẫn `123456` (bỏ qua kiểm tra ở seed) | `core/schemas.ts` | P1 |
@@ -267,7 +268,7 @@ Mọi bảng: `id` cuid, `created_at`, `updated_at`, `timestamptz`. Tiền là `
 | `sessions` | **mới**: `tokenHash`, `userId`, `expiresAt`, `currentTeamId` | index `userId` |
 | `login_attempts` | **mới**: `key` (phone/email/IP), `at`, `ok` | index `(key, at)` |
 | `password_resets` | **mới**: `tokenHash`, `userId`, `expiresAt`, `usedAt` | |
-| `teams` | bỏ `inviteCode` → bảng `invites`; thêm `fullSquad` (7), `duesReminder` (true), `createdBy` | `nameKey` unique |
+| `teams` | bỏ `inviteCode` → bảng `invites`; thêm `fullSquad` (9), `duesReminder` (true), `createdBy` | `nameKey` unique |
 | `team_captains` | như BRD | PK `(teamId, userId)` |
 | `invites` | **mới**: `teamId`, `code`, `revokedAt` | `code` unique; partial unique `(teamId) WHERE revoked_at IS NULL` |
 | `players` | thêm `payTypeFrom` (tháng có hiệu lực) + `payTypePrev` | unique `(teamId, userId)`; index `(teamId, status)` |

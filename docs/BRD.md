@@ -320,7 +320,7 @@ Bản thật nên thay bước 3 bằng thuật toán Hungarian (tối đa tổn
 ### 5.5 Trận sắp tới
 
 - Dropdown chọn trận (mặc định trận gần nhất chưa đá). Thanh trận: "vs <Đối thủ> · ngày · giờ · sân", số Đi / Nghỉ / Chưa trả lời, nút "Điểm danh" mở modal trận.
-- Dưới 7 người Đi: cảnh báo "Thiếu N người"; slot trống vẫn hiển thị.
+- Dưới ngưỡng "đủ người" của đội (mặc định 9, ĐT chỉnh trong Thông tin đội): cảnh báo "Thiếu N người"; slot trống vẫn hiển thị.
 - Ô tóm tắt kế hoạch thay người (số đợt, số lượt thay, "ai cũng được ra sân") — bấm mở **popup Đề xuất thay người**.
 
 ### 5.6 Đề xuất thay người (`buildPlan`)
@@ -410,6 +410,17 @@ Chỉ tính trận đã đá có ngày thuộc YEAR.
 - Xếp hạng hoà: bằng chỉ số chính → ít trận hơn đứng trên → nhiều chỉ số còn lại hơn đứng trên.
 - Bảng lịch sử từng trận: ngày, đối thủ, tỉ số, người ghi bàn, MVP.
 
+### 6.8 Popup tỉ số sau trận và nhắc khai báo
+
+Bổ sung 30/10/2026.
+
+- **Trận kết thúc** = đã qua giờ đá và ĐT đã nhập tỉ số. Lần đầu có tỉ số được ghi lại (`matches.resultAt`); sửa tỉ số sau đó không tính là kết thúc lại, xoá tỉ số thì xoá mốc.
+- **Popup tỉ số**: mỗi thành viên/ĐT của đội thấy **một lần** khi mở app lần đầu sau khi trận kết thúc, ở bất kỳ tab nào của đội. Chỉ cho trận mới nhất, trong 7 ngày kể từ khi có tỉ số; không báo cho người nhập tỉ số, khách, hay người vào đội sau giờ đá. Đánh dấu đã xem ngay khi popup hiện (bảng `match_receipts`), nên tải lại hay chuyển trang cũng không hiện lại; tắt bằng ✕, nút Đóng, bấm ra ngoài hoặc Esc.
+- **Nội dung**: tên hai đội, tỉ số lớn, nhãn Thắng/Hoà/Thua, người ghi bàn, MVP (nếu có), sân, số người ra quân; nút "Khai báo bàn/kiến tạo" (nếu người xem có Đi và chưa khai) và "Đóng".
+- **Không khí**: thắng — pháo giấy, đom đóm bay, cúp nhún, tỉ số phát sáng; hoà — tông dịu, đom đóm nhạt; thua — tông xám xanh, mưa nhẹ, lời động viên. Tắt chuyển động khi người dùng bật giảm chuyển động.
+- **Nhắc khai báo trên tab Đội**: người có Đi trận đã kết thúc (trong 7 ngày) mà chưa khai báo thấy dòng "Trận vs … kết thúc x–y. Bạn có ghi bàn hay kiến tạo không?" (kèm số ĐT đang ghi cho họ) với nút **Khai báo** (mở tab Kết quả của trận) và **Không có** (tắt nhắc trận đó). Khai báo xong cũng tự tắt.
+- API: `POST /matches/:id/result-seen`, `POST /matches/:id/claim-skip`.
+
 ## 7. Quỹ đội
 
 Số dư quỹ = tổng 4 nguồn trong sổ thu chi; 3 nguồn đầu tự sinh từ dữ liệu, chỉ khoản ghi tay là nhập trực tiếp. Tiền lưu bằng số nguyên đồng (VND), hiển thị `200.000đ`, số âm dùng dấu −.
@@ -480,7 +491,7 @@ Desktop chia 3 cột; ≤ 1180 px sân mini lên đầu rồi 2 cột; ≤ 900 p
 
 - **Cột 1**: nhãn "● Trận tới" (chấm nhấp nháy) + chip "Đang điểm danh" khi vote mở; "vs <Đối thủ>" cỡ lớn vàng; dòng thứ-ngày · giờ · sân · icon ₫ (tooltip phí đá lẻ); đồng hồ đếm ngược ngày/giờ/phút (cập nhật 30 giây; qua giờ đá hiện "Đang diễn ra · chờ kết quả").
 - **Cột 2 – sân mini động** (SVG, vòng lặp 6 giây): sân phối cảnh nhìn về khung thành, cầu thủ phe mình là đốm vàng phát sáng (đom đóm), đối thủ xanh ngọc đi qua lại, thủ môn dịch ngang; quả bóng chuyền qua 3 người (nhỏ dần theo chiều sâu, xoay, có bóng đổ), sút bổng vào lưới, lưới rung, thủ môn bay sai hướng, chữ "VÀO!". Ngày đá hiện nhãn "Tối nay". Dừng khi reduced-motion.
-- **Cột 3 – điểm danh**: số lớn "7/12 đi"; chip "Đủ người" hoặc "Thiếu N" (ngưỡng 7, tooltip giải thích); thanh màu đi (xanh) / nghỉ (đỏ) / chưa (xám) có tooltip số lượng; dãy avatar người Đi (tối đa 10 + "+N", hover ra tên).
+- **Cột 3 – điểm danh**: số lớn "7/12 đi"; chip "Đủ người" hoặc "Thiếu N" (ngưỡng theo đội, mặc định 9, tooltip giải thích); thanh màu đi (xanh) / nghỉ (đỏ) / chưa (xám) có tooltip số lượng; dãy avatar người Đi (tối đa 10 + "+N", hover ra tên).
   - Thành viên chưa vote khi vote mở: cả khối viền vàng nhấp nháy 2.4 giây, ô "● Bạn đi không?" + nút vàng lớn "✓ Tôi đi" và nút "Nghỉ".
   - Đã vote: 2 nút "Tôi đi" (xanh khi chọn) / "Tôi nghỉ" (đỏ khi chọn) + ⓘ "Đổi được đến khi đội trưởng đóng điểm danh".
   - Vote chưa mở / đã đóng: dòng trạng thái ngắn.
@@ -780,6 +791,5 @@ Phase 1–2 làm nền dữ liệu và công thức; giao diện theme đầy đ
 ### 11.4 Câu hỏi mở
 
 - Stack chính thức: Next.js + PostgreSQL (đề xuất) hay OutSystems ODC?
-- Ngưỡng "đủ người" cố định 7 hay cho ĐT cấu hình (ví dụ 9 = 7 + 2 dự bị)?
 - Có cần đăng nhập bằng Zalo / Google ở phase 1 không?
 - Tên miền và tên sản phẩm chính thức (prototype dùng "Sân 7 Manager").
