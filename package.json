@@ -1,0 +1,25 @@
+{
+  "name": "san7",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22 <23"
+  },
+  "scripts": {
+    "dev": "turbo run dev --filter=@san7/web",
+    "build": "turbo run build",
+    "test": "turbo run test --filter=@san7/core --filter=@san7/web",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "db:generate": "pnpm --filter @san7/db generate",
+    "db:migrate": "pnpm --filter @san7/db migrate",
+    "db:reset": "pnpm --filter @san7/db reset",
+    "db:seed": "pnpm --filter @san7/db seed",
+    "e2e": "pnpm --filter @san7/e2e test",
+    "db:deploy": "pnpm --filter @san7/db deploy"
+  },
+  "devDependencies": {
+    "turbo": "2.11.10",
+    "typescript": "5.9.3"
+  }
+}

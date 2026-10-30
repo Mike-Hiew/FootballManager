@@ -1,0 +1,413 @@
+// Sân 7 Manager — schema chính thức (BRD 9.1 + ARCHITECTURE 7.2).
+// Ngày nghiệp vụ lưu dạng chuỗi 'YYYY-MM-DD' theo giờ Asia/Ho_Chi_Minh để không lệch múi giờ;
+// thời điểm (timestamp) lưu timestamptz. Tiền là số nguyên đồng.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  phone        String    @unique
+  email        String?   @unique
+  passwordHash String
+  role         String    @default("user") // user | admin
+  lockedUntil  DateTime? @db.Timestamptz
+  disabledAt   DateTime? @db.Timestamptz
+  lastTeamId   String?
+  createdAt    DateTime  @default(now()) @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @db.Timestamptz
+
+  sessions      Session[]
+  players       Player[]
+  captainOf     TeamCaptain[]
+  joinRequests  JoinRequest[]
+  notifications Notification[]
+  pushSubs      PushSubscription[]
+  resets        PasswordReset[]
+
+  @@map("users")
+}
+
+model Session {
+  id            String   @id // SHA-256 của token
+  userId        String
+  expiresAt     DateTime @db.Timestamptz
+  currentTeamId String?
+  createdAt     DateTime @default(now()) @db.Timestamptz
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model LoginAttempt {
+  id  String   @id @default(cuid())
+  key String
+  ok  Boolean
+  at  DateTime @default(now()) @db.Timestamptz
+
+  @@index([key, at])
+  @@map("login_attempts")
+}
+
+model PasswordReset {
+  id        String    @id // SHA-256 của token
+  userId    String
+  expiresAt DateTime  @db.Timestamptz
+  usedAt    DateTime? @db.Timestamptz
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_resets")
+}
+
+model Team {
+  id             String   @id @default(cuid())
+  name           String
+  nameKey        String   @unique
+  foundedOn      String?
+  slogan         String?
+  photoUrl       String?
+  awardBootUrl   String?
+  awardAssistUrl String?
+  homeName       String?
+  homeAddress    String?
+  homeMapUrl     String?
+  homeDays       Int[]    @default([]) // 0=CN..6=T7
+  homeFrom       String?
+  homeTo         String?
+  homeCost       Int      @default(0)
+  rules          String[] @default([])
+  formation      String   @default("2-3-1")
+  lineup         Json     @default("[]")
+  monthlyFee     Int      @default(200000)
+  perMatchFee    Int      @default(80000)
+  planMinutes    Int      @default(80)
+  planPeriods    Int      @default(4)
+  planMin        Int?
+  fullSquad      Int      @default(7)
+  duesReminder   Boolean  @default(true)
+  hidden         Boolean  @default(false)
+  createdById    String?
+  createdAt      DateTime @default(now()) @db.Timestamptz
+  updatedAt      DateTime @updatedAt @db.Timestamptz
+
+  captains     TeamCaptain[]
+  invites      Invite[]
+  players      Player[]
+  joinRequests JoinRequest[]
+  matches      Match[]
+  fundEntries  FundEntry[]
+  dues         DuesPayment[]
+  snapshots    SeasonSnapshot[]
+
+  @@map("teams")
+}
+
+model TeamCaptain {
+  teamId    String
+  userId    String
+  createdAt DateTime @default(now()) @db.Timestamptz
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, userId])
+  @@index([userId])
+  @@map("team_captains")
+}
+
+model Invite {
+  id        String    @id @default(cuid())
+  teamId    String
+  code      String    @unique
+  revokedAt DateTime? @db.Timestamptz
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  team      Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  // partial unique (teamId) WHERE revoked_at IS NULL — thêm trong migration SQL
+  @@index([teamId])
+  @@map("invites")
+}
+
+model Player {
+  id          String   @id @default(cuid())
+  teamId      String
+  userId      String?
+  fullName    String
+  nick        String?
+  dob         String?
+  avatarUrl   String?
+  num         Int?
+  foot        String // Trái | Phải | Hai chân
+  payType     String // quy | le — loại đang áp dụng từ tháng payTypeFrom
+  payTypeFrom String? // 'YYYY-MM'; trước tháng này dùng prevPayType
+  prevPayType String?
+  stats       Json
+  styles      String[] @default([])
+  isCaptain   Boolean  @default(false)
+  status      String   @default("active") // active | left
+  createdAt   DateTime @default(now()) @db.Timestamptz
+  updatedAt   DateTime @updatedAt @db.Timestamptz
+
+  team        Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  attendance  Attendance[]
+  events      MatchEvent[]
+  claims      Claim[]
+  dues        DuesPayment[]
+  profileEdit ProfileEdit[]
+
+  @@unique([teamId, userId])
+  @@index([teamId, status])
+  @@map("players")
+}
+
+model JoinRequest {
+  id          String    @id @default(cuid())
+  teamId      String
+  userId      String
+  phone       String
+  payload     Json
+  status      String    @default("pending") // pending | approved | rejected
+  reason      String?
+  decidedById String?
+  decidedAt   DateTime? @db.Timestamptz
+  createdAt   DateTime  @default(now()) @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @db.Timestamptz
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // partial unique (teamId, phone) WHERE status = 'pending' — migration SQL
+  @@index([teamId, status])
+  @@index([userId])
+  @@map("join_requests")
+}
+
+model ProfileEdit {
+  id          String    @id @default(cuid())
+  teamId      String
+  playerId    String
+  payload     Json
+  status      String    @default("pending")
+  reason      String?
+  decidedById String?
+  decidedAt   DateTime? @db.Timestamptz
+  createdAt   DateTime  @default(now()) @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @db.Timestamptz
+  player      Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  // partial unique (playerId) WHERE status = 'pending' — migration SQL
+  @@index([teamId, status])
+  @@map("profile_edits")
+}
+
+model Match {
+  id             String    @id @default(cuid())
+  teamId         String
+  date           String // YYYY-MM-DD giờ VN
+  time           String?
+  kickoffAt      DateTime  @db.Timestamptz
+  opponent       String
+  venue          String?
+  type           String    @default("Giao hữu")
+  cost           Int       @default(0)
+  fee            Int
+  note           String?
+  scoreUs        Int?
+  scoreThem      Int?
+  voteState      String? // null | open | closed
+  voteOpenedAt   DateTime? @db.Timestamptz
+  voteRemindedAt DateTime? @db.Timestamptz
+  formation      String?
+  lineup         Json?
+  mvpPlayerId    String?
+  deletedAt      DateTime? @db.Timestamptz
+  createdAt      DateTime  @default(now()) @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @db.Timestamptz
+
+  team       Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  attendance Attendance[]
+  events     MatchEvent[]
+  claims     Claim[]
+  mvpVote    MvpVote?
+  ballots    MvpBallot[]
+
+  @@index([teamId, date])
+  @@index([kickoffAt])
+  @@map("matches")
+}
+
+model Attendance {
+  matchId      String
+  playerId     String
+  status       String // di | nghi
+  setByCaptain Boolean  @default(false)
+  lePaid       Boolean  @default(false)
+  updatedAt    DateTime @updatedAt @db.Timestamptz
+  match        Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player       Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@id([matchId, playerId])
+  @@map("attendance")
+}
+
+model MatchEvent {
+  matchId  String
+  playerId String
+  goals    Int    @default(0)
+  assists  Int    @default(0)
+  match    Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@id([matchId, playerId])
+  @@map("match_events")
+}
+
+model Claim {
+  id          String    @id @default(cuid())
+  matchId     String
+  playerId    String
+  goals       Int
+  assists     Int
+  status      String    @default("pending")
+  decidedById String?
+  decidedAt   DateTime? @db.Timestamptz
+  createdAt   DateTime  @default(now()) @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @db.Timestamptz
+  match       Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player      Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, playerId])
+  @@map("claims")
+}
+
+model MvpVote {
+  matchId   String    @id
+  status    String // open | done | need
+  openedAt  DateTime  @db.Timestamptz
+  closesAt  DateTime  @db.Timestamptz
+  closedAt  DateTime? @db.Timestamptz
+  decidedBy String? // vote | captain
+  match     Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@index([status, closesAt])
+  @@map("mvp_votes")
+}
+
+model MvpBallot {
+  matchId     String
+  voterId     String // playerId
+  candidateId String // playerId
+  updatedAt   DateTime @updatedAt @db.Timestamptz
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@id([matchId, voterId])
+  @@map("mvp_ballots")
+}
+
+model DuesPayment {
+  teamId    String
+  playerId  String
+  month     String // YYYY-MM
+  amount    Int
+  createdAt DateTime @default(now()) @db.Timestamptz
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, playerId, month])
+  @@map("dues_payments")
+}
+
+model FundEntry {
+  id          String    @id @default(cuid())
+  teamId      String
+  date        String // YYYY-MM-DD
+  amount      Int // + thu, − chi
+  source      String // dues | pitch | le | manual
+  sourceKey   String
+  note        String
+  createdById String?
+  deletedAt   DateTime? @db.Timestamptz
+  deletedById String?
+  createdAt   DateTime  @default(now()) @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @db.Timestamptz
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, source, sourceKey])
+  @@index([teamId, date])
+  @@map("fund_entries")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  teamId    String?
+  actorId   String?
+  kind      String // vote | mvp | join | edit | claim | result | fund | season
+  matchId   String?
+  view      String?
+  text      String
+  readAt    DateTime? @db.Timestamptz
+  pushedAt  DateTime? @db.Timestamptz
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now()) @db.Timestamptz
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+model SeasonSnapshot {
+  id        String   @id @default(cuid())
+  teamId    String
+  year      Int
+  data      Json
+  createdAt DateTime @default(now()) @db.Timestamptz
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, year])
+  @@map("season_snapshots")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  teamId    String?
+  actorId   String
+  action    String
+  entity    String
+  entityId  String?
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  @@index([teamId, createdAt])
+  @@map("audit_logs")
+}
+
+model JobRun {
+  job   String
+  key   String
+  ranAt DateTime @default(now()) @db.Timestamptz
+
+  @@id([job, key])
+  @@map("job_runs")
+}
