@@ -63,6 +63,9 @@ describe('MVP', () => {
     const r = resolveMvp(['a', 'a', 'a', 'b', 'c'], 7);
     expect(r).toMatchObject({ status: 'done', winner: 'a', votes: 3 });
   });
+  it('60% là ngưỡng số người bỏ phiếu: đủ phiếu thì người dẫn đầu thắng dù chỉ có 2/5 phiếu', () => {
+    expect(resolveMvp(['a', 'a', 'b', 'c', 'd'], 7)).toMatchObject({ status: 'done', winner: 'a', votes: 2, total: 5, need: 5 });
+  });
   it('4 phiếu → need', () => {
     expect(resolveMvp(['a', 'a', 'a', 'b'], 7).status).toBe('need');
   });

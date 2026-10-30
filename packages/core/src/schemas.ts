@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { STAT_KEYS, STYLES } from './stats';
-import { FEET, POSITIONS } from './positions';
+import { FEET, POSITIONS, type Position } from './positions';
 import { FORMATION_IDS } from './formation';
 
 // Không cho Zod thử `new Function` (dò JIT): CSP của app chặn eval nên mỗi trang sẽ sinh báo cáo vi phạm.
@@ -9,7 +9,10 @@ z.config({ jitless: true });
 const half = z.number().min(1).max(10).refine((v) => Number.isInteger(v * 2), 'Bước 0.5');
 export const statsSchema = z.object(Object.fromEntries(STAT_KEYS.map((k) => [k, half])) as Record<(typeof STAT_KEYS)[number], typeof half>);
 
-export const ratingsSchema = z.partialRecord(z.enum(POSITIONS), z.number().min(1).max(10));
+/** Điểm tự chấm theo vị trí. Bỏ qua vị trí không còn dùng (CDM/LM/RM/CAM trong đơn/hồ sơ cũ) thay vì báo lỗi. */
+export const ratingsSchema = z
+  .record(z.string(), z.number().min(1).max(10))
+  .transform((r) => Object.fromEntries(Object.entries(r).filter(([k]) => (POSITIONS as readonly string[]).includes(k))) as Partial<Record<Position, number>>);
 
 export const lineupSchema = z.array(z.string().min(1).nullable()).length(7);
 export const formationSchema = z.enum(FORMATION_IDS as [string, ...string[]]);

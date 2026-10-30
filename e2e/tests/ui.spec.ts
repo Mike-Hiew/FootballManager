@@ -22,12 +22,13 @@ test('11.1 #3 — popover công thức chỉ hiện khi hover/focus vào ô đi�
   await page.goto('/t/t-domdom/cau-thu');
   await hydrated(page);
   await expect(page.locator('.pop:not([hidden])')).toHaveCount(0);
-  const chip = page.locator('.pcard', { hasText: 'Khánh Mười' }).locator('[data-x="p:p6:LM"]');
-  await expect(chip).toContainText('LM');
-  await expect(chip).toContainText('8.2');
+  // Đức Cò thuận chân trái, mạnh nhất ở LB → có điều chỉnh chân thuận +0.3
+  const chip = page.locator('.pcard', { hasText: 'Đức Cò' }).locator('[data-x="p:p4:LB"]');
+  await expect(chip).toContainText('LB');
+  await expect(chip).toContainText('7.3');
   await hoverStill(page, chip);
   const pop = page.locator('.pop:not([hidden])');
-  await expect(pop).toContainText('LM · TV cánh trái');
+  await expect(pop).toContainText('LB · Hậu vệ trái');
   await expect(pop).toContainText('Điểm = Σ (chỉ số × trọng số) / 100 ± chân thuận');
   await expect(pop).toContainText('+0.3');
 });

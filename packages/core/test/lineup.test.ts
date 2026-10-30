@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 import golden from './__fixtures__/prototype-golden.json';
 import {
-  autoPick, autoPickGreedy, changeFormation, cleanLineup, hungarian, lineupSummary, placeInLineup,
+  autoPick, autoPickGreedy, changeFormation, cleanLineup, FORMATION_IDS, hungarian, isNatural, lineupSummary, placeInLineup, POSITIONS, rankedPositions, ratingsSchema,
   positionScore, removeFromLineup, slotGlow, slotPositions, suggestForPosition, STAT_KEYS, swapSlots,
   type LineupPlayer, type Position, type Stats,
 } from '../src';
@@ -115,5 +115,29 @@ describe('gợi ý & highlight', () => {
     const empty = lineupSummary('2-3-1', cleanLineup([], []), map);
     expect(empty.avg).toBeNull();
     expect(empty.tips).toContain('Chưa có thủ môn.');
+  });
+});
+
+describe('vị trí sân 7', () => {
+  it('mọi sơ đồ chỉ dùng GK/CB/LB/RB/CM/ST, slot 0 là GK', () => {
+    for (const f of FORMATION_IDS) {
+      const ps = slotPositions(f);
+      expect(ps[0]).toBe('GK');
+      for (const p of ps) expect(POSITIONS).toContain(p);
+    }
+    expect(slotPositions('2-3-1')).toEqual(['GK', 'CB', 'CB', 'CM', 'CM', 'CM', 'ST']);
+    expect(slotPositions('2-1-2-1')).toEqual(['GK', 'CB', 'CB', 'CM', 'CM', 'CM', 'ST']);
+  });
+  it('đúng sở trường = top 2 vị trí của người đó', () => {
+    for (const p of players) {
+      const rk = rankedPositions(p.stats, p.foot).map(([k]) => k);
+      expect(isNatural(p, rk[0])).toBe(true);
+      expect(isNatural(p, rk[1])).toBe(true);
+      expect(isNatural(p, rk[2])).toBe(false);
+    }
+  });
+  it('điểm tự chấm cũ có vị trí đã bỏ (CDM/LM/RM/CAM) → bỏ qua, không báo lỗi', () => {
+    expect(ratingsSchema.parse({ CB: 8, CDM: 7, CAM: 6.5 })).toEqual({ CB: 8 });
+    expect(ratingsSchema.safeParse({ CB: 11 }).success).toBe(false);
   });
 });

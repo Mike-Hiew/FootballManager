@@ -244,7 +244,7 @@ Số dư = `SUM(amount)`. Khoản tự sinh không xoá tay được; sửa tr�
 ### 7.3 Câu hỏi mở cần Mike chốt
 
 - [x] Giai đoạn đầu có chấp nhận chạy gói free (Vercel Hobby + Neon Free + cron ngoài), hay đi thẳng Vercel Pro 20 USD/tháng?
-- [ ] Quy tắc MVP 60%: giữ cách hiểu quorum như BRD?
+- [x] Quy tắc MVP 60%: giữ cách hiểu quorum như BRD? — Đã chốt: 60% là ngưỡng số người bỏ phiếu.
 - [ ] Ngưỡng "đủ người" cố định 7 hay cấu hình theo đội?
 - [ ] Đăng nhập Google ở phase 1? (Zalo cần OA đã xác thực, hợp phase 2)
 - [ ] Tên miền chính thức để cấu hình VAPID, email và cookie domain.
