@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addDays, balance, dayOfWeek, dm, initials, leaderboard, money, monthFlow, mvpCounts, mvpQuorum, nextHomeDay,
+  addDays, balance, compareLines, dayOfWeek, dm, initials, leaderboard, money, monthFlow, mvpCounts, mvpQuorum, nextHomeDay,
   normName, normPhone, outstanding, parseRules, playerSeason, recentMonths, resolveMvp, ruleIcon, seasonYear,
   shortName, teamSeason, todayVN, vnDateTime, type SeasonMatch, passwordSchema, phoneSchema, statsSchema, fillStats,
 } from '../src';
@@ -107,6 +107,22 @@ describe('season', () => {
     expect(leaderboard([a, b, c, d], 'goals').map((x) => x.playerId)).toEqual(['d', 'c', 'a', 'b']);
     expect(leaderboard([{ ...a, goals: 0 }], 'goals')).toEqual([]);
     expect(mvpCounts(ms, 2026).get('a')).toBe(2);
+  });
+  it('bảng Thống kê xếp hoà theo BRD 6.7 ở mọi cột', () => {
+    const l = (playerId: string, gp: number, goals: number, assists: number, mvp: number) =>
+      ({ playerId, gp, goals, assists, ga: goals + assists, mvp, rate: 0 });
+    const order = (rows: ReturnType<typeof l>[], k: Parameters<typeof compareLines>[0], dir: 1 | -1 = -1) =>
+      [...rows].sort(compareLines(k, dir)).map((r) => r.playerId);
+    // Bằng bàn: ít trận hơn đứng trên, rồi nhiều kiến tạo hơn
+    expect(order([l('long', 4, 1, 1, 0), l('minh', 3, 1, 0, 0), l('viet', 3, 1, 2, 0)], 'goals')).toEqual(['viet', 'minh', 'long']);
+    // Bằng B+KT và bằng trận: chỉ số còn lại là MVP (trước đây so lại chính B+KT)
+    expect(order([l('a', 4, 2, 1, 0), l('b', 4, 1, 2, 2)], 'ga')).toEqual(['b', 'a']);
+    // Bằng MVP và bằng trận: nhiều B+KT hơn đứng trên
+    expect(order([l('a', 4, 0, 0, 1), l('b', 4, 1, 1, 1)], 'mvp')).toEqual(['b', 'a']);
+    // Cột Trận không xếp hoà theo số trận
+    expect(order([l('a', 4, 0, 0, 0), l('b', 4, 2, 0, 0), l('c', 2, 5, 0, 0)], 'gp')).toEqual(['b', 'a', 'c']);
+    // Đảo chiều chỉ đảo chỉ số chính
+    expect(order([l('a', 4, 1, 0, 0), l('b', 3, 1, 0, 0), l('c', 4, 0, 0, 0)], 'goals', 1)).toEqual(['c', 'b', 'a']);
   });
 });
 

@@ -1,12 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { dm, leaderboard, resultOf, seasonTable, shortName, teamSeason, type PlayerLine } from '@san7/core';
+import { compareLines, dm, leaderboard, resultOf, seasonTable, shortName, teamSeason, type PlayerLine, type TableKey } from '@san7/core';
 import { useTeam } from './TeamContext';
 import { Avatar } from './ui';
 import { isPlayed, seasonOf } from '@/lib/season';
 
-type Key = 'gp' | 'goals' | 'assists' | 'ga' | 'mvp' | 'rate';
+type Key = TableKey;
 const COLS: Array<[Key, string]> = [['gp', 'Trận'], ['goals', 'Bàn'], ['assists', 'KT'], ['ga', 'B+KT'], ['mvp', 'MVP'], ['rate', '% tham gia']];
 
 interface Snapshot { year: number; data: { record: { n: number; w: number; d: number; l: number; gf: number; ga: number }; boot: { name: string | null; value: number } | null; assist: { name: string | null; value: number } | null; mvp: { name: string | null; value: number } | null } }
@@ -23,7 +23,7 @@ export function StatsView({ snapshots }: { snapshots: Snapshot[] }) {
   const rows = seasonTable(season, year, ids).filter((r) => byId(r.playerId) || r.gp > 0);
   const top = (k: 'goals' | 'assists' | 'mvp') => leaderboard(rows, k)[0];
   const tg = top('goals'), ta = top('assists'), tm = top('mvp');
-  const sorted = [...rows].sort((a, b) => sort.dir * (a[sort.k] - b[sort.k]) || (sort.k !== 'gp' ? a.gp - b.gp : 0) || b.ga - a.ga);
+  const sorted = [...rows].sort(compareLines(sort.k, sort.dir));
   const played = [...ts.matches].reverse();
   const p = (l: PlayerLine) => byId(l.playerId);
 
