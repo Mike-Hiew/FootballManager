@@ -9,6 +9,7 @@ import { type Ctx, requireManager } from '../authz';
 import { audit } from '../audit';
 import { AppError, conflict, invalid, notFound, zodMessage } from '../errors';
 import { captainUserIds, emit } from './notify';
+import { limitIp } from '../ratelimit';
 
 const joinSchema = z.object({
   fullName: z.string().trim().min(1, 'Nhập họ tên').max(60),
@@ -40,6 +41,7 @@ export type JoinPayload = z.infer<typeof joinPayloadSchema>;
 
 /** Nộp đơn xin vào đội qua link mời (BRD 3.3). */
 export async function submitJoin(code: string, raw: unknown, current: SessionUser | null) {
+  await limitIp('join');
   const inv = await prisma.invite.findUnique({ where: { code: code.toLowerCase() }, include: { team: true } });
   if (!inv || inv.revokedAt || inv.team.hidden) throw notFound('Link mời không còn hiệu lực, xin link mới từ đội trưởng');
   const p = joinSchema.safeParse(current ? { ...(raw as object), phone: current.phone, password: 'x' } : raw);

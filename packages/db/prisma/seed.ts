@@ -30,7 +30,7 @@ async function main() {
     prisma.duesPayment.deleteMany(), prisma.mvpBallot.deleteMany(), prisma.mvpVote.deleteMany(), prisma.claim.deleteMany(),
     prisma.matchEvent.deleteMany(), prisma.attendance.deleteMany(), prisma.match.deleteMany(), prisma.profileEdit.deleteMany(),
     prisma.joinRequest.deleteMany(), prisma.player.deleteMany(), prisma.invite.deleteMany(), prisma.teamCaptain.deleteMany(),
-    prisma.team.deleteMany(), prisma.session.deleteMany(), prisma.loginAttempt.deleteMany(), prisma.passwordReset.deleteMany(),
+    prisma.team.deleteMany(), prisma.session.deleteMany(), prisma.loginAttempt.deleteMany(), prisma.rateHit.deleteMany(), prisma.passwordReset.deleteMany(),
     prisma.user.deleteMany(),
   ]);
 

@@ -3,6 +3,9 @@ import { STAT_KEYS, STYLES } from './stats';
 import { FEET, POSITIONS } from './positions';
 import { FORMATION_IDS } from './formation';
 
+// Không cho Zod thử `new Function` (dò JIT): CSP của app chặn eval nên mỗi trang sẽ sinh báo cáo vi phạm.
+z.config({ jitless: true });
+
 const half = z.number().min(1).max(10).refine((v) => Number.isInteger(v * 2), 'Bước 0.5');
 export const statsSchema = z.object(Object.fromEntries(STAT_KEYS.map((k) => [k, half])) as Record<(typeof STAT_KEYS)[number], typeof half>);
 
