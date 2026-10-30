@@ -2,7 +2,7 @@
 
 Web app (PWA, ưu tiên mobile) quản lý nhiều đội bóng phong trào sân 7: cầu thủ và 17 chỉ số, điểm 10 vị trí, chiến thuật kiểu FO4, lịch đấu, điểm danh 1 chạm, kết quả, khai báo, vote MVP, quỹ đội, thống kê mùa, Khám phá và Admin.
 
-- Nghiệp vụ: [docs/BRD.md](docs/BRD.md) · Kiến trúc: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Kế hoạch & trạng thái: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) · Vận hành: [docs/RUNBOOK.md](docs/RUNBOOK.md)
+- Nghiệp vụ: [docs/BRD.md](docs/BRD.md) · Kiến trúc: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Kế hoạch & trạng thái: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) · Dựng hạ tầng: [docs/SETUP.md](docs/SETUP.md) · Vận hành: [docs/RUNBOOK.md](docs/RUNBOOK.md)
 - Prototype giao diện gốc: [docs/prototype/domdom-fc.html](docs/prototype/domdom-fc.html)
 
 ## Cấu trúc

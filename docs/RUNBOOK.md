@@ -11,6 +11,8 @@
 
 ## Biến môi trường
 
+Dựng từ đầu (tạo tài khoản, khai biến, tạo admin): xem `docs/SETUP.md`.
+
 Xem `.env.example`. Bắt buộc ở production: `DATABASE_URL` (pooled), `DIRECT_URL`, `APP_URL`, `CRON_SECRET`. Nên có: `VAPID_PUBLIC_KEY` + `NEXT_PUBLIC_VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` + `VAPID_SUBJECT` (push), `R2_*` (ảnh), `RESEND_API_KEY` + `MAIL_FROM` (quên mật khẩu).
 
 Sinh khoá VAPID:
@@ -39,6 +41,14 @@ Khi chưa cấu hình R2, ảnh được resize ở trình duyệt và lưu dạ
 - Đo staging/production: Actions → **Perf** → Run workflow, điền `base_url`. Production không có tài khoản demo: tạo một tài khoản đo và đặt secret `PERF_LOGIN_ID` / `PERF_LOGIN_PW` (cùng `team_id` của đội đó).
 - k6 bắn 20 req/s trong 1 phút từ một IP; giới hạn theo IP chỉ áp vào đăng nhập/đăng ký… nên chỉ lần đăng nhập ở bước setup bị tính.
 - Báo cáo Lighthouse HTML ở artifact `perf-report`.
+
+## Quản trị viên
+
+Production không có seed demo. Tạo hoặc nâng quyền admin (chuỗi kết nối Direct):
+
+```bash
+DATABASE_URL="<direct-url>" pnpm db:create-admin --phone 0901234567 --name "Họ Tên"
+```
 
 ## Rollback
 
