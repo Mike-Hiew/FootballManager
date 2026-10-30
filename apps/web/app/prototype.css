@@ -354,9 +354,9 @@ table.tbl{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeri
 .nitem.unread{background:var(--accent-soft)}
 .nitem small{color:var(--muted);font-size:11.5px}
 .nitem .qa{display:flex;gap:6px}
-body.ro .cap{display:none!important}
-body.ro #formations{pointer-events:none;opacity:.75}
-body.ro .dues td button{pointer-events:none}
+
+.ro #formations{pointer-events:none;opacity:.75}
+.ro .dues td button{pointer-events:none}
 .seg button:disabled{opacity:.5;cursor:default}
 .arow.mine{background:var(--accent-soft);border-radius:10px;padding-inline:8px}
 .locked .avpick label,.locked #avDel{display:none}

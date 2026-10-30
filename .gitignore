@@ -10,3 +10,4 @@ packages/db/src/generated
 e2e/test-results
 e2e/playwright-report
 next-env.d.ts
+apps/web/AGENTS.md

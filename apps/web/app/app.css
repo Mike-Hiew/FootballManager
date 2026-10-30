@@ -9,3 +9,7 @@ body { margin: 0; }
 a.btn { text-decoration: none; display: inline-flex; align-items: center; }
 .tabs a { text-decoration: none; }
 .pending-overlay { opacity: .6; pointer-events: none; }
+/* .seg dùng cả <a> (Link) như nút */
+.seg a{border:0;background:transparent;padding:6px 10px;border-radius:999px;font-weight:600;font-size:13px;color:var(--muted);text-decoration:none}
+.subtabs a{padding:8px 14px;font-size:13.5px}
+.seg a[aria-pressed="true"]{background:var(--onyx);color:var(--gold)}

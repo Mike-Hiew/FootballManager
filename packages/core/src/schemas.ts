@@ -40,6 +40,12 @@ export const phoneSchema = z
 
 export const emailSchema = z.string().trim().toLowerCase().email('Email không hợp lệ');
 
+/** Ảnh: URL https (R2) hoặc data URL ảnh đã resize ở trình duyệt (fallback khi chưa cấu hình R2). */
+export const imageUrlSchema = z
+  .string()
+  .max(400_000, 'Ảnh quá lớn')
+  .refine((u) => /^(https:\/\/|data:image\/(jpeg|png|webp);base64,)/.test(u), 'Ảnh không hợp lệ');
+
 export const profileSchema = z.object({
   fullName: z.string().trim().min(1, 'Nhập họ tên').max(60),
   nick: z.string().trim().max(24).optional().nullable(),
@@ -47,7 +53,7 @@ export const profileSchema = z.object({
   num: z.number().int().min(0).max(99).optional().nullable(),
   foot: footSchema,
   styles: z.array(styleSchema).max(14).default([]),
-  avatarUrl: z.string().url().optional().nullable(),
+  avatarUrl: imageUrlSchema.optional().nullable(),
   stats: statsSchema,
 });
 export type ProfileInput = z.infer<typeof profileSchema>;

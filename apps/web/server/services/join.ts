@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { prisma } from '@san7/db';
 import {
-  dateSchema, footSchema, inferStats, passwordSchema, payTypeSchema, phoneSchema, ratingsSchema, statsSchema, styleSchema,
+  dateSchema, footSchema, imageUrlSchema, inferStats, passwordSchema, payTypeSchema, phoneSchema, ratingsSchema, statsSchema, styleSchema,
 } from '@san7/core';
 import { hashPassword, verifyPassword } from '../auth/password';
 import { createSession, type SessionUser } from '../auth/session';
@@ -19,7 +19,7 @@ const joinSchema = z.object({
   num: z.number().int().min(0).max(99).optional().nullable(),
   foot: footSchema,
   payType: payTypeSchema,
-  avatarUrl: z.string().max(2000).optional().nullable(),
+  avatarUrl: imageUrlSchema.optional().nullable(),
   styles: z.array(styleSchema).max(14).default([]),
   ratings: ratingsSchema.refine((r) => Object.values(r).some((v) => (v ?? 0) > 0), 'Tự chấm điểm ít nhất một vị trí sở trường'),
 });

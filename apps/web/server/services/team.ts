@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { prisma, type Prisma } from '@san7/db';
 import {
-  autoPick, dateSchema, footSchema, foldText, inferStats, isSafeUrl, moneySchema, normName, parseRules,
+  autoPick, dateSchema, footSchema, foldText, imageUrlSchema, inferStats, isSafeUrl, moneySchema, normName, parseRules,
   ratingsSchema, teamNameSchema, timeSchema, teamSeason, seasonYear, type SeasonMatch,
 } from '@san7/core';
 import { inviteCode } from '../auth/tokens';
@@ -24,9 +24,9 @@ export const teamInfoSchema = z.object({
   name: teamNameSchema,
   foundedOn: dateSchema.optional().nullable().or(z.literal('')),
   slogan: z.string().trim().max(80).optional().nullable(),
-  photoUrl: z.string().max(2000).optional().nullable(),
-  awardBootUrl: z.string().max(2000).optional().nullable(),
-  awardAssistUrl: z.string().max(2000).optional().nullable(),
+  photoUrl: imageUrlSchema.optional().nullable().or(z.literal('')),
+  awardBootUrl: imageUrlSchema.optional().nullable().or(z.literal('')),
+  awardAssistUrl: imageUrlSchema.optional().nullable().or(z.literal('')),
   homeName: z.string().trim().max(50).optional().nullable(),
   homeAddress: z.string().trim().max(80).optional().nullable(),
   homeMapUrl: urlSchema,

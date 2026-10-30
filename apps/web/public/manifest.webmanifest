@@ -1,0 +1,13 @@
+{
+  "name": "Sân 7 Manager",
+  "short_name": "Sân 7",
+  "description": "Quản lý đội bóng phong trào sân 7",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#08090b",
+  "theme_color": "#08090b",
+  "lang": "vi",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
