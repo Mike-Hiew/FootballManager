@@ -48,6 +48,8 @@ interface Props {
 }
 
 type Tab = 'ho-so' | 'chi-so' | 'uoc-luong';
+/** Cột bảng trọng số: RB dùng chung trọng số với LB. */
+const WEIGHT_COLS: Position[] = ['GK', 'CB', 'LB', 'CM', 'ST'];
 
 /** Modal hồ sơ cầu thủ 3 tab: Hồ sơ · Chỉ số & vị trí · Ước lượng từ vị trí (BRD 4.6). */
 export function PlayerModal({ mode, initial, title, pendingNote, extra, saveLabel, onClose, onSave, onDelete, footerExtra }: Props) {
@@ -227,16 +229,16 @@ export function PlayerModal({ mode, initial, title, pendingNote, extra, saveLabe
           {fx && (
             <div style={{ marginTop: 16 }}>
               <p style={{ margin: '0 0 8px', fontSize: 13 }}>
-                <b>Điểm vị trí</b> = Σ (trọng số % × chỉ số) / 100, cộng điều chỉnh chân thuận ở vị trí cánh (đúng chân +0.3, ngược chân −0.3, hai chân +0.2).
+                <b>Điểm vị trí</b> = Σ (trọng số % × chỉ số) / 100, cộng điều chỉnh chân thuận ở hậu vệ trái/phải (đúng chân +0.3, ngược chân −0.3, hai chân +0.2).
               </p>
               <div className="twrap">
                 <table className="ftable">
-                  <thead><tr><th>Chỉ số</th>{(['GK', 'CB', 'LB', 'CDM', 'CM', 'LM', 'CAM', 'ST'] as Position[]).map((c) => <th key={c}>{c}{c === 'LB' ? '/RB' : c === 'LM' ? '/RM' : ''}</th>)}</tr></thead>
+                  <thead><tr><th>Chỉ số</th>{WEIGHT_COLS.map((c) => <th key={c}>{c}{c === 'LB' ? '/RB' : ''}</th>)}</tr></thead>
                   <tbody>
                     {STAT_KEYS.map((k) => (
                       <tr key={k}>
                         <th><b>{k}</b> {STAT_INFO[k].vn}</th>
-                        {(['GK', 'CB', 'LB', 'CDM', 'CM', 'LM', 'CAM', 'ST'] as Position[]).map((c) => {
+                        {WEIGHT_COLS.map((c) => {
                           const w = WEIGHTS[c][k] || 0;
                           return <td key={c} style={{ ['--a' as string]: w / 32 }}>{w || ''}</td>;
                         })}

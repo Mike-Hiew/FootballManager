@@ -8,7 +8,7 @@ Toàn bộ P0–P4 và phần chính của P5 đã có code trên nhánh, gom th
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| `packages/core` (mọi công thức BRD 4–7) | Xong · 60 test Vitest, golden fixture sinh từ chính prototype |
+| `packages/core` (mọi công thức BRD 4–7) | Xong · 64 test Vitest, golden fixture sinh từ chính prototype |
 | Schema Prisma 7 + migration + seed demo | Xong · seed port nguyên `sample()`/`seedDB()` của prototype |
 | Auth, phân quyền theo đội, DTO theo vai trò | Xong |
 | Mọi màn: Đội, Của tôi, Chiến thuật, Trận tới + kế hoạch thay người, Cầu thủ, Lịch + modal trận, Thống kê, Quỹ, Duyệt, Khám phá, Hệ thống | Xong · dùng lại CSS prototype nên giao diện khớp |
@@ -23,6 +23,8 @@ Toàn bộ P0–P4 và phần chính của P5 đã có code trên nhánh, gom th
 | So giao diện với prototype (11.1 #15) | Xong · `e2e/visual`: 13 màn/modal × 4 độ rộng, ngân sách ≤ 6 % pixel lệch (ngoại lệ có ghi lý do); báo cáo HTML là artifact CI |
 
 ### Điểm lệch so với kế hoạch ban đầu (có chủ đích)
+
+- **Vị trí sân 7** (chốt 30/10/2026): chỉ còn GK, CB, LB, RB, CM, ST — bỏ CDM/LM/RM/CAM của prototype. Slot LM/RM/CDM trong sơ đồ 2-3-1 và 2-1-2-1 đổi thành CM (giữ chỗ đứng); "đúng sở trường" tính theo top 2 thay vì top 3; điểm tự chấm cũ cho vị trí đã bỏ được bỏ qua. Không đổi schema, không cần migration.
 
 - **Giao diện**: dùng lại nguyên CSS của prototype (`apps/web/app/prototype.css`) + component React sinh đúng markup, thay vì viết lại bằng Tailwind/Radix — nhanh hơn và khớp pixel hơn. Kéo thả dùng HTML5 drag & drop như prototype (không thêm dnd-kit); cập nhật lạc quan dùng `useOptimistic` + Server Actions (không thêm TanStack Query); service worker viết tay (không thêm Serwist).
 - **Ngày nghiệp vụ** lưu dạng chuỗi `YYYY-MM-DD` theo giờ VN (không dùng `@db.Date`) để tránh lệch múi giờ; thời điểm vẫn là `timestamptz`.
@@ -152,11 +154,11 @@ Port từ prototype (dòng 1436–1540, 1840–1880), sửa theo BRD khi lệch.
 | Module | Hàm | Nguồn prototype | Test bắt buộc |
 | --- | --- | --- | --- |
 | `stats.ts` | `STAT_KEYS` (17), nhóm, `faceStats()` 6 chỉ số gộp, `suggestStyles()` 14 tag | `STAT`, `FACE`, `STYLE_RULE` | Bảng ngưỡng gợi ý từng tag |
-| `positions.ts` | `WEIGHTS` (RB=LB, RM=LM), `footAdj`, `positionScore`, `allScores`, `explain()` (danh sách đóng góp giảm dần + dòng chân thuận), `scoreTier()` ≥8 / 6.5–7.9 / <6.5 | `W`, `posScore`, `footAdj` | Tổng mỗi dòng trọng số = 100; **12 cầu thủ mẫu ±0.05** (Khánh Mười LM 8.2, Hùng Gôn GK 8.3, Quang Còi ST 8.0 + bảng golden 120 giá trị sinh từ prototype); chỉ số thiếu = 5 |
-| `infer.ts` | `inferStats(ratings, foot)` GD có chiếu + ridge, 600 vòng, làm tròn 0.5 | `inferStats` | {CB 8.2, CDM 7} → CB tính lại 8.2 ± 0.3; property test ngẫu nhiên: mọi vị trí đã chấm lệch ≤ 0.3 |
+| `positions.ts` | `WEIGHTS` (RB=LB), `footAdj`, `positionScore`, `allScores`, `explain()` (danh sách đóng góp giảm dần + dòng chân thuận), `scoreTier()` ≥8 / 6.5–7.9 / <6.5 | `W`, `posScore`, `footAdj` | Tổng mỗi dòng trọng số = 100; **12 cầu thủ mẫu ±0.05** (Khánh Mười CM 7.9, Hùng Gôn GK 8.3, Quang Còi ST 8.0 + bảng golden 72 giá trị sinh từ prototype); chỉ số thiếu = 5 |
+| `infer.ts` | `inferStats(ratings, foot)` GD có chiếu + ridge, 600 vòng, làm tròn 0.5 | `inferStats` | {CB 8.2, CM 7} → CB tính lại 8.2 ± 0.3; property test ngẫu nhiên: mọi vị trí đã chấm lệch ≤ 0.3 |
 | `formation.ts` | 5 sơ đồ + toạ độ, `changeFormation()` giữ người cùng vị trí, người còn lại vào slot trống điểm cao nhất | `FORMATIONS` | Đổi 2-3-1 → 3-2-1 giữ GK, CB |
 | `autopick.ts` | `autoPick(players, formation)` **Hungarian** (ma trận 7×N, tối đa Σ điểm), GK slot 0 | `autoPick` | Σ điểm ≥ bản tham lam trên 1.000 bộ ngẫu nhiên; < 1 ms với 30 người |
-| `lineup.ts` | `lineupSummary()`: điểm đội hình, Ra sân x/7, Đúng sở trường x/7 (top 3 vị trí), chip lối chơi, cảnh báo (chưa có TM, chưa xác nhận đi) | `renderTactics` | Theo dữ liệu seed |
+| `lineup.ts` | `lineupSummary()`: điểm đội hình, Ra sân x/7, Đúng sở trường x/7 (top 2 vị trí), chip lối chơi, cảnh báo (chưa có TM, chưa xác nhận đi) | `renderTactics` | Theo dữ liệu seed |
 | `schemas.ts` | Zod: `Stats` (17 khoá, 1–10 bước 0.5), `Lineup` (7 × id\|null), payload đơn, profile | — | Từ chối 10.5, 0.7 |
 
 - **DoD:** coverage `core` ≥ 90%; `core` không có import ngoài Zod (kiểm bằng lint rule).
@@ -166,7 +168,7 @@ Port từ prototype (dòng 1436–1540, 1840–1880), sửa theo BRD khi lệch.
 - **Phạm vi:**
   - Service `player`: CRUD (ĐT), đổi `payType` (hiệu lực từ tháng sau: lưu `payTypeFrom` — xem mục 4), `status=left` thay vì xoá cứng khi đã có dữ liệu, `POST /stats/infer`.
   - Tab **Cầu thủ**: lưới thẻ auto-fill 280 px (avatar, số áo, tên, top 3 vị trí màu, chip Quỹ/Đá lẻ, sao MVP mùa — tạm 0 đến P3), lọc nhóm vị trí, tìm bỏ dấu, sắp xếp.
-  - **Modal cầu thủ 3 tab**: Hồ sơ · Chỉ số (thanh trượt 5 nhóm, bảng 10 vị trí cập nhật trực tiếp bằng `core`, **popover công thức chỉ khi hover/chạm**) · Từ điểm vị trí (nút "Ước lượng chỉ số" đổ sang tab Chỉ số). 4 chế độ: sửa (ĐT), tự sửa → chờ duyệt, xem (khách), duyệt đơn.
+  - **Modal cầu thủ 3 tab**: Hồ sơ · Chỉ số (thanh trượt 5 nhóm, bảng 6 vị trí cập nhật trực tiếp bằng `core`, **popover công thức chỉ khi hover/chạm**) · Từ điểm vị trí (nút "Ước lượng chỉ số" đổ sang tab Chỉ số). 4 chế độ: sửa (ĐT), tự sửa → chờ duyệt, xem (khách), duyệt đơn.
   - `profile_edits`: một bản chờ/cầu thủ (gửi lại ghi đè); Duyệt hiện bản so sánh cũ/mới (trường đổi tô vàng), ĐT sửa thêm rồi Duyệt/Từ chối. Gắn `inferStats` vào đơn xin vào (ĐT thấy & sửa chỉ số trước khi duyệt).
 - **Test:** Playwright: ĐT sửa chỉ số đơn của Hải Râu rồi duyệt (hoàn tất 11.1 #2); thành viên gửi sửa → ĐT thấy diff; khách mở modal chỉ xem, `PATCH /players/:id` → 403; popover chỉ hiện khi hover/focus (11.1 #3).
 

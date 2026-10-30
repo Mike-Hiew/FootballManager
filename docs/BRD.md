@@ -19,7 +19,7 @@ Xây một web app (ưu tiên mobile, cài được như PWA) cho nhiều đội
 | --- | --- |
 | Đăng ký, đăng nhập bằng SĐT hoặc email + mật khẩu | Thanh toán online (VNPay, MoMo) |
 | Đa đội, đa vai trò, một người ở nhiều đội | Đặt sân với chủ sân |
-| Cầu thủ, 17 chỉ số, điểm 10 vị trí | Video, livestream |
+| Cầu thủ, 17 chỉ số, điểm 6 vị trí | Video, livestream |
 | Chiến thuật tổng + trận tới, kế hoạch thay người | Chat trong đội (dùng Zalo) |
 | Lịch đấu, điểm danh, kết quả, khai báo, MVP | Giải đấu nhiều đội, bảng xếp hạng giải |
 | Quỹ tháng, đá lẻ, sổ thu chi | Xuất hoá đơn |
@@ -157,7 +157,7 @@ Thành viên sửa hồ sơ/chỉ số của mình → lưu thành `profile_edit
 
 ## 4. Module cầu thủ
 
-Mỗi cầu thủ có hồ sơ + 17 chỉ số thang 1–10; điểm hợp 10 vị trí được tính ra từ chỉ số, không nhập tay. Chiều ngược lại (từ điểm vị trí suy ra chỉ số) dùng khi thành viên mới chưa biết tự chấm chi tiết.
+Mỗi cầu thủ có hồ sơ + 17 chỉ số thang 1–10; điểm hợp 6 vị trí được tính ra từ chỉ số, không nhập tay. Chiều ngược lại (từ điểm vị trí suy ra chỉ số) dùng khi thành viên mới chưa biết tự chấm chi tiết.
 
 ### 4.1 Hồ sơ
 
@@ -210,32 +210,29 @@ Mỗi cầu thủ có hồ sơ + 17 chỉ số thang 1–10; điểm hợp 10 v�
 
 ### 4.3 Công thức điểm vị trí
 
-10 vị trí: GK (Thủ môn), CB (Trung vệ), LB / RB (Hậu vệ trái/phải), CDM (TV phòng ngự), CM (TV trung tâm), LM / RM (TV cánh trái/phải), CAM (TV tấn công), ST (Tiền đạo).
+6 vị trí của sân 7: GK (Thủ môn), CB (Trung vệ), LB / RB (Hậu vệ trái/phải), CM (Tiền vệ), ST (Tiền đạo). Đã bỏ CDM, LM, RM, CAM của sân 11 (chốt 30/10/2026); điểm tự chấm cũ cho các vị trí này được bỏ qua.
 
 ```latex
 \text{Điểm}(p, v) = \mathrm{clamp}_{[1,10]}\left( \mathrm{round}_{0.1}\left( \frac{\sum_{k} w_{v,k} \cdot s_{p,k}}{100} + \Delta_{\text{chân}}(p, v) \right) \right)
 ```
 
-Trọng số w (%, tổng mỗi dòng = 100). RB dùng trọng số của LB; RM dùng của LM. Chỉ số thiếu mặc định 5.
+Trọng số w (%, tổng mỗi dòng = 100). RB dùng trọng số của LB. Chỉ số thiếu mặc định 5.
 
 | Vị trí | Trọng số |
 | --- | --- |
 | GK | HAN 40, REF 24, GKP 20, PAS 6, LPA 5, REA 5 |
 | CB | TAC 32, DEF 24, HEA 11, STR 10, PAC 7, PAS 6, DRI 5, REA 5 |
 | LB / RB | TAC 22, DEF 22, DRI 13, STA 10, PAS 10, REA 8, PAC 7, LPA 5, HEA 3 |
-| CDM | DEF 21, PAS 15, TAC 15, STA 10, DRI 9, REA 9, VIS 8, LPA 7, STR 6 |
 | CM | DRI 18, PAS 18, VIS 12, STA 9, LPA 8, DEF 8, ATP 8, REA 8, TAC 6, SHO 5 |
-| LM / RM | DRI 25, PAS 14, PAC 12, LPA 11, STA 9, REA 7, DEF 6, VIS 6, TAC 5, ATP 5 |
-| CAM | DRI 25, PAS 18, VIS 15, ATP 11, SHO 10, REA 7, PAC 5, FIN 5, DEF 4 |
 | ST | FIN 22, DRI 16, SHO 15, PAC 12, ATP 11, REA 9, HEA 6, DEF 4, STR 2, PAS 2, VIS 1 |
 
-Điều chỉnh chân thuận Δ chỉ áp dụng cho vị trí biên (LB, LM = Trái; RB, RM = Phải): đúng chân +0.3, ngược chân −0.3, hai chân +0.2; vị trí khác 0.
+Điều chỉnh chân thuận Δ chỉ áp dụng cho vị trí biên (LB = Trái; RB = Phải): đúng chân +0.3, ngược chân −0.3, hai chân +0.2; vị trí khác 0.
 
 Thang màu điểm: ≥ 8.0 xanh (xuất sắc), 6.5–7.9 vàng, < 6.5 đỏ.
 
 **Giải thích công thức chỉ hiện khi hover/chạm vào ô điểm**: popover liệt kê từng chỉ số × trọng số = đóng góp (sắp xếp theo trọng số giảm dần), dòng chân thuận nếu có, tổng điểm, và dòng "Điểm = Σ (chỉ số × trọng số) / 100 ± chân thuận".
 
-Test bắt buộc: Khánh Mười (seed, chân Trái) có LM = 8.2; Hùng Gôn GK = 8.3; Quang Còi ST = 8.0 (sai số ± 0.05).
+Test bắt buộc: Khánh Mười (seed, chân Trái) có CM = 7.9; Hùng Gôn GK = 8.3; Quang Còi ST = 8.0 (sai số ± 0.05).
 
 ### 4.4 Suy ngược chỉ số từ điểm vị trí (`inferStats`)
 
@@ -247,7 +244,7 @@ Test bắt buộc: Khánh Mười (seed, chân Trái) có LM = 8.2; Hùng Gôn G
 4. Lặp 600 lần: gradient g\[k\] = 0.04·(s\[k\] − prior\[k\]) + Σ\_v 2·e\_v·w\_{v,k}/100, với e\_v = (Σ w·s/100) − (điểm\_v − Δchân). Cập nhật s\[k\] = clamp(s\[k\] − 1.5·g\[k\], 1, 10).
 5. Làm tròn về bước 0.5.
 
-Test: nhập {CB: 8.2, CDM: 7} → tính lại CB nằm trong 8.2 ± 0.3. Giao diện: tab "Từ điểm vị trí" trong form cầu thủ, nút "Ước lượng chỉ số" đổ kết quả vào tab Chỉ số để chỉnh tiếp.
+Test: nhập {CB: 8.2, CM: 7} → tính lại CB nằm trong 8.2 ± 0.3. Giao diện: tab "Từ điểm vị trí" trong form cầu thủ, nút "Ước lượng chỉ số" đổ kết quả vào tab Chỉ số để chỉnh tiếp.
 
 ### 4.5 Phong cách thi đấu
 
@@ -273,7 +270,7 @@ Test: nhập {CB: 8.2, CDM: 7} → tính lại CB nằm trong 8.2 ± 0.3. Giao d
 
 - Lưới thẻ (auto-fill, min 280 px): avatar, số áo, tên, top 3 vị trí kèm điểm màu, chip Quỹ/Đá lẻ, sao MVP mùa.
 - Lọc theo nhóm vị trí (TM / Hậu vệ / Tiền vệ / Tiền đạo), tìm theo tên, sắp xếp theo số áo / điểm cao nhất / tên.
-- Bấm thẻ → modal 3 tab: Hồ sơ, Chỉ số (thanh trượt + bảng điểm 10 vị trí cập nhật trực tiếp), Từ điểm vị trí. Chế độ: sửa (ĐT), tự sửa → chờ duyệt (thành viên), xem (khách), duyệt đơn (ĐT).
+- Bấm thẻ → modal 3 tab: Hồ sơ, Chỉ số (thanh trượt + bảng điểm 6 vị trí cập nhật trực tiếp), Từ điểm vị trí. Chế độ: sửa (ĐT), tự sửa → chờ duyệt (thành viên), xem (khách), duyệt đơn (ĐT).
 
 ## 5. Module chiến thuật
 
@@ -285,9 +282,9 @@ Tọa độ (x, y) tính theo % chiều ngang / dọc sân, khung thành đội 
 
 | Sơ đồ | 7 slot (vị trí x,y) |
 | --- | --- |
-| 2-3-1 (mặc định) | GK 50,91 · CB 30,73 · CB 70,73 · LM 17,48 · CM 50,52 · RM 83,48 · ST 50,20 |
+| 2-3-1 (mặc định) | GK 50,91 · CB 30,73 · CB 70,73 · CM 17,48 · CM 50,52 · CM 83,48 · ST 50,20 |
 | 3-2-1 | GK 50,91 · LB 18,72 · CB 50,75 · RB 82,72 · CM 32,49 · CM 68,49 · ST 50,20 |
-| 2-1-2-1 | GK 50,91 · CB 30,75 · CB 70,75 · CDM 50,59 · LM 20,40 · RM 80,40 · ST 50,17 |
+| 2-1-2-1 | GK 50,91 · CB 30,75 · CB 70,75 · CM 50,59 · CM 20,40 · CM 80,40 · ST 50,17 |
 | 3-1-2 | GK 50,91 · LB 18,72 · CB 50,75 · RB 82,72 · CM 50,51 · ST 32,23 · ST 68,23 |
 | 2-2-2 | GK 50,91 · CB 30,74 · CB 70,74 · CM 30,50 · CM 70,50 · ST 30,23 · ST 70,23 |
 
@@ -295,7 +292,7 @@ Tọa độ (x, y) tính theo % chiều ngang / dọc sân, khung thành đội 
 
 ### 5.2 Giao diện kiểu FO4
 
-- **Thanh trên**: chọn sơ đồ (pill), 3 số liệu: Điểm đội hình (trung bình điểm 7 người ở slot của họ), Ra sân x/7, Đúng sở trường x/7 (slot là 1 trong 3 vị trí cao điểm nhất của người đó). Nút "Xếp tự động", "Bỏ hết" (chỉ ĐT).
+- **Thanh trên**: chọn sơ đồ (pill), 3 số liệu: Điểm đội hình (trung bình điểm 7 người ở slot của họ), Ra sân x/7, Đúng sở trường x/7 (slot là 1 trong 2 vị trí cao điểm nhất của người đó; trước là 3, giảm khi chỉ còn 6 vị trí). Nút "Xếp tự động", "Bỏ hết" (chỉ ĐT).
 - **Sân** bên trái (\~5/12 chiều ngang desktop): cỏ sọc, vạch vôi. Mỗi slot là thẻ tròn: số áo to, badge điểm màu, tên, mã vị trí; huy hiệu "C" cho ĐT; **sao vàng phát sáng + số lần MVP trong năm** (ví dụ ★ 2) nếu đã từng là MVP mùa này.
 - **Bảng bên phải**: Tổng quan đội hình (chip lối chơi nổi bật = đếm tag phong cách của 7 người; cảnh báo như "chưa có thủ môn", "X, Y chưa xác nhận đi trận này"), rồi bảng Vị trí · Cầu thủ · Điểm cho 7 đá chính và phần Dự bị (vị trí tốt nhất của họ).
 - **Tooltip ⓘ** "Cách xếp đội hình": chạm cầu thủ để xem thẻ và vị trí hợp, rồi chạm slot hoặc dòng bảng để xếp; chạm slot để xem ai hợp nhất; desktop kéo thả được.
