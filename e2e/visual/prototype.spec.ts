@@ -120,7 +120,7 @@ for (const width of WIDTHS) {
       const name = `${v.name}-${width}`;
       const r = diff(await shot(proto, !v.prep), await shot(app, !v.prep), name);
       const budget = v.budget?.[width] ?? BUDGET;
-      const { bands, ...res } = r;
+      const { bands, crops, ...res } = r;
       record({ view: v.name, width, budget, ...res });
       if (r.ratio > budget) {
         failures.push(`${name}: ${(r.ratio * 100).toFixed(2)}% > ${(budget * 100).toFixed(0)}%`);
@@ -129,6 +129,7 @@ for (const width of WIDTHS) {
           console.log(`  y=${y0} proto: ${await textAt(proto, y0, !v.prep)}`);
           console.log(`  y=${y0} app:   ${await textAt(app, y0, !v.prep)}`);
         }
+        if (process.env.VISUAL_LOG_PNG) for (const c of crops) console.log(`[visual-png] ${name} ${c.y} ${c.proto} ${c.app}`);
       }
       if (v.prep) {
         await proto.keyboard.press('Escape');

@@ -56,8 +56,10 @@ jobs:
           E2E_COMMAND: pnpm --filter @san7/web start -p 3200
       - name: So giao diện với prototype (1920/1440/1024/390)
         run: pnpm --filter @san7/e2e visual
+        # Ảnh cắt vùng lệch in thẳng ra log (artifact không phải lúc nào cũng tải được)
         env:
           CI: 'true'
+          VISUAL_LOG_PNG: '1'
           E2E_COMMAND: pnpm --filter @san7/web start -p 3200
       - uses: actions/upload-artifact@v4
         if: always()

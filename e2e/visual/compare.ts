@@ -37,7 +37,20 @@ export function diff(proto: Buffer, app: Buffer, name: string) {
   writeFileSync(`${REPORT_DIR}${name}-proto.png`, proto);
   writeFileSync(`${REPORT_DIR}${name}-app.png`, app);
   writeFileSync(`${REPORT_DIR}${name}-diff.png`, PNG.sync.write(d));
-  return { ratio: (n + extra) / total, protoH: a.height, appH: b.height, bands: bands(d) };
+  const bs = bands(d);
+  // Ảnh cắt nhỏ quanh 3 dải lệch đầu tiên (base64) để xem được ngay trong log CI
+  const crops = bs.slice(0, 3).map(([y0, y1]) => {
+    const top = Math.max(0, y0 - 10);
+    const hh = Math.min(h - top, y1 - y0 + 20, 160);
+    const cw = Math.min(w, 800);
+    const cut = (img: PNG) => {
+      const out = new PNG({ width: cw, height: hh });
+      PNG.bitblt(img, out, 0, top, cw, hh, 0, 0);
+      return PNG.sync.write(out).toString('base64');
+    };
+    return { y: top, proto: cut(a), app: cut(b) };
+  });
+  return { ratio: (n + extra) / total, protoH: a.height, appH: b.height, bands: bs, crops };
 }
 
 /** Các dải hàng (y0–y1) có trên 2 % pixel lệch — in ra log để biết lệch ở đâu khi không mở được báo cáo. */
