@@ -1,0 +1,11 @@
+/* Bổ sung cho prototype.css: font tự host qua next/font, vài lớp dùng riêng cho bản React. */
+:root {
+  --f-display: var(--font-display), "Jost", "Futura", "Century Gothic", system-ui, sans-serif;
+  --f-body: var(--font-body), "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+body { margin: 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
+.ok-msg { color: var(--good); font-size: 13px; }
+a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+.tabs a { text-decoration: none; }
+.pending-overlay { opacity: .6; pointer-events: none; }
