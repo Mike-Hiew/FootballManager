@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
+import { connection } from 'next/server';
 import { Frame } from '@/components/Frame';
 import { exploreTeams } from '@/server/services/team';
 import { ExploreList } from './ExploreList';
 
 export const metadata: Metadata = { title: 'Khám phá các đội' };
-export const revalidate = 300;
 
 export default async function ExplorePage() {
+  // Trang đọc phiên đăng nhập (header) nên luôn render động, không prerender lúc build.
+  await connection();
   const teams = await exploreTeams();
   return (
     <Frame active="kham-pha">
