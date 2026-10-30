@@ -25,7 +25,7 @@ Khi chưa cấu hình R2, ảnh được resize ở trình duyệt và lưu dạ
 
 ## Deploy
 
-1. Vercel project trỏ Root Directory = `apps/web`; `apps/web/vercel.json` đặt region `sin1` và chạy `prisma migrate deploy` trước `next build`.
+1. Vercel project trỏ Root Directory = `apps/web`; `apps/web/vercel.json` đặt region `sin1` và chạy `prisma migrate deploy` trước `next build` — chỉ ở build production (`VERCEL_ENV=production`), để preview của PR không sửa DB thật. Migrate đi qua kết nối trực tiếp (`DIRECT_URL`, nếu thiếu thì `DATABASE_URL_UNPOOLED` của Neon) vì advisory lock của Prisma không qua được pooler.
 2. Migration chỉ dùng `prisma migrate deploy` ở staging/production. Không bao giờ chạy `prisma migrate reset` trên DB thật.
 3. Sau deploy: kiểm `GET /dang-nhap` 200 và gọi thử `/api/jobs/tick` với `CRON_SECRET`.
 

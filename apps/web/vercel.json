@@ -1,5 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": ["sin1"],
-  "buildCommand": "pnpm --filter @san7/db exec prisma migrate deploy && next build"
+  "buildCommand": "if [ \"$VERCEL_ENV\" = production ]; then pnpm --filter @san7/db exec prisma migrate deploy; fi && next build"
 }
