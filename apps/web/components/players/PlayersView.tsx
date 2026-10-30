@@ -88,8 +88,8 @@ export function PlayersView() {
             <div className="filters">
               {GROUPS.map((g) => <button key={g} type="button" className="chipbtn" aria-pressed={g === group} onClick={() => setGroup(g)}>{g}</button>)}
             </div>
-            <input type="search" placeholder="Tìm theo tên" aria-label="Tìm cầu thủ" value={q} onChange={(e) => setQ(e.target.value)} style={{ maxWidth: 180 }} />
-            <select aria-label="Sắp xếp" value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
+            <input type="search" className="mini" placeholder="Tìm tên" aria-label="Tìm cầu thủ" value={q} onChange={(e) => setQ(e.target.value)} />
+            <select className="mini" aria-label="Sắp xếp" value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
               <option value="num">Theo số áo</option>
               <option value="best">Điểm cao nhất</option>
               <option value="name">Theo tên</option>
@@ -109,7 +109,7 @@ export function PlayersView() {
               const a = ageOf(p.dob, now);
               const se = playerSeason(season, view.year, p.id);
               return (
-                <div key={p.id} className="pcard" tabIndex={0} role="button" aria-label={`Mở hồ sơ ${p.fullName}`} onClick={(e) => !(e.target as Element).closest('.pp') && modal.open(p.id)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget && (e.preventDefault(), modal.open(p.id))}>
+                <div key={p.id} className="pcard" tabIndex={0} role="button" aria-label={`Mở hồ sơ ${p.fullName}`} onClick={(e) => !(e.target as Element).closest('[data-x]') && modal.open(p.id)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget && (e.preventDefault(), modal.open(p.id))}>
                   <div className="pc-top">
                     <Avatar p={p} size={52} />
                     <div className="who">
@@ -126,7 +126,7 @@ export function PlayersView() {
                   </div>
                   <div className="pc-pos">
                     {top.map(([k, v], i) => (
-                      <span key={k} className={`pchip pp${i === 0 ? ' best' : ''}`} data-x={`p:${p.id}:${k}`} tabIndex={0} style={{ ['--fit' as string]: `var(--${v >= 8 ? 'good' : v >= 6.5 ? 'ok' : 'bad'})` }}>
+                      <span key={k} className={`pchip${i === 0 ? ' best' : ''}`} data-x={`p:${p.id}:${k}`} tabIndex={0} style={{ ['--fit' as string]: `var(--${v >= 8 ? 'good' : v >= 6.5 ? 'ok' : 'bad'})` }}>
                         <b>{k}</b><em>{v.toFixed(1)}</em>
                       </span>
                     ))}

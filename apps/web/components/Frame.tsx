@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { prisma } from '@san7/db';
 import { getSession } from '@/server/auth/session';
-import { myTeams } from '@/server/services/view';
+import { countApprovals, myTeams } from '@/server/services/view';
+import { allowedViews, roleIn } from '@/server/authz';
 import { Header } from './Header';
 import { TooltipLayer } from './Overlays';
 
@@ -22,13 +23,17 @@ export async function Frame({ active, children }: { active: string; children: Re
   }
   const [teams, unread] = await Promise.all([myTeams(s.user.id, s.user.role), prisma.notification.count({ where: { userId: s.user.id, readAt: null } })]);
   const home = teams.find((t) => t.id === s.currentTeamId) ?? teams[0];
+  // Giữ đủ hàng tab của đội đang chọn như prototype (Khám phá/Hệ thống vẫn nằm trong khung đội)
+  const r = home ? await roleIn(s.user, home.id) : null;
+  const teamTabs = r ? allowedViews(r.role, !!r.playerId).filter((v) => v !== 'tran-toi') : [];
+  const approvals = r && (r.role === 'admin' || r.role === 'captain') ? await countApprovals(home!.id) : 0;
   return (
     <div className="wrap" id="app">
       <Header
         team={home ? { id: home.id, name: home.name, photoUrl: home.photoUrl } : null}
-        role={home ? (s.user.role === 'admin' ? 'admin' : home.role) : null}
-        tabs={[...(home ? ['doi'] : []), 'kham-pha', ...(s.user.role === 'admin' ? ['he-thong'] : [])]}
-        approvalCount={0}
+        role={r?.role ?? null}
+        tabs={[...teamTabs, 'kham-pha', ...(s.user.role === 'admin' ? ['he-thong'] : [])]}
+        approvalCount={approvals}
         me={{ id: s.user.id, name: s.user.name, isAdmin: s.user.role === 'admin' }}
         myTeams={teams}
         initialUnread={unread}

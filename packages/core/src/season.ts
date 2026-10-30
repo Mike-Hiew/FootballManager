@@ -128,6 +128,17 @@ export function leaderboard(lines: readonly PlayerLine[], key: LeaderKey): Playe
     .sort((a, b) => b[key] - a[key] || a.gp - b.gp || OTHER[key](b) - OTHER[key](a));
 }
 
+export type TableKey = LeaderKey | 'gp' | 'rate';
+
+/**
+ * Thứ tự bảng Thống kê theo cột `key` (dir -1 = giảm dần). Xếp hoà theo BRD 6.7: bằng chỉ số chính →
+ * ít trận hơn đứng trên → nhiều chỉ số còn lại hơn đứng trên.
+ */
+export function compareLines(key: TableKey, dir: 1 | -1) {
+  const rest = (l: PlayerLine) => (key === 'gp' || key === 'rate' ? l.ga : OTHER[key](l));
+  return (a: PlayerLine, b: PlayerLine) => dir * (a[key] - b[key]) || (key !== 'gp' ? a.gp - b.gp : 0) || rest(b) - rest(a);
+}
+
 /** Đếm số lần MVP mùa của từng người (sao trên sân). */
 export function mvpCounts(matches: readonly SeasonMatch[], year: number): Map<string, number> {
   const out = new Map<string, number>();

@@ -19,19 +19,19 @@ test('11.1 #2 — link mời → chờ duyệt → ĐT sửa chỉ số rồi du
   await login(page, CAPTAIN);
   await page.goto('/t/t-domdom/duyet');
   const card = page.locator('.apcard', { hasText: 'Đinh Văn Thử' });
-  await card.getByRole('button', { name: 'Xem & sửa' }).click();
+  await card.getByRole('button', { name: 'Xem, sửa chỉ số' }).click();
   await page.getByRole('tab', { name: 'Chỉ số & vị trí' }).click();
   await page.getByLabel(/Dứt điểm:/).fill('9');
-  await page.getByRole('button', { name: 'Duyệt vào đội' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Duyệt vào đội' }).click();
   await expect(page.locator('.toast')).toContainText('Đã duyệt');
   await expect(page.locator('.apcard', { hasText: 'Đinh Văn Thử' })).toHaveCount(0);
 
   // tạo link mới → link cũ báo hết hiệu lực
   const invite = page.getByLabel('Link mời');
-  const oldLink = await invite.inputValue();
+  const oldLink = (await invite.textContent())!;
   await page.getByRole('button', { name: 'Tạo link mới' }).click();
   await page.getByRole('button', { name: 'Bấm lần nữa để tạo' }).click();
-  await expect(invite).not.toHaveValue(oldLink);
+  await expect(invite).not.toHaveText(oldLink);
   await page.goto(new URL(oldLink).pathname);
   await expect(page.getByText('Link mời không còn hiệu lực, xin link mới từ đội trưởng.')).toBeVisible();
 

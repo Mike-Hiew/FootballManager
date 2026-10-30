@@ -109,6 +109,8 @@ export interface TeamView {
   matches: MatchDTO[];
   myPendingEdit: boolean;
   approvalCount: number;
+  /** số đơn xin vào đang chờ (chỉ ĐT) */
+  pendingJoins: number;
   now: string;
   year: number;
 }

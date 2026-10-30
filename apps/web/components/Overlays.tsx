@@ -98,7 +98,7 @@ export function FormulaPopover() {
     };
     const click = (e: Event) => {
       if (canHover) return;
-      const el = (e.target as Element).closest?.('.pp[data-x]') as HTMLElement | null;
+      const el = (e.target as Element).closest?.('[data-x]') as HTMLElement | null;
       if (el) (cur === el ? close() : open(el));
       else if (cur) close();
     };

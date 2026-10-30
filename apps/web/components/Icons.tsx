@@ -24,4 +24,4 @@ const RIC: Record<string, React.ReactNode> = {
   heart: <><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" /></>,
   info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5v.5" /></>,
 };
-export const RuleIcon = ({ k }: { k: string }) => <svg {...P}>{RIC[k] ?? RIC.info}</svg>;
+export const RuleIcon = ({ k }: { k: string }) => <svg {...P} width={18} height={18} strokeLinecap="round" strokeLinejoin="round">{RIC[k] ?? RIC.info}</svg>;

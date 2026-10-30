@@ -18,6 +18,7 @@ Toàn bộ P0–P4 và phần chính của P5 đã có code trên nhánh, gom th
 | Test tích hợp service trên Postgres thật | 23 test xanh (`apps/web/test`) |
 | E2E Playwright theo 11.1 | 13 test xanh (`e2e/tests`) |
 | CI GitHub Actions, runbook | Xong (`.github/workflows/ci.yml`, `docs/RUNBOOK.md`) |
+| So giao diện với prototype (11.1 #15) | Xong · `e2e/visual`: 13 màn/modal × 4 độ rộng, ngân sách ≤ 6 % pixel lệch (ngoại lệ có ghi lý do); báo cáo HTML là artifact CI |
 
 ### Điểm lệch so với kế hoạch ban đầu (có chủ đích)
 
@@ -31,7 +32,7 @@ Toàn bộ P0–P4 và phần chính của P5 đã có code trên nhánh, gom th
 
 - Chốt các câu hỏi mở mục 1 (MVP 60%, ngưỡng đủ người, tên miền).
 - Tạo hạ tầng thật: Neon (Singapore), Vercel (`sin1`), cron-job.org, R2, khoá VAPID, Resend; nối Sentry (`@sentry/nextjs`) khi có DSN.
-- Visual regression so ảnh prototype ở 1920/1440/1024/390 (hiện mới kiểm "không cuộn ngang"); Lighthouse LCP và k6 smoke.
+- Lighthouse LCP và k6 smoke.
 - Rà soát bảo mật (CSP header, rate limit theo IP cho API công khai).
 
 ## 0. Tóm tắt
@@ -298,7 +299,7 @@ Mọi bảng: `id` cuid, `created_at`, `updated_at`, `timestamptz`. Tiền là `
 | 12 | Công thức số dư; Còn phải thu; đổi mức đá lẻ không đổi trận cũ | Vitest + integration `fund.test` | 4.1 |
 | 13 | Khách: 4 tab, không quỹ/SĐT/nút sửa, API sửa 403 | E2E `guest.spec` | 4.4 |
 | 14 | Tooltip chuột/bàn phím/chạm; 2 quy định đầu | E2E `dashboard.spec` | 4.3 |
-| 15 | Khớp prototype 4 breakpoint; không cuộn ngang; reduced-motion | E2E visual `visual.spec` | 5.1 |
+| 15 | Khớp prototype 4 breakpoint; không cuộn ngang; reduced-motion | `e2e/visual/prototype.spec.ts` + `mobile.spec` | 5.1 |
 
 ## 6. Chiến lược test
 

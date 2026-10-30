@@ -16,6 +16,8 @@ export default defineConfig({
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 1000 } } },
     { name: 'mobile', use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } }, testMatch: /mobile\.spec\.ts/ },
+    // So ảnh app với prototype (BRD 11.1 #15). Chạy riêng: pnpm --filter @san7/e2e visual
+    { name: 'visual', testDir: './visual', use: { ...devices['Desktop Chrome'] } },
   ],
   webServer: {
     command: process.env.E2E_COMMAND ?? `pnpm --filter @san7/web exec next dev -p ${PORT}`,
