@@ -4,7 +4,7 @@
  * Ảnh hai bên chụp trong cùng lần chạy nên không cần ảnh mốc (baseline) commit vào repo.
  * Báo cáo: e2e/visual-report/index.html
  */
-import { expect, test, type Browser, type Page } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Browser, type Page } from '@playwright/test';
 import { diff, record } from './compare';
 
 const PROTO = 'file://' + new URL('../../docs/prototype/domdom-fc.html', import.meta.url).pathname;
@@ -15,6 +15,12 @@ const NOW = new Date(Math.floor(Date.now() / 3600e3) * 3600e3);
 type Who = 'captain' | 'admin';
 interface View { name: string; proto: string; app: string; who?: Who; budget?: Partial<Record<(typeof WIDTHS)[number], number>>; prep?: (p: Page, side: 'proto' | 'app') => Promise<void> }
 // Modal là lớp position: fixed — chụp đúng khung nhìn thay vì full-page.
+
+// Bấm mở modal làm trang cuộn tới thẻ được bấm, mỗi bên một khác — đưa nền về đầu trang để hai bên giống nhau.
+async function openModal(p: Page, target: ReturnType<Page['locator']>) {
+  await target.click();
+  await p.evaluate(() => window.scrollTo(0, 0));
+}
 
 const VIEWS: View[] = [
   { name: 'doi', proto: 'doi', app: '/t/t-domdom/doi' },
@@ -33,11 +39,11 @@ const VIEWS: View[] = [
   { name: 'he-thong', proto: 'he-thong', app: '/he-thong', who: 'admin' },
   {
     name: 'modal-cau-thu', proto: 'cau-thu', app: '/t/t-domdom/cau-thu',
-    prep: async (p) => p.locator('.pcard .who b', { hasText: 'Khánh Mười' }).first().click(),
+    prep: async (p) => openModal(p, p.locator('.pcard .who b', { hasText: 'Khánh Mười' }).first()),
   },
   {
     name: 'modal-tran', proto: 'lich', app: '/t/t-domdom/lich',
-    prep: async (p) => p.locator('.mcard', { hasText: 'Hoàng Mai Stars' }).first().click(),
+    prep: async (p) => openModal(p, p.locator('.mcard', { hasText: 'Hoàng Mai Stars' }).first()),
   },
 ];
 
@@ -50,6 +56,30 @@ async function open(browser: Browser, width: number) {
   const page = await ctx.newPage();
   await page.clock.setFixedTime(NOW);
   return page;
+}
+
+/**
+ * Prototype tải Be Vietnam Pro/Jost từ Google Fonts, app dùng bản next/font tải lúc build — hai bản có thể khác
+ * nét và độ rộng (trên CI lệch đủ để chữ xuống dòng khác). Cho prototype dùng đúng file font của app.
+ */
+let fontCss: Promise<string> | undefined;
+async function appFonts(request: APIRequestContext, base: string) {
+  const html = await (await request.get(`${base}/dang-nhap`)).text();
+  const sheets = [...html.matchAll(/href="([^"]+\.css[^"]*)"/g)].map((m) => new URL(m[1], base).href);
+  const css = await Promise.all(sheets.map(async (u) => (await request.get(u)).text()));
+  const faces = css.join('\n').match(/@font-face\{[^}]*\}/g) ?? [];
+  if (!faces.length) throw new Error('Không tìm thấy @font-face trong CSS của app');
+  return faces.join('\n').replace(/url\((?:\.\.\/media\/|\/_next\/static\/media\/)/g, 'url(https://fonts.gstatic.com/__app/');
+}
+
+async function useAppFonts(page: Page, base: string) {
+  fontCss ??= appFonts(page.request, base);
+  const css = await fontCss;
+  await page.route('https://fonts.googleapis.com/**', (r) => r.fulfill({ contentType: 'text/css', body: css }));
+  await page.route('https://fonts.gstatic.com/__app/**', async (r) => {
+    const res = await page.request.get(`${base}/_next/static/media/${new URL(r.request().url()).pathname.split('/').pop()}`);
+    await r.fulfill({ status: res.status(), body: await res.body(), headers: { 'content-type': 'font/woff2', 'access-control-allow-origin': '*' } });
+  });
 }
 
 async function protoLogin(page: Page, who: Who) {
@@ -95,6 +125,7 @@ for (const width of WIDTHS) {
     const get = async (who: Who) => {
       if (!pages[who]) {
         const proto = await open(browser, width);
+        await useAppFonts(proto, baseURL!);
         const app = await open(browser, width);
         await protoLogin(proto, who);
         await app.goto(baseURL!);
