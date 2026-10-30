@@ -10,7 +10,8 @@ import {
 import { useTeam } from '../TeamContext';
 import { Avatar, Tip } from '../ui';
 import { RuleIcon } from '../Icons';
-import { assistSVG, bootSVG, pitchScene } from './art';
+import { assistSVG, bootSVG } from './art';
+import { stadiumScene } from './stadium';
 import { TeamInfoModal } from './TeamInfoModal';
 import { PaymentReminders } from '../PaymentReminders';
 import { MatchModal } from '../matches/MatchModal';
@@ -61,15 +62,8 @@ function Donut({ w, d, l }: { w: number; d: number; l: number }) {
   );
 }
 
-function Countdown({ m, now0 }: { m: MatchDTO; now0: number }) {
-  const [now, setNow] = useState(now0);
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30000);
-    setNow(Date.now());
-    return () => clearInterval(id);
-  }, []);
+function Countdown({ m, now }: { m: MatchDTO; now: number }) {
   const t = new Date(m.kickoffAt).getTime() - now;
-  if (t <= 0) return <span className="cd-now">Đang diễn ra · chờ kết quả</span>;
   const d = Math.floor(t / 864e5);
   const h = Math.floor((t % 864e5) / 36e5);
   const mi = Math.floor((t % 36e5) / 6e4);
@@ -77,17 +71,34 @@ function Countdown({ m, now0 }: { m: MatchDTO; now0: number }) {
   return <>{d ? c(d, 'ngày') : null}{c(h, 'giờ')}{c(mi, 'phút')}</>;
 }
 
+/** Thời lượng trận (phút): theo giờ đá sân nhà của đội nếu có, không thì 90. */
+function matchMinutes(from: string | null, to: string | null): number {
+  const mm = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+  if (!from || !to || !/^\d\d:\d\d$/.test(from) || !/^\d\d:\d\d$/.test(to)) return 90;
+  const d = (mm(to) - mm(from) + 1440) % 1440;
+  return d >= 30 && d <= 240 ? d : 90;
+}
+
+type Phase = 'upcoming' | 'live' | 'ended';
+
 function NextMatch() {
   const { view, players, byId, canEdit, act, teamId } = useTeam();
   const today = todayVN(new Date(view.now));
   const m = useMemo(() => view.matches.filter((x) => !isPlayed(x) && x.date >= today).sort(byKick)[0], [view.matches, today]);
   const meId = view.myPlayerId;
   const [att, setOpt] = useOptimistic(m?.attendance ?? {}, (cur, [pid, s]: [string, 'di' | 'nghi']) => ({ ...cur, [pid]: { status: s, byCaptain: false, lePaid: false } }));
-  const [detail, setDetail] = useState(false);
-  const pitch = useMemo(() => pitchScene(), []);
+  const [detail, setDetail] = useState<null | 'att' | 'res'>(null);
+  const pitch = useMemo(() => stadiumScene(view.team.name), [view.team.name]);
   const svgBox = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (reduced()) svgBox.current?.querySelectorAll('svg').forEach((s) => (s as SVGSVGElement).pauseAnimations?.());
+  }, [pitch]);
+  // Đồng hồ chạy ở client để tự chuyển Trận tới → Đang diễn ra → Chờ tỉ số mà không cần tải lại
+  const [now, setNow] = useState(() => new Date(view.now).getTime());
+  useEffect(() => {
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 15000);
+    return () => clearInterval(id);
   }, []);
   if (view.role === 'guest') return null;
   if (!m) {
@@ -110,6 +121,11 @@ function NextMatch() {
   const squad = view.team.fullSquad;
   const need = Math.max(0, squad - di.length);
   const pct = (x: number) => (players.length ? (x / players.length) * 100 : 0);
+  const kick = new Date(m.kickoffAt).getTime();
+  const dur = matchMinutes(view.team.homeFrom, view.team.homeTo);
+  const phase: Phase = now < kick ? 'upcoming' : now < kick + dur * 6e4 ? 'live' : 'ended';
+  const minute = Math.min(dur, Math.max(1, Math.ceil((now - kick) / 6e4)));
+  const askVote = phase === 'upcoming' && !!meId && open && !st;
   const daysTo = Math.round((Date.UTC(...(m.date.split('-').map(Number) as [number, number, number])) - Date.UTC(...(today.split('-').map(Number) as [number, number, number]))) / 864e5);
   const vote = (s: 'di' | 'nghi') => {
     if (!meId) return;
@@ -119,7 +135,16 @@ function NextMatch() {
     });
   };
   let cta: React.ReactNode = null;
-  if (meId && open) {
+  if (phase === 'live') {
+    cta = <div className="nx-ask live-now"><span className="q"><span className="live red" />Trận đang diễn ra — chúc anh em đá hay!</span></div>;
+  } else if (phase === 'ended') {
+    cta = (
+      <div className="nx-ask">
+        <span className="q">Trận đã kết thúc. {canEdit ? 'Nhập tỉ số để cả đội nhận kết quả.' : 'Đang chờ đội trưởng nhập tỉ số.'}</span>
+        {canEdit && <div className="nx-btns"><button type="button" className="nxbtn go big" onClick={() => setDetail('res')}>Nhập tỉ số</button></div>}
+      </div>
+    );
+  } else if (meId && open) {
     cta = st ? (
       <div className="nx-ask done">
         <div className="nx-btns">
@@ -144,9 +169,18 @@ function NextMatch() {
   }
   return (
     <>
-      <div className={`nxb has-pitch${meId && open && !st ? ' need' : ''}`}>
+      <div className={`nxb has-pitch stadium ph-${phase}${askVote ? ' need' : ''}`}>
+        <div className="nx-pitch" ref={svgBox}>
+          <div style={{ display: 'contents' }} dangerouslySetInnerHTML={{ __html: pitch }} />
+        </div>
         <div className="nx-l">
-          <div className="nx-eye"><span className="live" />Trận tới {open && <span className="pill-open">Đang điểm danh</span>}</div>
+          {phase === 'live' ? (
+            <div className="nx-eye"><span className="live red" />Trực tiếp <span className="pill-live">Đang diễn ra</span></div>
+          ) : phase === 'ended' ? (
+            <div className="nx-eye"><span className="live" />Vừa kết thúc <span className="pill-open">Chờ tỉ số</span></div>
+          ) : (
+            <div className="nx-eye"><span className="live" />Trận tới {open && <span className="pill-open">Đang điểm danh</span>}{daysTo === 0 && <span className="pill-today">Hôm nay</span>}</div>
+          )}
           <div className="nx-vs"><i>vs</i><span className="them">{m.opponent}</span></div>
           <div className="nx-meta">
             <span><b>{DAY_SHORT[dayOfWeek(m.date)]}, {dm(m.date)}</b></span>
@@ -154,12 +188,17 @@ function NextMatch() {
             {m.venue && <span>{m.venue}</span>}
             {m.fee ? <span className="tip dk" tabIndex={0} data-tt={`Đá lẻ ${money(m.fee)}/trận`}>₫</span> : null}
           </div>
-          <div className="nx-cd"><Countdown m={m} now0={new Date(view.now).getTime()} /></div>
+          {phase === 'upcoming' && <div className="nx-cd"><Countdown m={m} now={now} /></div>}
+          {phase === 'live' && (
+            <div className="nx-clock" role="timer" aria-label={`Phút ${minute} trên ${dur}`}>
+              <b>{minute}<i>'</i></b>
+              <div className="nx-prog"><span style={{ width: `${(minute / dur) * 100}%` }} /></div>
+              <small>{dur} phút · bắt đầu {m.time ?? ''}</small>
+            </div>
+          )}
+          {phase === 'ended' && <div className="nx-clock done"><small>Kết thúc khoảng {new Date(kick + dur * 6e4).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' })}</small></div>}
         </div>
-        <div className="nx-pitch" ref={svgBox}>
-          <div style={{ display: 'contents' }} dangerouslySetInnerHTML={{ __html: pitch }} />
-          {daysTo === 0 && <div className="nx-pitch-cap"><span className="live" />Tối nay</div>}
-        </div>
+        <div className="nx-gap" aria-hidden="true" />
         <div className="nx-r">
           <div className="nx-att">
             <div className="big"><b><Up to={di.length} /></b><span>/{players.length} đi</span></div>
@@ -179,12 +218,12 @@ function NextMatch() {
           <div className="nx-cap">
             {canEdit && !m.voteState && <button type="button" className="btn primary sm" onClick={() => act(() => setVoteStateAction(teamId, m.id, 'open'), 'Đã mở điểm danh và thông báo cả đội')}>Mở điểm danh</button>}
             {canEdit && open && un > 0 && <button type="button" className="btn sm" onClick={() => act(() => remindVoteAction(teamId, m.id), (n) => `Đã nhắc ${n} người`)}>Nhắc {un} người</button>}
-            <button type="button" className="btn sm" onClick={() => setDetail(true)}>Danh sách</button>
+            <button type="button" className="btn sm" onClick={() => setDetail('att')}>Danh sách</button>
             <Link className="btn sm" href={`/t/${teamId}/tran-toi?tran=${m.id}`}>Đội hình trận</Link>
           </div>
         </div>
       </div>
-      {detail && <MatchModal matchId={m.id} initialTab="att" onClose={() => setDetail(false)} />}
+      {detail && <MatchModal matchId={m.id} initialTab={detail} onClose={() => setDetail(null)} />}
     </>
   );
 }
