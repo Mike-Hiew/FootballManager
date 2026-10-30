@@ -9,26 +9,41 @@ import { newToken } from '../auth/tokens';
 export async function adminOverview(user: SessionUser, now: Date) {
   requireAdmin(user);
   const today = todayVN(now);
-  const [users, teams, weekMatches] = await Promise.all([
+  const [users, teams, weekMatches, pending] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: 'asc' },
-      include: { players: { where: { status: 'active' }, include: { team: { select: { name: true } } } }, captainOf: { include: { team: { select: { name: true } } } } },
+      include: {
+        players: { where: { status: 'active' }, include: { team: { select: { name: true } } } },
+        captainOf: { include: { team: { select: { name: true } } } },
+        joinRequests: { where: { status: 'pending' }, include: { team: { select: { name: true } } } },
+      },
     }),
     prisma.team.findMany({
       orderBy: { createdAt: 'asc' },
-      include: { captains: { include: { user: { select: { name: true, id: true } } } }, _count: { select: { players: { where: { status: 'active' } }, matches: { where: { deletedAt: null } } } } },
+      include: {
+        captains: { include: { user: { select: { name: true, id: true } } } },
+        invites: { where: { revokedAt: null }, select: { code: true } },
+        _count: { select: { players: { where: { status: 'active' } }, matches: { where: { deletedAt: null } }, joinRequests: { where: { status: 'pending' } } } },
+      },
     }),
     prisma.match.count({ where: { deletedAt: null, date: { gte: addDays(today, -6), lte: today } } }),
+    prisma.joinRequest.count({ where: { status: 'pending' } }),
   ]);
   return {
-    stats: { users: users.length, teams: teams.length, weekMatches },
-    users: users.map((u) => ({
-      id: u.id, name: u.name, phone: u.phone, email: u.email, role: u.role, createdAt: u.createdAt.toISOString(), disabled: !!u.disabledAt,
-      teams: [...new Set([...u.captainOf.map((c) => c.team.name + ' (ĐT)'), ...u.players.map((p) => p.team.name)])],
-    })),
+    stats: { users: users.length, teams: teams.length, weekMatches, pending },
+    users: users.map((u) => {
+      const capOf = new Set(u.captainOf.map((c) => c.team.name));
+      // Vai trò theo từng đội như prototype: ĐT / thành viên / chờ duyệt
+      const roles: Array<{ kind: 'admin' | 'cap' | 'member' | 'pending'; team?: string }> = [];
+      if (u.role === 'admin') roles.push({ kind: 'admin' });
+      for (const t of capOf) roles.push({ kind: 'cap', team: t });
+      for (const p of u.players) if (!capOf.has(p.team.name)) roles.push({ kind: 'member', team: p.team.name });
+      for (const j of u.joinRequests) roles.push({ kind: 'pending', team: j.team.name });
+      return { id: u.id, name: u.name, phone: u.phone, email: u.email, role: u.role, createdAt: u.createdAt.toISOString(), disabled: !!u.disabledAt, roles };
+    }),
     teams: teams.map((t) => ({
       id: t.id, name: t.name, captains: t.captains.map((c) => ({ id: c.user.id, name: c.user.name })), members: t._count.players,
-      matches: t._count.matches, createdAt: t.createdAt.toISOString(), hidden: t.hidden,
+      pending: t._count.joinRequests, matches: t._count.matches, inviteCode: t.invites[0]?.code ?? null, createdAt: t.createdAt.toISOString(), hidden: t.hidden,
     })),
   };
 }

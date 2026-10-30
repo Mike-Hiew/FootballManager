@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { FUND_SOURCE_LABEL, dm, monthFlow, monthLabel, money, recentMonths, shortName, todayVN, balance, type FundSource } from '@san7/core';
 import { useTeam } from './TeamContext';
-import { Avatar, Tip } from './ui';
+import { Avatar } from './ui';
 import { MatchModal } from './matches/MatchModal';
 import { addEntryAction, deleteEntryAction, setDuesAction, setDuesReminderAction, setFeesAction } from '@/app/actions';
 
@@ -55,9 +55,7 @@ export function FundView({ data }: { data: FundData }) {
         </div>
 
         <div className="panel">
-          <h3 className="st" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            Mức đóng <Tip text="Thành viên Quỹ đóng cố định mỗi tháng, đá bao nhiêu trận cũng được. Thành viên Đá lẻ trả tiền theo từng trận có đi đá. Giá đá lẻ mới chỉ áp dụng cho các trận tạo sau." />
-          </h3>
+          <h3 className="st">Mức đóng</h3>
           <form
             className="form-inline"
             onSubmit={(e) => {
@@ -70,15 +68,15 @@ export function FundView({ data }: { data: FundData }) {
               <div className="field" style={{ width: 170 }}><label htmlFor="feeMonth">Quỹ tháng / người</label><input id="feeMonth" name="monthly" type="number" min={0} step={10000} inputMode="numeric" defaultValue={data.monthlyFee} /></div>
               <div className="field" style={{ width: 170 }}><label htmlFor="feeMatch">Giá đá lẻ / trận</label><input id="feeMatch" name="match" type="number" min={0} step={5000} inputMode="numeric" defaultValue={data.perMatchFee} /></div>
               {canEdit && <button className="btn" type="submit">Lưu mức đóng</button>}
+              {canEdit && (
+                <label className="check" style={{ alignSelf: 'center' }} data-tt="Gửi thông báo ngày 5 hằng tháng cho thành viên quỹ chưa đóng (hạn trước ngày 10)">
+                  <input type="checkbox" defaultChecked={data.duesReminder} onChange={(e) => act(() => setDuesReminderAction(teamId, e.target.checked), e.target.checked ? 'Đã bật nhắc đóng quỹ ngày 5' : 'Đã tắt nhắc đóng quỹ')} />
+                  Nhắc đóng quỹ ngày 5
+                </label>
+              )}
             </fieldset>
           </form>
-          {canEdit && (
-            <label className="check" style={{ marginTop: 8 }}>
-              <input type="checkbox" defaultChecked={data.duesReminder} onChange={(e) => act(() => setDuesReminderAction(teamId, e.target.checked), e.target.checked ? 'Đã bật nhắc đóng quỹ ngày 5' : 'Đã tắt nhắc đóng quỹ')} />
-              Tự nhắc thành viên chưa đóng quỹ vào ngày 5 hằng tháng
-            </label>
-          )}
-          <p className="hint">Thành viên <span className="chip quy">Quỹ</span> đóng theo tháng. Thành viên <span className="chip le">Đá lẻ</span> trả tiền theo từng trận có đi đá. Đổi loại quỹ/đá lẻ có hiệu lực từ tháng sau.</p>
+          <p className="hint">Thành viên <span className="chip quy">Quỹ</span> đóng theo tháng. Thành viên <span className="chip le">Đá lẻ</span> trả tiền theo từng trận có đi đá. Giá đá lẻ mới chỉ áp dụng cho các trận tạo sau.</p>
         </div>
 
         <div className="grid2">

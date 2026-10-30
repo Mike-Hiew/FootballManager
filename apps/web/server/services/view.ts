@@ -17,7 +17,7 @@ export async function teamView(ctx: Ctx): Promise<TeamView> {
   const manager = canManage(ctx.role);
   const insider = ctx.role !== 'guest';
   const month = currentMonth(ctx.now);
-  const [team, players, matches, captains, invite, myEdit, approvalCount] = await Promise.all([
+  const [team, players, matches, captains, invite, myEdit, approvalCount, pendingJoins] = await Promise.all([
     prisma.team.findUniqueOrThrow({ where: { id: ctx.teamId } }),
     prisma.player.findMany({ where: { teamId: ctx.teamId }, include: { user: { select: { phone: true } } }, orderBy: [{ num: 'asc' }, { fullName: 'asc' }] }),
     prisma.match.findMany({
@@ -29,6 +29,7 @@ export async function teamView(ctx: Ctx): Promise<TeamView> {
     manager ? prisma.invite.findFirst({ where: { teamId: ctx.teamId, revokedAt: null } }) : null,
     ctx.playerId ? prisma.profileEdit.findFirst({ where: { playerId: ctx.playerId, status: 'pending' }, select: { id: true } }) : null,
     manager ? countApprovals(ctx.teamId) : Promise.resolve(0),
+    manager ? prisma.joinRequest.count({ where: { teamId: ctx.teamId, status: 'pending' } }) : Promise.resolve(0),
   ]);
 
   const toPlayer = (p: (typeof players)[number]): PlayerDTO => ({
@@ -85,6 +86,7 @@ export async function teamView(ctx: Ctx): Promise<TeamView> {
     matches: matches.map(matchDTO),
     myPendingEdit: !!myEdit,
     approvalCount,
+    pendingJoins,
     now: ctx.now.toISOString(),
     year: seasonYear(ctx.now),
   };

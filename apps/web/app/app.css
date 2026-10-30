@@ -13,3 +13,8 @@ a.btn { text-decoration: none; display: inline-flex; align-items: center; }
 .seg a{border:0;background:transparent;padding:6px 10px;border-radius:999px;font-weight:600;font-size:13px;color:var(--muted);text-decoration:none}
 .subtabs a{padding:8px 14px;font-size:13.5px}
 .seg a[aria-pressed="true"]{background:var(--onyx);color:var(--gold)}
+/* Ô tìm/sắp xếp gọn ở thanh công cụ (BRD 4.6 — không có trong prototype) */
+input.mini,select.mini{height:30px;padding:0 10px;border-radius:999px;font-size:12.5px;width:120px;border:1px solid var(--edge,rgba(0,0,0,.1));background:rgba(255,255,255,.5)}
+select.mini{width:auto}
+.adm-acts .linkbtn+.linkbtn,.adm-acts .btn+.linkbtn{margin-left:10px}
+.form5.sm .fp{width:20px;height:20px;font-size:10.5px}

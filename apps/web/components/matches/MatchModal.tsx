@@ -110,7 +110,7 @@ function AttTab({ m }: { m: MatchDTO }) {
     act(() => setAttendanceAction(teamId, m.id, p.id, next), p.id === meId ? (next ? `Đã điểm danh: bạn ${next === 'di' ? 'ĐI' : 'NGHỈ'} trận vs ${m.opponent}` : 'Đã bỏ chọn') : undefined);
   };
   return (
-    <>
+    <div>
       <div className="attsum">
         {vs}
         <span><b>{di.length}</b> đi</span><span><b>{ng.length}</b> nghỉ</span><span><b>{ps.length - di.length - ng.length}</b> chưa trả lời</span>
@@ -154,7 +154,7 @@ function AttTab({ m }: { m: MatchDTO }) {
           );
         }) : <div className="empty-list">Đội chưa có cầu thủ.</div>}
       </div>
-    </>
+    </div>
   );
 }
 

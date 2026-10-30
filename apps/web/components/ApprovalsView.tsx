@@ -48,7 +48,9 @@ function Diff({ p, d }: { p: PlayerDTO; d: PlayerDraft }) {
 
 /** Tab Duyệt (BRD 8.6). */
 export function ApprovalsView({ data }: { data: ApprovalsDTO }) {
-  const { byId, nameOf, matchById, act, teamId, players } = useTeam();
+  const { view, byId, nameOf, matchById, act, teamId, players } = useTeam();
+  // Vote MVP đang mở hoặc cần chỉ định (prototype liệt kê cả hai; badge chỉ đếm loại cần chỉ định)
+  const mvpList = view.matches.filter((m) => m.mvpVote && m.mvpVote.status !== 'done' && (m.mvpVote.status === 'open' || data.mvpNeed.includes(m.id)));
   const [joinEdit, setJoinEdit] = useState<{ id: string; draft: PlayerDraft } | null>(null);
   const [editEdit, setEditEdit] = useState<{ id: string; draft: PlayerDraft; name: string } | null>(null);
   const [mvpMatch, setMvpMatch] = useState<string | null>(null);
@@ -62,7 +64,6 @@ export function ApprovalsView({ data }: { data: ApprovalsDTO }) {
     <section className="view">
       <div style={{ display: 'grid', gap: 14 }}>
         <h2 className="vt">Duyệt</h2>
-        <InvitePanel />
         <div className="apwrap">
           <div className="panel">
             <h3 className="st">Xin vào đội ({data.joins.length})</h3>
@@ -78,8 +79,8 @@ export function ApprovalsView({ data }: { data: ApprovalsDTO }) {
                     <Top3 stats={d.stats} foot={d.foot} />
                   </div>
                   <div className="acts">
-                    <button type="button" className="btn sm" onClick={() => setJoinEdit({ id: j.id, draft: d })}>Xem & sửa</button>
-                    <button type="button" className="btn primary sm" onClick={() => act(() => approveJoinAction(teamId, j.id), `Đã duyệt ${d.fullName} vào đội`)}>Duyệt</button>
+                    <button type="button" className="btn sm" onClick={() => setJoinEdit({ id: j.id, draft: d })}>Xem, sửa chỉ số</button>
+                    <button type="button" className="btn primary sm" onClick={() => act(() => approveJoinAction(teamId, j.id), `Đã duyệt ${d.fullName} vào đội`)}>Duyệt vào đội</button>
                     <button type="button" className="btn ghost sm danger" onClick={() => reject((r) => act(() => rejectJoinAction(teamId, j.id, r), 'Đã từ chối đơn'))}>Từ chối</button>
                   </div>
                 </div>
@@ -131,20 +132,25 @@ export function ApprovalsView({ data }: { data: ApprovalsDTO }) {
           </div>
 
           <div className="panel">
-            <h3 className="st">Vote MVP cần chỉ định ({data.mvpNeed.length})</h3>
-            {data.mvpNeed.length ? data.mvpNeed.map((id) => {
-              const m = matchById(id);
-              if (!m) return null;
+            <h3 className="st">Vote MVP ({mvpList.length})</h3>
+            {mvpList.length ? mvpList.map((m) => {
+              const v = m.mvpVote!;
+              const goers = Object.values(m.attendance).filter((a) => a.status === 'di').length;
+              const left = Math.max(0, Math.ceil((new Date(v.closesAt).getTime() - new Date(view.now).getTime()) / 3600e3));
               return (
-                <div key={id} className="apcard">
+                <div key={m.id} className="apcard">
                   <span className="tier ex">★</span>
-                  <div className="t"><b>vs {m.opponent}</b> · {dm(m.date)}<small><span className="warn">Chưa đủ 60% phiếu hoặc hoà, cần đội trưởng chỉ định</span></small></div>
-                  <div className="acts"><button type="button" className="btn sm" onClick={() => setMvpMatch(id)}>Mở trận</button></div>
+                  <div className="t">
+                    <b>vs {m.opponent}</b> · {dm(m.date)}
+                    <small>{v.status === 'open' ? `Đang vote · ${v.ballots}/${goers} phiếu · hết hạn trong ${left} giờ` : <span className="warn">Chưa đủ 60% phiếu hoặc hoà, cần đội trưởng chỉ định</span>}</small>
+                  </div>
+                  <div className="acts"><button type="button" className="btn sm" onClick={() => setMvpMatch(m.id)}>Mở trận</button></div>
                 </div>
               );
             }) : <div className="empty-list">Không có vote MVP nào cần xử lý.</div>}
           </div>
         </div>
+        <InvitePanel />
       </div>
 
       {joinEdit && (

@@ -171,6 +171,7 @@ export async function exploreTeams(q?: string) {
       const s = teamSeason(t.matches.map((m) => toSeasonMatch({ ...m, attendance: [], events: [] })), year);
       return {
         id: t.id, name: t.name, slogan: t.slogan, photoUrl: t.photoUrl, homeName: t.homeName, members: t._count.players,
+        founded: t.foundedOn ? Number(t.foundedOn.slice(0, 4)) : null,
         record: { w: s.w, d: s.d, l: s.l }, form: s.form.map((x) => x.r),
       };
     });

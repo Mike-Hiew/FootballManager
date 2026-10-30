@@ -88,7 +88,7 @@ export function PlanModal({ match, pool, formation, onClose, onApply }: { match:
                           const s = pd.assign.indexOf(i);
                           if (s < 0) return <td key={k} className="cell"><i>·</i></td>;
                           const pos = plan.slots[s];
-                          return <td key={k} className="cell"><span className="pp" tabIndex={0} style={{ background: tierColor(i.r[pos]) }} data-x={`p:${p.id}:${pos}`}>{pos}</span></td>;
+                          return <td key={k} className="cell"><span tabIndex={0} style={{ background: tierColor(i.r[pos]) }} data-x={`p:${p.id}:${pos}`}>{pos}</span></td>;
                         })}
                         <td className="mins">{i.t}/{P} · {Math.round(i.t * step)}&apos;</td>
                       </tr>

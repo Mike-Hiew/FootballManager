@@ -360,10 +360,10 @@ export function TacticsView({ mode, matchId }: { mode: 'tong' | 'tran'; matchId?
                     const g = i in glow ? (glow[i] >= 8 ? ' g-good' : glow[i] >= 6.5 ? ' g-ok' : ' g-bad') + (i === bestSlot && glow[i] >= 6.5 ? ' g-top' : '') : '';
                     const sc = p ? positionScore(p.stats, p.foot, pos) : 0;
                     return (
-                      <tr key={i} className={`${selSlot === i ? 'sel' : ''}${g}${dropOn === i ? ' drop' : ''}`} tabIndex={0} onClick={(e) => !(e.target as Element).closest('.pp') && slotClick(i)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), slotClick(i))} {...(p ? drag(p.id) : {})} {...dropSlot(i)}>
+                      <tr key={i} className={`${selSlot === i ? 'sel' : ''}${g}${dropOn === i ? ' drop' : ''}`} tabIndex={0} onClick={(e) => !(e.target as Element).closest('[data-x]') && slotClick(i)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), slotClick(i))} {...(p ? drag(p.id) : {})} {...dropSlot(i)}>
                         <td><span className={`posb ${lineCls(pos)}`}>{pos}</span>{i in glow && <small className="gl" style={{ color: tierColor(glow[i]) }}>{i === bestSlot ? '★ ' : ''}{fmt1(glow[i])}</small>}</td>
                         <td>{p ? who(p) : <span className="muted">Trống</span>}</td>
-                        <td>{p && <><span className="sc pp" tabIndex={0} data-x={`p:${p.id}:${pos}`} style={{ ['--fit' as string]: tierColor(sc) }}>{fmt1(sc)}</span>{!isNatural(p, pos) && <small className="lech">lệch</small>}</>}</td>
+                        <td>{p && <><span className="sc" tabIndex={0} data-x={`p:${p.id}:${pos}`} style={{ ['--fit' as string]: tierColor(sc) }}>{fmt1(sc)}</span>{!isNatural(p, pos) && <small className="lech">lệch</small>}</>}</td>
                       </tr>
                     );
                   })}
@@ -401,10 +401,10 @@ export function TacticsView({ mode, matchId }: { mode: 'tong' | 'tran'; matchId?
                       }
                     }
                     return (
-                      <tr key={p.id} className={`brow${isSel ? ' sel' : ''}${g}`} tabIndex={0} onClick={(e) => !(e.target as Element).closest('.pp') && benchClick(p.id)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), benchClick(p.id))} {...drag(p.id)}>
+                      <tr key={p.id} className={`brow${isSel ? ' sel' : ''}${g}`} tabIndex={0} onClick={(e) => !(e.target as Element).closest('[data-x]') && benchClick(p.id)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), benchClick(p.id))} {...drag(p.id)}>
                         <td><span className={`posb ${lineCls(bk)}`}>{bk}</span></td>
                         <td>{who(p)}{rk && <span className="rk">{rk}</span>}</td>
-                        <td><span className="sc pp" tabIndex={0} data-x={`p:${p.id}:${bk}`} style={{ ['--fit' as string]: tierColor(bv) }}>{fmt1(bv)}</span></td>
+                        <td><span className="sc" tabIndex={0} data-x={`p:${p.id}:${bk}`} style={{ ['--fit' as string]: tierColor(bv) }}>{fmt1(bv)}</span></td>
                       </tr>
                     );
                   }) : (
@@ -473,7 +473,7 @@ function PlayerCard(props: {
         <div className="pc2-id">
           <div className="pc2-pos">
             <span className={`posb ${lineCls(pos)}`}>{pos}</span>
-            <b className="pp" tabIndex={0} style={{ color: tierColor(cs) }} data-x={`p:${p.id}:${pos}`}>{fmt1(cs)}</b>
+            <b tabIndex={0} style={{ color: tierColor(cs) }} data-x={`p:${p.id}:${pos}`}>{fmt1(cs)}</b>
             <span className="muted">{props.slotIndex >= 0 ? 'vị trí đang đá' : 'vị trí hợp nhất'}</span>
           </div>
           <h3>{p.num != null && <small>{p.num}</small>}{shortName(p)}{props.mvp > 0 && <> <span className="mvpt" style={{ fontSize: 20 }}>★{props.mvp}</span></>}</h3>
@@ -485,7 +485,7 @@ function PlayerCard(props: {
       </div>
       <div className="face2">{faceStats(p.stats).map((f) => <div key={f.label}><b style={{ color: tierColor(f.value) }}>{Math.round(f.value * 10)}</b><span>{f.label}</span></div>)}</div>
       <div className="pc-pos">
-        {rk.map(([k, v], i) => <span key={k} className={`pchip pp${i === 0 ? ' best' : ''}`} tabIndex={0} data-x={`p:${p.id}:${k}`} style={{ ['--fit' as string]: tierColor(v) }}><b>{k}</b><em>{fmt1(v)}</em></span>)}
+        {rk.map(([k, v], i) => <span key={k} className={`pchip${i === 0 ? ' best' : ''}`} tabIndex={0} data-x={`p:${p.id}:${k}`} style={{ ['--fit' as string]: tierColor(v) }}><b>{k}</b><em>{fmt1(v)}</em></span>)}
         {p.styles.slice(0, 3).map((x) => <span key={x} className="tag">{x}</span>)}
       </div>
       <div className="season"><span><b>{se.gp}</b>trận</span><span><b>{se.goals}</b>bàn</span><span><b>{se.assists}</b>kiến tạo</span><span><b>{se.mvp}</b>MVP {view.year}</span></div>

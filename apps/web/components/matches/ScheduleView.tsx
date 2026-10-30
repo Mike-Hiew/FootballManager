@@ -33,16 +33,21 @@ export function ScheduleView({ openId, openTab }: { openId?: string; openTab?: '
       res = (
         <>
           <span className="score">{m.scoreUs}–{m.scoreThem}</span>
-          <span className={`chip ${r === 'T' ? 'win' : r === 'B' ? 'loss' : ''}`}>{r === 'T' ? 'Thắng' : r === 'B' ? 'Thua' : 'Hoà'}</span>
-          {m.mvpPlayerId && <span className="chip">★ {nameOf(m.mvpPlayerId)}</span>}
+          {/* ★ MVP (BRD 6.2) đặt cùng hàng với chip kết quả để giữ chiều cao thẻ như prototype */}
+          <span>
+            {m.mvpPlayerId && <span className="mvpt" style={{ fontSize: 11.5, marginRight: 6 }}>★ {nameOf(m.mvpPlayerId)}</span>}
+            <span className={`chip ${r === 'T' ? 'win' : r === 'B' ? 'loss' : ''}`}>{r === 'T' ? 'Thắng' : r === 'B' ? 'Thua' : 'Hoà'}</span>
+          </span>
         </>
       );
     } else if (m.date < today) res = <span className="chip loss">Chưa nhập kết quả</span>;
     else {
       res = (
         <>
-          <span className={`chip ${m.voteState === 'open' ? 'quy' : ''}`}>{m.voteState === 'open' ? 'Vote đang mở' : m.voteState === 'closed' ? 'Vote đã đóng' : 'Chưa mở vote'}</span>
-          <span className="chip">{di} đi · {ng} nghỉ{un ? ` · ${un} chưa trả lời` : ''}</span>
+          {/* trạng thái vote (BRD 6.2) gộp vào chip số người để giữ bố cục prototype */}
+          <span className={`chip ${m.voteState === 'open' ? 'quy' : ''}`} data-tt={m.voteState === 'open' ? 'Vote đang mở' : m.voteState === 'closed' ? 'Vote đã đóng' : 'Chưa mở vote'}>
+            {m.voteState === 'open' ? '● ' : ''}{di} đi · {ng} nghỉ{un ? ` · ${un} chưa trả lời` : ''}
+          </span>
         </>
       );
     }

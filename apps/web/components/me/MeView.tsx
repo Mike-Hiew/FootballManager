@@ -68,7 +68,7 @@ export function MeView({ duesMonths }: { duesMonths: string[] }) {
             <h3 className="st">Chỉ số</h3>
             <div className="radar"><Radar stats={me.stats} /></div>
             <div className="pc-pos" style={{ marginTop: 8 }}>
-              {rk.map(([k, v], i) => <span key={k} className={`pchip pp${i === 0 ? ' best' : ''}`} tabIndex={0} data-x={`p:${me.id}:${k}`} style={{ ['--fit' as string]: tierColor(v) }}><b>{k}</b><em>{fmt1(v)}</em></span>)}
+              {rk.map(([k, v], i) => <span key={k} className={`pchip${i === 0 ? ' best' : ''}`} tabIndex={0} data-x={`p:${me.id}:${k}`} style={{ ['--fit' as string]: tierColor(v) }}><b>{k}</b><em>{fmt1(v)}</em></span>)}
             </div>
           </div>
           <div className="panel span2">
