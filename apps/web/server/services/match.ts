@@ -118,7 +118,13 @@ export async function saveResult(ctx: Ctx, matchId: string, raw: unknown) {
   const ids = new Set((await prisma.player.findMany({ where: { teamId: ctx.teamId }, select: { id: true } })).map((x) => x.id));
   const events = d.events.filter((e) => ids.has(e.playerId) && (e.goals || e.assists));
   await prisma.$transaction(async (tx) => {
-    await tx.match.update({ where: { id: matchId }, data: { scoreUs: d.scoreUs, scoreThem: d.scoreThem, voteState: d.scoreUs != null && before.voteState === 'open' ? 'closed' : before.voteState } });
+    // resultAt: lần đầu có tỉ số (sửa tỉ số sau đó không bật lại popup); xoá tỉ số thì xoá mốc
+    const resultAt = d.scoreUs == null ? null : (before.resultAt ?? ctx.now);
+    await tx.match.update({ where: { id: matchId }, data: { scoreUs: d.scoreUs, scoreThem: d.scoreThem, resultAt, voteState: d.scoreUs != null && before.voteState === 'open' ? 'closed' : before.voteState } });
+    // Người nhập tỉ số không cần popup báo tỉ số
+    if (d.scoreUs != null) {
+      await tx.matchReceipt.upsert({ where: { matchId_userId: { matchId, userId: ctx.user.id } }, create: { matchId, userId: ctx.user.id, seenAt: ctx.now }, update: { seenAt: ctx.now } });
+    }
     await tx.matchEvent.deleteMany({ where: { matchId } });
     if (d.scoreUs != null && events.length) await tx.matchEvent.createMany({ data: events.map((e) => ({ matchId, ...e })) });
     if (d.scoreUs == null) {

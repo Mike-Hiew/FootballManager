@@ -18,3 +18,66 @@ input.mini,select.mini{height:30px;padding:0 10px;border-radius:999px;font-size:
 select.mini{width:auto}
 .adm-acts .linkbtn+.linkbtn,.adm-acts .btn+.linkbtn{margin-left:10px}
 .form5.sm .fp{width:20px;height:20px;font-size:10.5px}
+
+/* ===== Popup tỉ số sau trận (BRD 6.8): thắng = ăn mừng, hoà = dịu, thua = trầm ===== */
+.rp-overlay{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 30%,rgba(20,26,22,.55),rgba(6,10,8,.82));animation:rp-in .35s ease-out both}
+.rp-win{background:radial-gradient(90% 70% at 50% 35%,rgba(255,206,92,.42),rgba(40,28,6,.86) 70%)}
+.rp-draw{background:radial-gradient(90% 70% at 50% 35%,rgba(170,190,180,.32),rgba(12,18,16,.84) 70%)}
+.rp-loss{background:radial-gradient(90% 70% at 50% 30%,rgba(70,90,110,.45),rgba(8,12,18,.9) 70%)}
+.rp-fx{position:absolute;inset:0;pointer-events:none}
+.rp-card{position:relative;width:min(440px,100%);max-height:100%;overflow:auto;text-align:center;padding:30px 22px 22px;border-radius:28px;
+  color:#fff;background:linear-gradient(160deg,rgba(46,52,49,.95),rgba(18,22,20,.97));border:1px solid rgba(255,255,255,.22);
+  -webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);box-shadow:0 30px 90px rgba(0,0,0,.45);
+  animation:rp-pop .55s cubic-bezier(.2,1.4,.4,1) both}
+.rp-win .rp-card{background:linear-gradient(160deg,rgba(84,58,12,.96),rgba(30,21,5,.97));border-color:rgba(255,214,120,.6);box-shadow:0 0 0 1px rgba(255,214,120,.25),0 0 60px rgba(255,190,70,.35),0 30px 90px rgba(0,0,0,.45)}
+.rp-loss .rp-card{background:linear-gradient(160deg,rgba(40,50,64,.96),rgba(15,19,27,.97));animation:rp-sink .7s ease-out both}
+.rp-x{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.3);
+  background:rgba(0,0,0,.25);color:#fff;font-size:16px;cursor:pointer;line-height:1}
+.rp-x:hover,.rp-x:focus-visible{background:rgba(255,255,255,.2);outline:2px solid rgba(255,255,255,.6);outline-offset:2px}
+.rp-kicker{font-size:12px;letter-spacing:.06em;text-transform:uppercase;opacity:.75;padding:0 40px}
+.rp-cup{width:64px;height:64px;margin:10px auto 0;display:block;fill:#ffd36b;stroke:#ffd36b;filter:drop-shadow(0 0 14px rgba(255,200,80,.8));
+  animation:rp-bounce 1.6s ease-in-out .5s infinite}
+.rp-title{margin:8px 0 4px;font-family:var(--f-display);font-weight:800;font-size:34px;text-transform:uppercase;letter-spacing:.04em}
+.rp-win .rp-title{background:linear-gradient(90deg,#fff3c4,#ffc94d,#fff3c4);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:rp-shine 2.4s linear infinite}
+.rp-loss .rp-title{color:#c9d4e2}
+.rp-score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:14px 0 10px}
+.rp-side{display:grid;justify-items:center;gap:6px;min-width:0}
+.rp-side b{font-size:13px;line-height:1.25;overflow-wrap:anywhere}
+.rp-opp{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font:800 22px var(--f-display);background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25)}
+.rp-num{display:flex;align-items:center;gap:8px;font:800 54px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.rp-num i{font-style:normal;opacity:.5;font-size:36px}
+.rp-win .rp-num span:first-child{color:#ffd36b;text-shadow:0 0 18px rgba(255,200,80,.9),0 0 40px rgba(255,170,40,.5);animation:rp-pulse 1.8s ease-in-out infinite}
+.rp-loss .rp-num span:last-child{color:#ffb0a6}
+.rp-badge{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.rp-badge.win{background:#ffd36b;color:#3a2a00}
+.rp-badge.draw{background:rgba(255,255,255,.2)}
+.rp-badge.loss{background:rgba(160,180,205,.25);color:#dbe4f0}
+.rp-line{margin:12px 0 6px;font-size:15px;opacity:.92}
+.rp-facts{list-style:none;margin:10px 0 0;padding:10px 12px;display:grid;gap:6px;text-align:left;font-size:13px;border-radius:16px;background:rgba(0,0,0,.18)}
+.rp-facts span{display:inline-block;min-width:70px;opacity:.65}
+.rp-acts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin-top:16px}
+.rp-acts .btn{min-height:42px}
+.rp-acts .btn:not(.primary){background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.3)}
+/* pháo giấy */
+.rp-confetti{position:absolute;top:-14px;width:9px;height:14px;border-radius:2px;opacity:.95;transform:rotate(var(--r));animation:rp-fall 3.2s linear infinite}
+.rp-confetti.c0{background:#ffd36b}.rp-confetti.c1{background:#4cc47e}.rp-confetti.c2{background:#fff}.rp-confetti.c3{background:#ff8a5c}
+/* đom đóm bay lên */
+.rp-fly{position:absolute;bottom:-10px;border-radius:50%;background:#fff6b0;box-shadow:0 0 10px 3px rgba(255,230,120,.85);animation:rp-rise 5s ease-in infinite}
+.rp-draw .rp-fly{background:#e6f1ea;box-shadow:0 0 8px 2px rgba(220,240,230,.6);animation-duration:7s;opacity:.7}
+/* mưa nhẹ khi thua */
+.rp-rain{position:absolute;top:-40px;width:1.5px;height:38px;background:linear-gradient(transparent,rgba(190,210,235,.55));animation:rp-drop 1.4s linear infinite}
+@keyframes rp-in{from{opacity:0}to{opacity:1}}
+@keyframes rp-pop{0%{opacity:0;transform:scale(.7) translateY(20px)}100%{opacity:1;transform:none}}
+@keyframes rp-sink{0%{opacity:0;transform:translateY(-14px)}100%{opacity:1;transform:none}}
+@keyframes rp-bounce{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(4deg)}}
+@keyframes rp-shine{to{background-position:-200% 0}}
+@keyframes rp-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes rp-fall{0%{transform:translateY(0) rotate(var(--r))}100%{transform:translateY(110vh) rotate(calc(var(--r) + 720deg))}}
+@keyframes rp-rise{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-105vh) translateX(30px);opacity:0}}
+@keyframes rp-drop{to{transform:translateY(110vh)}}
+@media (prefers-reduced-motion:reduce){
+  .rp-overlay,.rp-card,.rp-cup,.rp-title,.rp-num span{animation:none!important}
+  .rp-confetti,.rp-fly,.rp-rain{display:none}
+}

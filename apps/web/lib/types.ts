@@ -111,6 +111,8 @@ export interface TeamView {
   approvalCount: number;
   /** số đơn xin vào đang chờ (chỉ ĐT) */
   pendingJoins: number;
+  /** popup tỉ số trận vừa kết thúc + nhắc khai báo (BRD 6.8) */
+  postMatch: { resultMatchId: string | null; claimMatchIds: string[] };
   now: string;
   year: number;
 }

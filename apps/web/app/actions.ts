@@ -13,6 +13,7 @@ import * as join from '@/server/services/join';
 import * as player from '@/server/services/player';
 import * as match from '@/server/services/match';
 import * as claim from '@/server/services/claim';
+import * as postmatch from '@/server/services/postmatch';
 import * as mvp from '@/server/services/mvp';
 import * as fund from '@/server/services/fund';
 import * as tactics from '@/server/services/tactics';
@@ -147,6 +148,12 @@ export async function setLePaidAction(teamId: string, matchId: string, playerId:
 }
 export async function submitClaimAction(teamId: string, matchId: string, goals: number, assists: number) {
   return run(() => inTeam(teamId, (c) => claim.submitClaim(c, matchId, { goals, assists }).then(() => null)));
+}
+export async function markResultSeenAction(teamId: string, matchId: string) {
+  return run(() => inTeam(teamId, (c) => postmatch.markResultSeen(c, matchId).then(() => null)));
+}
+export async function skipClaimAction(teamId: string, matchId: string) {
+  return run(() => inTeam(teamId, (c) => postmatch.skipClaim(c, matchId).then(() => null)));
 }
 export async function decideClaimAction(teamId: string, claimId: string, approve: boolean) {
   return run(() => inTeam(teamId, (c) => claim.decideClaim(c, claimId, approve).then(() => null)));

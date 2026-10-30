@@ -9,6 +9,7 @@ import { myTeams, teamView } from '@/server/services/view';
 import { Header } from '@/components/Header';
 import { TeamProvider } from '@/components/TeamContext';
 import { FormulaPopover, TooltipLayer } from '@/components/Overlays';
+import { ResultPopup } from '@/components/matches/ResultPopup';
 
 export async function generateMetadata({ params }: { params: Promise<{ teamId: string }> }): Promise<Metadata> {
   const { teamId } = await params;
@@ -58,6 +59,7 @@ export default async function TeamLayout({ params, children }: { params: Promise
         {children}
       </div>
       <TooltipLayer />
+      <ResultPopup />
       <FormulaPopover />
     </TeamProvider>
   );

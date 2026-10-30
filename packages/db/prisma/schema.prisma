@@ -31,6 +31,7 @@ model User {
   notifications Notification[]
   pushSubs      PushSubscription[]
   resets        PasswordReset[]
+  matchReceipts MatchReceipt[]
 
   @@map("users")
 }
@@ -232,6 +233,7 @@ model Match {
   note           String?
   scoreUs        Int?
   scoreThem      Int?
+  resultAt       DateTime? @db.Timestamptz // lần đầu ĐT nhập tỉ số — mốc cho popup kết quả
   voteState      String? // null | open | closed
   voteOpenedAt   DateTime? @db.Timestamptz
   voteRemindedAt DateTime? @db.Timestamptz
@@ -248,6 +250,7 @@ model Match {
   claims     Claim[]
   mvpVote    MvpVote?
   ballots    MvpBallot[]
+  receipts   MatchReceipt[]
 
   @@index([teamId, date])
   @@index([kickoffAt])
@@ -420,4 +423,19 @@ model JobRun {
 
   @@id([job, key])
   @@map("job_runs")
+}
+
+/// Thành viên đã xem popup tỉ số / bỏ qua nhắc khai báo của một trận (mỗi người một dòng mỗi trận).
+model MatchReceipt {
+  matchId        String
+  userId         String
+  seenAt         DateTime? @db.Timestamptz
+  claimSkippedAt DateTime? @db.Timestamptz
+
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([matchId, userId])
+  @@index([userId])
+  @@map("match_receipts")
 }

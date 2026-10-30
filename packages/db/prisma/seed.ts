@@ -86,7 +86,8 @@ async function main() {
     },
   });
   await prisma.player.createMany({
-    data: domPlayers.map((p) => ({ ...p, teamId: dom.id, userId: 'u-' + p.id })),
+    // Vào đội từ trước các trận demo (popup tỉ số không báo trận đá trước khi người đó vào đội)
+    data: domPlayers.map((p) => ({ ...p, teamId: dom.id, userId: 'u-' + p.id, createdAt: new Date(now.getTime() - 365 * 24 * H) })),
   });
 
   type Ev = Record<string, { g: number; a: number }>;
@@ -182,7 +183,7 @@ async function main() {
       captains: { create: [{ userId: 'u-q2' }] }, invites: { create: [{ code: 'phohue9' }] },
     },
   });
-  await prisma.player.createMany({ data: phPlayers.map((p) => ({ ...p, teamId: ph.id, userId: 'u-' + p.id })) });
+  await prisma.player.createMany({ data: phPlayers.map((p) => ({ ...p, teamId: ph.id, userId: 'u-' + p.id, createdAt: new Date(now.getTime() - 365 * 24 * H) })) });
   const phAll = phPlayers.map((p) => p.id);
   const phMatches: Array<[string, number, string, [number, number] | null, Ev, string | null, string[]]> = [
     ['n1', -11, 'Đom Đóm FC', [3, 1], { q8: { g: 2, a: 0 }, q9: { g: 1, a: 1 }, q4: { g: 0, a: 2 } }, 'q8', ['q3']],

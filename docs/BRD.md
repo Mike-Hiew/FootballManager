@@ -410,6 +410,17 @@ Chỉ tính trận đã đá có ngày thuộc YEAR.
 - Xếp hạng hoà: bằng chỉ số chính → ít trận hơn đứng trên → nhiều chỉ số còn lại hơn đứng trên.
 - Bảng lịch sử từng trận: ngày, đối thủ, tỉ số, người ghi bàn, MVP.
 
+### 6.8 Popup tỉ số sau trận và nhắc khai báo
+
+Bổ sung 30/10/2026.
+
+- **Trận kết thúc** = đã qua giờ đá và ĐT đã nhập tỉ số. Lần đầu có tỉ số được ghi lại (`matches.resultAt`); sửa tỉ số sau đó không tính là kết thúc lại, xoá tỉ số thì xoá mốc.
+- **Popup tỉ số**: mỗi thành viên/ĐT của đội thấy **một lần** khi mở app lần đầu sau khi trận kết thúc, ở bất kỳ tab nào của đội. Chỉ cho trận mới nhất, trong 7 ngày kể từ khi có tỉ số; không báo cho người nhập tỉ số, khách, hay người vào đội sau giờ đá. Đánh dấu đã xem ngay khi popup hiện (bảng `match_receipts`), nên tải lại hay chuyển trang cũng không hiện lại; tắt bằng ✕, nút Đóng, bấm ra ngoài hoặc Esc.
+- **Nội dung**: tên hai đội, tỉ số lớn, nhãn Thắng/Hoà/Thua, người ghi bàn, MVP (nếu có), sân, số người ra quân; nút "Khai báo bàn/kiến tạo" (nếu người xem có Đi và chưa khai) và "Đóng".
+- **Không khí**: thắng — pháo giấy, đom đóm bay, cúp nhún, tỉ số phát sáng; hoà — tông dịu, đom đóm nhạt; thua — tông xám xanh, mưa nhẹ, lời động viên. Tắt chuyển động khi người dùng bật giảm chuyển động.
+- **Nhắc khai báo trên tab Đội**: người có Đi trận đã kết thúc (trong 7 ngày) mà chưa khai báo thấy dòng "Trận vs … kết thúc x–y. Bạn có ghi bàn hay kiến tạo không?" (kèm số ĐT đang ghi cho họ) với nút **Khai báo** (mở tab Kết quả của trận) và **Không có** (tắt nhắc trận đó). Khai báo xong cũng tự tắt.
+- API: `POST /matches/:id/result-seen`, `POST /matches/:id/claim-skip`.
+
 ## 7. Quỹ đội
 
 Số dư quỹ = tổng 4 nguồn trong sổ thu chi; 3 nguồn đầu tự sinh từ dữ liệu, chỉ khoản ghi tay là nhập trực tiếp. Tiền lưu bằng số nguyên đồng (VND), hiển thị `200.000đ`, số âm dùng dấu −.

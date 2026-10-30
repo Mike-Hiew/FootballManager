@@ -13,7 +13,7 @@ import { RuleIcon } from '../Icons';
 import { assistSVG, bootSVG, pitchScene } from './art';
 import { TeamInfoModal } from './TeamInfoModal';
 import { MatchModal } from '../matches/MatchModal';
-import { remindVoteAction, setAttendanceAction, setVoteStateAction } from '@/app/actions';
+import { remindVoteAction, setAttendanceAction, setVoteStateAction, skipClaimAction } from '@/app/actions';
 import { byKick, isPlayed, isSettled, seasonOf } from '@/lib/season';
 import type { MatchDTO } from '@/lib/types';
 
@@ -188,6 +188,47 @@ function NextMatch() {
   );
 }
 
+/** Nhắc người đã Đi khai báo bàn/kiến tạo cho trận vừa có tỉ số (BRD 6.8). Tắt khi đã khai báo hoặc bấm "Không có". */
+function ClaimReminders() {
+  const { view, teamId, act } = useTeam();
+  const [hidden, setHidden] = useState<string[]>([]);
+  const [open, setOpen] = useState<string | null>(null);
+  const me = view.myPlayerId;
+  const list = view.postMatch.claimMatchIds
+    .filter((id) => !hidden.includes(id))
+    .map((id) => view.matches.find((m) => m.id === id))
+    .filter((m): m is MatchDTO => !!m)
+    .slice(0, 2);
+  if (!me || !list.length) return open ? <MatchModal matchId={open} initialTab="res" onClose={() => setOpen(null)} /> : null;
+  return (
+    <>
+      {list.map((m) => {
+        const e = m.events[me];
+        return (
+          <div key={m.id} className="note claim-remind" role="status" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span>
+              Trận <b>vs {m.opponent}</b> ({dm(m.date)}) kết thúc <b>{m.scoreUs}–{m.scoreThem}</b>. Bạn có ghi bàn hay kiến tạo không?
+              {e && (e.goals || e.assists) ? <> Đội trưởng đang ghi cho bạn {e.goals} bàn, {e.assists} kiến tạo.</> : null}
+            </span>
+            <button type="button" className="btn primary sm" onClick={() => setOpen(m.id)}>Khai báo</button>
+            <button
+              type="button"
+              className="btn sm"
+              onClick={() => {
+                setHidden((h) => [...h, m.id]);
+                void act(() => skipClaimAction(teamId, m.id));
+              }}
+            >
+              Không có
+            </button>
+          </div>
+        );
+      })}
+      {open && <MatchModal matchId={open} initialTab="res" onClose={() => setOpen(null)} />}
+    </>
+  );
+}
+
 export function Dashboard({ isNew }: { isNew?: boolean }) {
   const { view, players, byId, nameOf, canEdit } = useTeam();
   const t = view.team;
@@ -262,6 +303,7 @@ export function Dashboard({ isNew }: { isNew?: boolean }) {
           </div>
         </div>
 
+        <ClaimReminders />
         <NextMatch />
 
         <div className="dash">

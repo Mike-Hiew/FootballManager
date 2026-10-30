@@ -16,6 +16,7 @@ import * as join from '@/server/services/join';
 import * as player from '@/server/services/player';
 import * as match from '@/server/services/match';
 import * as claim from '@/server/services/claim';
+import * as postmatch from '@/server/services/postmatch';
 import * as mvp from '@/server/services/mvp';
 import * as fund from '@/server/services/fund';
 import * as tactics from '@/server/services/tactics';
@@ -141,6 +142,8 @@ const routes: Array<[string, H]> = [
   ['POST /matches/:id/vote/remind', async ({ p }) => ({ reminded: await match.remindVote(await tc(await teamOf.match(p[0])), p[0]) })],
   ['PUT /matches/:id/attendance/:playerId', async ({ p, body }) => { await match.setAttendance(await tc(await teamOf.match(p[0])), p[0], p[1], await body()); return { ok: true }; }],
   ['POST /matches/:id/claims', async ({ p, body }) => { await claim.submitClaim(await tc(await teamOf.match(p[0])), p[0], await body()); return { ok: true }; }],
+  ['POST /matches/:id/result-seen', async ({ p }) => { await postmatch.markResultSeen(await tc(await teamOf.match(p[0])), p[0]); return { ok: true }; }],
+  ['POST /matches/:id/claim-skip', async ({ p }) => { await postmatch.skipClaim(await tc(await teamOf.match(p[0])), p[0]); return { ok: true }; }],
   ['POST /matches/:id/mvp/open', async ({ p }) => { await mvp.openMvp(await tc(await teamOf.match(p[0])), p[0]); return { ok: true }; }],
   ['PUT /matches/:id/mvp/ballot', async ({ p, body }) => { await mvp.castBallot(await tc(await teamOf.match(p[0])), p[0], String((await body()).candidateId)); return { ok: true }; }],
   ['PUT /matches/:id/mvp', async ({ p, body }) => { await mvp.assignMvp(await tc(await teamOf.match(p[0])), p[0], String((await body()).playerId)); return { ok: true }; }],
