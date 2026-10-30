@@ -4,8 +4,16 @@ import './prototype.css';
 import './app.css';
 import { RegisterSW } from '@/components/Pwa';
 
-const body = Be_Vietnam_Pro({ subsets: ['latin', 'vietnamese'], weight: ['300', '400', '500', '600', '700'], variable: '--font-body', display: 'swap' });
-const display = Jost({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], variable: '--font-display', display: 'swap' });
+// Cùng subset và chuỗi font dự phòng với prototype: Jost không có chữ tiếng Việt (Ư, Ộ…) nên các
+// ký tự đó rơi xuống font sau. Font "Fallback" co giãn của next/font sẽ làm chữ khác prototype và khác theo máy.
+const body = Be_Vietnam_Pro({
+  subsets: ['latin', 'latin-ext', 'vietnamese'], weight: ['300', '400', '500', '600', '700'], variable: '--font-body', display: 'swap',
+  adjustFontFallback: false, fallback: ['system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+});
+const display = Jost({
+  subsets: ['latin', 'latin-ext'], weight: ['300', '400', '500', '600', '700'], variable: '--font-display', display: 'swap',
+  adjustFontFallback: false, fallback: ['Futura', 'Century Gothic', 'system-ui', 'sans-serif'],
+});
 
 export const metadata: Metadata = {
   title: { default: process.env.APP_NAME ?? 'Sân 7 Manager', template: `%s · ${process.env.APP_NAME ?? 'Sân 7 Manager'}` },
