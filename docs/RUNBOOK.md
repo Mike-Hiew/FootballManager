@@ -27,6 +27,12 @@ Khi chưa cấu hình R2, ảnh được resize ở trình duyệt và lưu dạ
 2. Migration chỉ dùng `prisma migrate deploy` ở staging/production. Không bao giờ chạy `prisma migrate reset` trên DB thật.
 3. Sau deploy: kiểm `GET /dang-nhap` 200 và gọi thử `/api/jobs/tick` với `CRON_SECRET`.
 
+## Bảo mật
+
+- **CSP**: `apps/web/proxy.ts` gắn `Content-Security-Policy` có nonce riêng cho mỗi lần tải trang (`script-src 'nonce-…' 'strict-dynamic'`, `frame-ancestors 'none'`); nội dung ở `apps/web/server/csp.ts`. Vì nonce theo request nên mọi trang render động. Thêm script/dịch vụ bên ngoài (Sentry, analytics…) thì phải mở thêm nguồn ở đó, nếu không trình duyệt sẽ chặn.
+- **Giới hạn tần suất theo IP** (`apps/web/server/ratelimit.ts`, bảng `rate_hits`): đăng nhập 30/15 phút, đăng ký 10/giờ, quên mật khẩu 5/giờ (thêm 3/giờ cho mỗi email đích), đặt lại mật khẩu 10/15 phút, gửi đơn xin vào đội 10/giờ. Vượt ngưỡng → 429. Khoá theo tài khoản (sai 5 lần/15 phút) vẫn áp dụng riêng. Job tick xoá bản ghi cũ hơn 1 ngày.
+- IP lấy từ `x-real-ip` / `x-forwarded-for` do Vercel đặt. Nếu tự host sau reverse proxy, proxy phải ghi đè hai header này bằng IP thật, nếu không người gọi có thể tự khai IP để né giới hạn.
+
 ## Rollback
 
 - Code: Vercel → Deployments → Promote bản trước.
@@ -49,5 +55,6 @@ Khi chưa cấu hình R2, ảnh được resize ở trình duyệt và lưu dạ
 | Triệu chứng | Kiểm tra |
 | --- | --- |
 | Không nhận push trên iPhone | Người dùng phải "Thêm vào màn hình chính" rồi bật thông báo trong app |
+| Báo "Bạn thao tác quá nhiều lần" (429) | Giới hạn theo IP ở mục Bảo mật; nhiều người chung một IP (wifi công ty) có thể chạm ngưỡng đăng nhập — tăng `RULES.login` nếu cần |
 | Người dùng bị khoá đăng nhập | Sai 5 lần/15 phút → tự mở sau 15 phút; Admin có thể "Mở khoá"/"Đặt lại mật khẩu" ở tab Hệ thống |
 | Số dư quỹ lạ | Bảng `fund_entries` có khoá nguồn; mọi thao tác ĐT ghi `audit_logs` (ai, trước/sau) |

@@ -112,6 +112,11 @@ export async function tick(now: Date): Promise<TickResult> {
 
     // 6. Đẩy push còn sót
     res.pushed = await dispatchOutbox();
+
+    // 7. Dọn dấu vết giới hạn tần suất / đăng nhập quá 1 ngày (cửa sổ dài nhất là 1 giờ)
+    const old = new Date(now.getTime() - 864e5);
+    await prisma.rateHit.deleteMany({ where: { at: { lt: old } } });
+    await prisma.loginAttempt.deleteMany({ where: { at: { lt: old } } });
     return res;
   } finally {
     await releaseLease();

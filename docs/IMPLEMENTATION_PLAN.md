@@ -8,16 +8,17 @@ Toàn bộ P0–P4 và phần chính của P5 đã có code trên nhánh, gom th
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| `packages/core` (mọi công thức BRD 4–7) | Xong · 58 test Vitest, golden fixture sinh từ chính prototype |
+| `packages/core` (mọi công thức BRD 4–7) | Xong · 59 test Vitest, golden fixture sinh từ chính prototype |
 | Schema Prisma 7 + migration + seed demo | Xong · seed port nguyên `sample()`/`seedDB()` của prototype |
 | Auth, phân quyền theo đội, DTO theo vai trò | Xong |
 | Mọi màn: Đội, Của tôi, Chiến thuật, Trận tới + kế hoạch thay người, Cầu thủ, Lịch + modal trận, Thống kê, Quỹ, Duyệt, Khám phá, Hệ thống | Xong · dùng lại CSS prototype nên giao diện khớp |
 | REST API theo BRD 9.2, job `/api/jobs/tick`, outbox thông báo | Xong |
 | PWA (service worker tự viết, offline, Web Push + nút Đi/Nghỉ) | Xong · cần khoá VAPID để bật push thật |
 | Upload ảnh R2 (presigned PUT) | Xong · chưa có R2 thì dùng data URL (chỉ dev/staging) |
-| Test tích hợp service trên Postgres thật | 23 test xanh (`apps/web/test`) |
-| E2E Playwright theo 11.1 | 13 test xanh (`e2e/tests`) |
+| Test tích hợp service trên Postgres thật | 28 test xanh (`apps/web/test`) |
+| E2E Playwright theo 11.1 | 14 test xanh (`e2e/tests`) |
 | CI GitHub Actions, runbook | Xong (`.github/workflows/ci.yml`, `docs/RUNBOOK.md`) |
+| Bảo mật: CSP có nonce, giới hạn tần suất theo IP | Xong · `apps/web/proxy.ts` + `server/csp.ts` (test E2E không vi phạm CSP trên mọi màn), `server/ratelimit.ts` + bảng `rate_hits` (5 test tích hợp) |
 | So giao diện với prototype (11.1 #15) | Xong · `e2e/visual`: 13 màn/modal × 4 độ rộng, ngân sách ≤ 6 % pixel lệch (ngoại lệ có ghi lý do); báo cáo HTML là artifact CI |
 
 ### Điểm lệch so với kế hoạch ban đầu (có chủ đích)
@@ -33,7 +34,6 @@ Toàn bộ P0–P4 và phần chính của P5 đã có code trên nhánh, gom th
 - Chốt các câu hỏi mở mục 1 (MVP 60%, ngưỡng đủ người, tên miền).
 - Tạo hạ tầng thật: Neon (Singapore), Vercel (`sin1`), cron-job.org, R2, khoá VAPID, Resend; nối Sentry (`@sentry/nextjs`) khi có DSN.
 - Lighthouse LCP và k6 smoke.
-- Rà soát bảo mật (CSP header, rate limit theo IP cho API công khai).
 
 ## 0. Tóm tắt
 

@@ -7,6 +7,7 @@ import { assertNotLocked, recordAttempt } from '../auth/lockout';
 import { newToken, sha256 } from '../auth/tokens';
 import { AppError, conflict, invalid, isUniqueViolation, zodMessage } from '../errors';
 import { now } from '../clock';
+import { hit, limitIp, RULES } from '../ratelimit';
 
 export const registerSchema = z
   .object({
@@ -20,6 +21,7 @@ export const registerSchema = z
 
 /** Bước 1/2 đăng ký đội trưởng (BRD 3.2): tạo tài khoản + đăng nhập. Email bắt buộc với ĐT. */
 export async function register(raw: unknown) {
+  await limitIp('register');
   const p = registerSchema.safeParse(raw);
   if (!p.success) throw invalid(zodMessage(p.error));
   const { name, phone, email, password } = p.data;
@@ -37,6 +39,7 @@ export async function register(raw: unknown) {
 
 /** Đăng nhập bằng SĐT hoặc email; khoá 15 phút khi sai 5 lần (BRD 3.4). */
 export async function login(identifier: string, password: string) {
+  await limitIp('login');
   const at = now();
   const id = normLogin(identifier.trim());
   if (!id.value || !password) throw invalid('Nhập số điện thoại/email và mật khẩu');
@@ -59,6 +62,8 @@ export async function login(identifier: string, password: string) {
 export async function forgotPassword(email: string): Promise<{ link: string | null }> {
   const e = emailSchema.safeParse(email);
   if (!e.success) throw invalid('Email không hợp lệ');
+  await limitIp('forgot');
+  await hit(`forgot:email:${e.data}`, RULES.forgotEmail);
   const user = await prisma.user.findUnique({ where: { email: e.data } });
   if (!user) return { link: null };
   const token = newToken();
@@ -87,6 +92,7 @@ async function sendResetMail(to: string, link: string) {
 }
 
 export async function resetPassword(token: string, password: string) {
+  await limitIp('reset');
   const p = passwordSchema.safeParse(password);
   if (!p.success) throw invalid(zodMessage(p.error));
   const r = await prisma.passwordReset.findUnique({ where: { id: sha256(token) } });

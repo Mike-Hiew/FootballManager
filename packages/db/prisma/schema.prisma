@@ -47,6 +47,16 @@ model Session {
   @@map("sessions")
 }
 
+/// Giới hạn tần suất theo IP cho API công khai (đăng nhập, đăng ký, quên mật khẩu, xin vào đội).
+model RateHit {
+  id  String   @id @default(cuid())
+  key String
+  at  DateTime @default(now()) @db.Timestamptz
+
+  @@index([key, at])
+  @@map("rate_hits")
+}
+
 model LoginAttempt {
   id  String   @id @default(cuid())
   key String
