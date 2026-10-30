@@ -33,7 +33,7 @@ Toàn bộ P0–P4 và phần chính của P5 đã có code trên nhánh, gom th
 ### Còn lại trước go-live
 
 - Chốt các câu hỏi mở mục 1 (MVP 60%, ngưỡng đủ người, tên miền).
-- Tạo hạ tầng thật: Neon (Singapore), Vercel (`sin1`), cron-job.org, R2, khoá VAPID, Resend; nối Sentry (`@sentry/nextjs`) khi có DSN.
+- Tạo hạ tầng thật theo `docs/SETUP.md` (phương án miễn phí: Vercel Hobby, Neon, R2, Resend, cron-job.org); tạo admin production bằng `pnpm db:create-admin`. Nối Sentry (`@sentry/nextjs`) khi có DSN.
 - Đo lại k6 + Lighthouse trên staging thật (chạy tay workflow `Perf` với `base_url`).
 
 ## 0. Tóm tắt

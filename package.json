@@ -15,6 +15,7 @@
     "db:migrate": "pnpm --filter @san7/db migrate",
     "db:reset": "pnpm --filter @san7/db reset",
     "db:seed": "pnpm --filter @san7/db seed",
+    "db:create-admin": "pnpm --filter @san7/db create-admin",
     "e2e": "pnpm --filter @san7/e2e test",
     "db:deploy": "pnpm --filter @san7/db deploy"
   },
