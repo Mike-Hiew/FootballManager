@@ -54,6 +54,17 @@ jobs:
         env:
           CI: 'true'
           E2E_COMMAND: pnpm --filter @san7/web start -p 3200
+      - name: So giao diện với prototype (1920/1440/1024/390)
+        run: pnpm --filter @san7/e2e visual
+        env:
+          CI: 'true'
+          E2E_COMMAND: pnpm --filter @san7/web start -p 3200
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visual-report
+          path: e2e/visual-report
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

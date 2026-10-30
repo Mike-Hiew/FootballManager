@@ -53,6 +53,12 @@ pnpm --filter @san7/web test      # test tích hợp trên DB san7_test (TEST_DA
 pnpm e2e                          # Playwright trên DB san7_e2e (E2E_DATABASE_URL), tự bật dev server cổng 3200
 ```
 
+```bash
+pnpm --filter @san7/e2e visual    # so ảnh app với prototype ở 1920/1440/1024/390 → e2e/visual-report/index.html
+```
+
+Bộ so sánh giao diện chụp `docs/prototype/domdom-fc.html` và app với cùng dữ liệu demo, cùng giờ cố định, tắt chuyển động, rồi tính tỉ lệ pixel lệch (pixelmatch). Hai bên chụp trong cùng một lần chạy nên không cần commit ảnh mốc. Ngân sách mặc định ≤ 6 %; vài màn có ngoại lệ ghi lý do trong `e2e/visual/prototype.spec.ts` (tính năng BRD bắt buộc mà prototype không có).
+
 Tạo trước hai DB rỗng `san7_test`, `san7_e2e`; bộ test tự chạy `prisma migrate deploy` và seed.
 
 ## Job định kỳ
