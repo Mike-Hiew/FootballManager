@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { pushSubscribeAction } from '@/app/actions';
 import { Modal } from './ui';
 
@@ -81,51 +81,82 @@ function pushState(): PushState {
   return 'ask';
 }
 
-const SNOOZE_KEY = 'san7-push-ask';
-const snoozed = () => {
+// "Để sau" chỉ ẩn trong lần mở app này: mở app lần sau vẫn hỏi lại cho tới khi bật.
+const DISMISS_KEY = 'san7-push-ask';
+const dismissed = () => {
   try {
-    return Number(localStorage.getItem(SNOOZE_KEY) ?? 0) > Date.now();
+    return sessionStorage.getItem(DISMISS_KEY) === '1';
   } catch {
     return false;
   }
 };
-const snooze = (days: number) => {
+const dismiss = () => {
   try {
-    localStorage.setItem(SNOOZE_KEY, String(Date.now() + days * 864e5));
+    sessionStorage.setItem(DISMISS_KEY, '1');
   } catch {}
 };
 
+/** Hướng dẫn mở lại thông báo đã bị chặn: trình duyệt không cho app hỏi lại nữa. */
+function UnblockSteps() {
+  const ua = navigator.userAgent;
+  const standalone = matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone;
+  if (/iphone|ipad|ipod/i.test(ua)) {
+    return <p style={{ margin: 0 }}>Mở <b>Cài đặt</b> của iPhone → <b>Thông báo</b> → <b>{process.env.NEXT_PUBLIC_APP_NAME ?? 'Đom Đóm FC'}</b> → bật <b>Cho phép thông báo</b>, rồi quay lại app.</p>;
+  }
+  if (/android/i.test(ua)) {
+    return standalone
+      ? <p style={{ margin: 0 }}>Nhấn giữ icon app ngoài màn hình chính → <b>Thông tin ứng dụng</b> → <b>Thông báo</b> → bật, rồi quay lại app.</p>
+      : <p style={{ margin: 0 }}>Bấm biểu tượng <b>ổ khoá / cài đặt</b> cạnh thanh địa chỉ → <b>Quyền</b> → <b>Thông báo</b> → <b>Cho phép</b>, rồi tải lại trang.</p>;
+  }
+  return <p style={{ margin: 0 }}>Bấm biểu tượng <b>ổ khoá</b> cạnh thanh địa chỉ → <b>Thông báo</b> → <b>Cho phép</b>, rồi tải lại trang.</p>;
+}
+
 /**
- * Mở app là hỏi bật thông báo. Trình duyệt chỉ cho xin quyền khi người dùng bấm, nên đây là popup của app
- * với nút "Bật thông báo"; "Để sau" thì 3 ngày sau hỏi lại. Đã có quyền thì đăng ký lại lặng lẽ
- * (máy mới / cài lại app vẫn nhận được thông báo).
+ * Mỗi lần mở app đều kiểm tra thông báo; chưa bật thì hiện popup (kể cả khi người dùng đã tắt đi).
+ * Trình duyệt chỉ cho xin quyền khi người dùng bấm, nên đây là popup của app với nút "Bật thông báo";
+ * đã chặn thì trình duyệt không cho hỏi lại, popup hướng dẫn bật trong cài đặt. Quay lại app (từ Cài đặt)
+ * là kiểm tra lại; đã có quyền thì đăng ký lại lặng lẽ (máy mới / cài lại app vẫn nhận được thông báo).
  */
 export function PushAsk() {
   const [state, setState] = useState<PushState>('hidden');
   const [busy, setBusy] = useState(false);
+  const shown = useRef(false);
+  shown.current = state !== 'hidden' && state !== 'done';
   useEffect(() => {
-    const s = pushState();
-    if (s === 'done') {
-      void subscribePush().catch(() => {});
-      return;
-    }
-    if ((s !== 'ask' && s !== 'ios') || snoozed()) return;
-    // nhường popup khác (tỉ số trận vừa đá…) hiện trước
-    const timer = setInterval(() => {
-      if (document.querySelector('.overlay')) return;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    const check = () => {
+      if (document.visibilityState !== 'visible') return;
+      const s = pushState();
+      if (s === 'done') {
+        setState('hidden');
+        void subscribePush().catch(() => {});
+        return;
+      }
       clearInterval(timer);
-      setState(s);
-    }, 1500);
-    return () => clearInterval(timer);
+      if (s === 'hidden' || dismissed()) return setState('hidden');
+      if (shown.current) return setState(s); // popup đang mở: chỉ cập nhật nội dung
+      // nhường popup khác (tỉ số trận vừa đá…) hiện trước
+      timer = setInterval(() => {
+        if (document.querySelector('.overlay')) return;
+        clearInterval(timer);
+        if (!dismissed()) setState(s);
+      }, 1500);
+    };
+    check();
+    document.addEventListener('visibilitychange', check);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', check);
+    };
   }, []);
-  if (state !== 'ask' && state !== 'ios') return null;
+  if (state === 'hidden' || state === 'done') return null;
   const later = () => {
-    snooze(state === 'ios' ? 7 : 3);
+    dismiss();
     setState('hidden');
   };
   return (
     <Modal
-      title="Bật thông báo"
+      title={state === 'denied' ? 'Thông báo đang tắt' : 'Bật thông báo'}
       onClose={later}
       footer={
         state === 'ask' ? (
@@ -151,7 +182,7 @@ export function PushAsk() {
         )
       }
     >
-      <p style={{ marginTop: 0 }}>Nhận thông báo trên điện thoại để không bỏ lỡ:</p>
+      <p style={{ marginTop: 0 }}>{state === 'denied' ? 'Bạn đang không nhận được thông báo nên có thể bỏ lỡ:' : 'Nhận thông báo trên điện thoại để không bỏ lỡ:'}</p>
       <ul style={{ margin: '0 0 12px', paddingLeft: 20, lineHeight: 1.7 }}>
         <li>Điểm danh trận mới, bấm Đi / Nghỉ ngay trên màn hình khoá</li>
         <li>Tỉ số và kết quả trận</li>
@@ -162,6 +193,7 @@ export function PushAsk() {
           Trên iPhone, thông báo chỉ hoạt động khi đã cài app: bấm nút <b>Chia sẻ</b> của Safari, chọn <b>“Thêm vào màn hình chính”</b>, rồi mở app từ icon ngoài màn hình chính.
         </p>
       )}
+      {state === 'denied' && <div className="note"><UnblockSteps /></div>}
     </Modal>
   );
 }
