@@ -8,7 +8,7 @@ Toàn bộ P0–P4 và phần chính của P5 đã có code trên nhánh, gom th
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| `packages/core` (mọi công thức BRD 4–7) | Xong · 59 test Vitest, golden fixture sinh từ chính prototype |
+| `packages/core` (mọi công thức BRD 4–7) | Xong · 60 test Vitest, golden fixture sinh từ chính prototype |
 | Schema Prisma 7 + migration + seed demo | Xong · seed port nguyên `sample()`/`seedDB()` của prototype |
 | Auth, phân quyền theo đội, DTO theo vai trò | Xong |
 | Mọi màn: Đội, Của tôi, Chiến thuật, Trận tới + kế hoạch thay người, Cầu thủ, Lịch + modal trận, Thống kê, Quỹ, Duyệt, Khám phá, Hệ thống | Xong · dùng lại CSS prototype nên giao diện khớp |
@@ -32,7 +32,7 @@ Toàn bộ P0–P4 và phần chính của P5 đã có code trên nhánh, gom th
 
 ### Còn lại trước go-live
 
-- Chốt các câu hỏi mở mục 1 (MVP 60%, ngưỡng đủ người, tên miền).
+- Chốt các câu hỏi mở mục 1 còn lại (ngưỡng đủ người, đăng nhập Google, tên miền). MVP 60% đã chốt là ngưỡng số người bỏ phiếu.
 - Tạo hạ tầng thật theo `docs/SETUP.md` (phương án miễn phí: Vercel Hobby, Neon, R2, Resend, cron-job.org); tạo admin production bằng `pnpm db:create-admin`. Nối Sentry (`@sentry/nextjs`) khi có DSN.
 - Đo lại k6 + Lighthouse trên staging thật (chạy tay workflow `Perf` với `base_url`).
 
@@ -57,7 +57,7 @@ Toàn bộ P0–P4 và phần chính của P5 đã có code trên nhánh, gom th
 | # | Câu hỏi | Mặc định dùng | Chỗ cô lập trong code | Cần chốt trước |
 | --- | --- | --- | --- | --- |
 | Q1 | Gói hạ tầng | Free: Vercel Hobby + Neon Free + cron-job.org (đã tick trong ARCHITECTURE 7.3) | env + `vercel.json` | — (đã chốt) |
-| Q2 | MVP 60% | Quorum: số phiếu ≥ ceil(0.6·N người Đi), dẫn đầu không hoà | `core/mvp.ts` → `resolveMvp(rule)` | PR 3.3 |
+| Q2 | MVP 60% | Quorum: số phiếu ≥ ceil(0.6·N người Đi), dẫn đầu không hoà | `core/mvp.ts` → `resolveMvp(rule)` | — (đã chốt 30/10: ngưỡng số người bỏ phiếu) |
 | Q3 | Ngưỡng "đủ người" | Cấu hình theo đội, cột `teams.fullSquad` mặc định 7 | `core/attendance.ts` | PR 3.2 |
 | Q4 | Đăng nhập Google phase 1 | Không; phase 2 thêm bảng `user_identities` (provider, subject) mà không đổi bảng `users` | `server/auth` | P1 |
 | Q5 | Tên miền / tên sản phẩm | Dùng domain Vercel tạm; `APP_NAME`, `APP_URL` qua env | env | P5 (trước khi bật push production) |
