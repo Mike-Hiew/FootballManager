@@ -11,9 +11,11 @@ describe('trọng số', () => {
   it('mỗi vị trí tổng = 100', () => {
     for (const p of POSITIONS) expect(Object.values(WEIGHTS[p]).reduce((a, b) => a + b!, 0)).toBe(100);
   });
-  it('RB dùng của LB, RM dùng của LM', () => {
+  it('RB dùng của LB', () => {
     expect(WEIGHTS.RB).toEqual(WEIGHTS.LB);
-    expect(WEIGHTS.RM).toEqual(WEIGHTS.LM);
+  });
+  it('chỉ còn vị trí của sân 7', () => {
+    expect([...POSITIONS]).toEqual(['GK', 'CB', 'LB', 'RB', 'CM', 'ST']);
   });
 });
 
@@ -22,11 +24,11 @@ describe('positionScore', () => {
     const k = byNick('Khánh Mười');
     const h = byNick('Hùng Gôn');
     const q = byNick('Quang Còi');
-    expect(positionScore(k.stats, k.foot, 'LM')).toBeCloseTo(8.2, 1);
+    expect(positionScore(k.stats, k.foot, 'CM')).toBeCloseTo(7.9, 1);
     expect(positionScore(h.stats, h.foot, 'GK')).toBeCloseTo(8.3, 1);
     expect(positionScore(q.stats, q.foot, 'ST')).toBeCloseTo(8.0, 1);
   });
-  it('khớp prototype cho 12 cầu thủ × 10 vị trí', () => {
+  it('khớp prototype cho 12 cầu thủ × 6 vị trí', () => {
     for (const p of golden.players) {
       const s = allScores(p.stats, p.foot);
       for (const pos of POSITIONS) expect(Math.abs(s[pos] - (p.scores as Record<string, number>)[pos])).toBeLessThanOrEqual(0.05);
@@ -34,13 +36,13 @@ describe('positionScore', () => {
   });
   it('chỉ số thiếu mặc định 5, kẹp trong [1,10]', () => {
     expect(positionScore({}, 'Phải', 'CM')).toBe(5);
-    expect(positionScore(fillStats({}), 'Phải', 'LM')).toBe(4.7);
+    expect(positionScore(fillStats({}), 'Phải', 'LB')).toBe(4.7);
     const max = fillStats(Object.fromEntries(Object.keys(fillStats({})).map((k) => [k, 10])));
-    expect(positionScore(max, 'Trái', 'LM')).toBe(10);
+    expect(positionScore(max, 'Trái', 'LB')).toBe(10);
   });
   it('chân thuận chỉ ảnh hưởng vị trí biên', () => {
-    expect(footAdj('Trái', 'LM')).toBe(0.3);
-    expect(footAdj('Phải', 'LM')).toBe(-0.3);
+    expect(footAdj('Trái', 'LB')).toBe(0.3);
+    expect(footAdj('Phải', 'LB')).toBe(-0.3);
     expect(footAdj('Hai chân', 'RB')).toBe(0.2);
     expect(footAdj('Trái', 'CM')).toBe(0);
   });
@@ -49,7 +51,7 @@ describe('positionScore', () => {
 describe('explain', () => {
   it('sắp theo trọng số giảm dần và cộng đúng ra điểm', () => {
     const k = byNick('Khánh Mười');
-    const e = explain(k.stats, k.foot, 'LM');
+    const e = explain(k.stats, k.foot, 'LB');
     const ws = e.rows.map((r) => r.weight);
     expect([...ws].sort((a, b) => b - a)).toEqual(ws);
     const sum = e.rows.reduce((a, r) => a + r.contribution, 0) + e.footAdj;

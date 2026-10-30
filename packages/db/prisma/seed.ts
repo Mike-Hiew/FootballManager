@@ -131,7 +131,7 @@ async function main() {
     },
   });
   await user('u-hai', 'Lương Văn Hải', '0901000099');
-  const haiRatings: Ratings = { CB: 7.5, CDM: 7 };
+  const haiRatings: Ratings = { CB: 7.5, CM: 7 };
   await prisma.joinRequest.create({
     data: {
       teamId: dom.id, userId: 'u-hai', phone: '0901000099', createdAt: new Date(now.getTime() - 24 * H),
@@ -160,14 +160,14 @@ async function main() {
   type Q = [string, string, string, number, string, 'quy' | 'le', Ratings, string[]];
   const qs: Q[] = [
     ['q1', 'Nguyễn Hữu Phúc', 'Phúc Gôn', 1, 'Phải', 'quy', { GK: 7.8 }, ['Phản xạ (TM)']],
-    ['q2', 'Trần Đức Anh', 'Anh Thép', 4, 'Phải', 'quy', { CB: 8.2, CDM: 7 }, ['Không chiến', 'Thủ lĩnh']],
+    ['q2', 'Trần Đức Anh', 'Anh Thép', 4, 'Phải', 'quy', { CB: 8.2, CM: 7 }, ['Không chiến', 'Thủ lĩnh']],
     ['q3', 'Lê Minh Tâm', 'Tâm Lợn', 5, 'Phải', 'quy', { CB: 7.4, LB: 7 }, ['Càn quét']],
-    ['q4', 'Đỗ Văn Hiếu', 'Hiếu Còi', 8, 'Phải', 'quy', { CM: 8.4, CAM: 7.8 }, ['Kiến thiết']],
-    ['q5', 'Bùi Quang Huy', 'Huy Mập', 6, 'Phải', 'le', { CDM: 7.6, CM: 7.2 }, ['Càn quét', 'Bền bỉ']],
-    ['q6', 'Vũ Thành Nam', 'Nam Tây', 7, 'Phải', 'quy', { RM: 8.1, ST: 7.2 }, ['Tốc độ']],
-    ['q7', 'Hà Đức Toàn', 'Toàn Lé', 11, 'Trái', 'le', { LM: 7.5, LB: 7 }, ['Tốc độ']],
-    ['q8', 'Ngô Tiến Dũng', 'Dũng Tịt', 9, 'Phải', 'quy', { ST: 8.6, CAM: 7 }, ['Dứt điểm']],
-    ['q9', 'Mai Xuân Trường', 'Trường Bé', 10, 'Trái', 'quy', { CAM: 8, ST: 7.4 }, ['Rê dắt', 'Sút xa']],
+    ['q4', 'Đỗ Văn Hiếu', 'Hiếu Còi', 8, 'Phải', 'quy', { CM: 8.4, ST: 7.4 }, ['Kiến thiết']],
+    ['q5', 'Bùi Quang Huy', 'Huy Mập', 6, 'Phải', 'le', { CM: 7.6, CB: 7 }, ['Càn quét', 'Bền bỉ']],
+    ['q6', 'Vũ Thành Nam', 'Nam Tây', 7, 'Phải', 'quy', { ST: 8.1, RB: 7.2 }, ['Tốc độ']],
+    ['q7', 'Hà Đức Toàn', 'Toàn Lé', 11, 'Trái', 'le', { LB: 7.5, CM: 7 }, ['Tốc độ']],
+    ['q8', 'Ngô Tiến Dũng', 'Dũng Tịt', 9, 'Phải', 'quy', { ST: 8.6, CM: 7 }, ['Dứt điểm']],
+    ['q9', 'Mai Xuân Trường', 'Trường Bé', 10, 'Trái', 'quy', { CM: 8, ST: 7.4 }, ['Rê dắt', 'Sút xa']],
   ];
   const phPlayers = qs.map(([id, fullName, nick, num, foot, payType, r, styles]) => ({
     id, fullName, nick, num, foot, payType, stats: inferStats(r, foot), styles, isCaptain: id === 'q2',

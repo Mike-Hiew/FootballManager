@@ -2,11 +2,14 @@ import { type Position } from './positions';
 
 export type Slot = readonly [pos: Position, x: number, y: number];
 
-/** 5 sơ đồ sân 7, toạ độ %, khung thành đội mình ở dưới (BRD 5.1). Slot 0 luôn là GK. */
+/**
+ * 5 sơ đồ sân 7, toạ độ %, khung thành đội mình ở dưới (BRD 5.1). Slot 0 luôn là GK.
+ * Tiền vệ cánh/trụ của 2-3-1 và 2-1-2-1 là CM (sân 7 không có LM/RM/CDM), giữ nguyên chỗ đứng trên sân.
+ */
 export const FORMATIONS = {
-  '2-3-1': [['GK', 50, 91], ['CB', 30, 73], ['CB', 70, 73], ['LM', 17, 48], ['CM', 50, 52], ['RM', 83, 48], ['ST', 50, 20]],
+  '2-3-1': [['GK', 50, 91], ['CB', 30, 73], ['CB', 70, 73], ['CM', 17, 48], ['CM', 50, 52], ['CM', 83, 48], ['ST', 50, 20]],
   '3-2-1': [['GK', 50, 91], ['LB', 18, 72], ['CB', 50, 75], ['RB', 82, 72], ['CM', 32, 49], ['CM', 68, 49], ['ST', 50, 20]],
-  '2-1-2-1': [['GK', 50, 91], ['CB', 30, 75], ['CB', 70, 75], ['CDM', 50, 59], ['LM', 20, 40], ['RM', 80, 40], ['ST', 50, 17]],
+  '2-1-2-1': [['GK', 50, 91], ['CB', 30, 75], ['CB', 70, 75], ['CM', 50, 59], ['CM', 20, 40], ['CM', 80, 40], ['ST', 50, 17]],
   '3-1-2': [['GK', 50, 91], ['LB', 18, 72], ['CB', 50, 75], ['RB', 82, 72], ['CM', 50, 51], ['ST', 32, 23], ['ST', 68, 23]],
   '2-2-2': [['GK', 50, 91], ['CB', 30, 74], ['CB', 70, 74], ['CM', 30, 50], ['CM', 70, 50], ['ST', 30, 23], ['ST', 70, 23]],
 } as const satisfies Record<string, readonly Slot[]>;

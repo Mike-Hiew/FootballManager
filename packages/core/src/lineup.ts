@@ -11,10 +11,10 @@ export interface LineupPlayer {
   isCaptain?: boolean;
 }
 
-/** Slot là "đúng sở trường" khi vị trí nằm trong top 3 điểm của người đó (BRD 5.2). */
+/** Slot là "đúng sở trường" khi vị trí nằm trong top 2 điểm của người đó (BRD 5.2; chỉ còn 6 vị trí nên top 3 gần như ai cũng đạt). */
 export function isNatural(p: Pick<LineupPlayer, 'stats' | 'foot'>, pos: Position): boolean {
   return rankedPositions(p.stats, p.foot)
-    .slice(0, 3)
+    .slice(0, 2)
     .some(([k]) => k === pos);
 }
 
