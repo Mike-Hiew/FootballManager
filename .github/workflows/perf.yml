@@ -1,0 +1,76 @@
+# Đo hiệu năng theo BRD 9.4: k6 smoke (API p95 < 300 ms ở 20 req/s) và Lighthouse (LCP trang Đội < 1.5 s).
+# - Push lên main: build app, seed demo rồi đo trên runner (theo dõi xu hướng, không thay cho đo thật).
+# - Chạy tay với base_url: đo thẳng staging/production. Tài khoản đo lấy từ secret PERF_LOGIN_ID / PERF_LOGIN_PW
+#   (để trống thì dùng tài khoản ĐT của seed demo, chỉ có ở staging).
+name: Perf
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'URL cần đo (để trống = build và đo trên runner)'
+        required: false
+        default: ''
+      team_id:
+        description: 'ID đội dùng để đo'
+        required: false
+        default: 't-domdom'
+
+concurrency:
+  group: perf-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: san7
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/san7
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/san7
+      SEED_DEMO: 'true'
+      BASE_URL: ${{ inputs.base_url || 'http://localhost:3000' }}
+      TEAM_ID: ${{ inputs.team_id || 't-domdom' }}
+      LOGIN_ID: ${{ secrets.PERF_LOGIN_ID }}
+      LOGIN_PW: ${{ secrets.PERF_LOGIN_PW }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build, seed và chạy app trên runner
+        if: ${{ !inputs.base_url }}
+        run: |
+          pnpm --filter @san7/db exec prisma migrate deploy
+          pnpm --filter @san7/db seed
+          pnpm --filter @san7/web build
+          (pnpm --filter @san7/web start -p 3000 > server.log 2>&1 &)
+          for i in $(seq 60); do curl -fs -o /dev/null http://localhost:3000/dang-nhap && exit 0; sleep 1; done; cat server.log; exit 1
+      - name: Cài k6
+        run: |
+          curl -fsSL https://github.com/grafana/k6/releases/download/v1.3.0/k6-v1.3.0-linux-amd64.tar.gz | tar xz
+          sudo mv k6-v1.3.0-linux-amd64/k6 /usr/local/bin/k6
+      - name: k6 smoke — API p95 < 300 ms ở 20 req/s
+        run: k6 run e2e/perf/k6-smoke.js
+      - name: Lighthouse — LCP trang Đội < 1.5 s (mobile, Slow 4G)
+        run: |
+          pnpm --filter @san7/e2e exec playwright install --with-deps chromium
+          pnpm --filter @san7/e2e lighthouse
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-report
+          path: e2e/perf-report
+          retention-days: 14

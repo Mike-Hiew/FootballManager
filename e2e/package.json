@@ -6,13 +6,16 @@
   "scripts": {
     "test": "playwright test --project=desktop --project=mobile",
     "typecheck": "tsc --noEmit -p .",
-    "visual": "playwright test --project=visual"
+    "visual": "playwright test --project=visual",
+    "lighthouse": "node perf/lighthouse.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
     "@types/node": "22.20.5",
+    "@types/pngjs": "6.0.5",
+    "chrome-launcher": "1.2.2",
+    "lighthouse": "13.6.0",
     "pixelmatch": "8.0.0",
-    "pngjs": "7.0.0",
-    "@types/pngjs": "6.0.5"
+    "pngjs": "7.0.0"
   }
 }

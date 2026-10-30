@@ -33,6 +33,13 @@ Khi chưa cấu hình R2, ảnh được resize ở trình duyệt và lưu dạ
 - **Giới hạn tần suất theo IP** (`apps/web/server/ratelimit.ts`, bảng `rate_hits`): đăng nhập 30/15 phút, đăng ký 10/giờ, quên mật khẩu 5/giờ (thêm 3/giờ cho mỗi email đích), đặt lại mật khẩu 10/15 phút, gửi đơn xin vào đội 10/giờ. Vượt ngưỡng → 429. Khoá theo tài khoản (sai 5 lần/15 phút) vẫn áp dụng riêng. Job tick xoá bản ghi cũ hơn 1 ngày.
 - IP lấy từ `x-real-ip` / `x-forwarded-for` do Vercel đặt. Nếu tự host sau reverse proxy, proxy phải ghi đè hai header này bằng IP thật, nếu không người gọi có thể tự khai IP để né giới hạn.
 
+## Hiệu năng
+
+- Mục tiêu BRD 9.4: trang Đội LCP < 1.5 s trên 4G, API p95 < 300 ms.
+- Đo staging/production: Actions → **Perf** → Run workflow, điền `base_url`. Production không có tài khoản demo: tạo một tài khoản đo và đặt secret `PERF_LOGIN_ID` / `PERF_LOGIN_PW` (cùng `team_id` của đội đó).
+- k6 bắn 20 req/s trong 1 phút từ một IP; giới hạn theo IP chỉ áp vào đăng nhập/đăng ký… nên chỉ lần đăng nhập ở bước setup bị tính.
+- Báo cáo Lighthouse HTML ở artifact `perf-report`.
+
 ## Rollback
 
 - Code: Vercel → Deployments → Promote bản trước.

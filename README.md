@@ -42,7 +42,7 @@ Tài khoản demo (chỉ khi `SEED_DEMO=true`): Admin `0900000000` / `admin123`;
 ## Kiểm thử
 
 ```bash
-pnpm --filter @san7/core test     # 58 test công thức (golden fixture sinh từ prototype)
+pnpm --filter @san7/core test     # 59 test công thức (golden fixture sinh từ prototype)
 ```
 
 ```bash
@@ -60,6 +60,20 @@ pnpm --filter @san7/e2e visual    # so ảnh app với prototype ở 1920/1440/1
 Bộ so sánh giao diện chụp `docs/prototype/domdom-fc.html` và app với cùng dữ liệu demo, cùng giờ cố định, tắt chuyển động, rồi tính tỉ lệ pixel lệch (pixelmatch). Hai bên chụp trong cùng một lần chạy nên không cần commit ảnh mốc. Ngân sách mặc định ≤ 6 %; vài màn có ngoại lệ ghi lý do trong `e2e/visual/prototype.spec.ts` (tính năng BRD bắt buộc mà prototype không có).
 
 Tạo trước hai DB rỗng `san7_test`, `san7_e2e`; bộ test tự chạy `prisma migrate deploy` và seed.
+
+### Hiệu năng (BRD 9.4)
+
+Chạy app bản production (`pnpm --filter @san7/web build && pnpm --filter @san7/web start`) với dữ liệu demo, rồi:
+
+```bash
+k6 run e2e/perf/k6-smoke.js                 # API p95 < 300 ms ở 20 req/s
+```
+
+```bash
+pnpm --filter @san7/e2e lighthouse          # LCP trang Đội < 1.5 s (mobile, Slow 4G) → e2e/perf-report/
+```
+
+Cả hai nhận `BASE_URL` để đo staging/production (tài khoản đo qua `LOGIN_ID`/`LOGIN_PW`). Workflow `Perf` chạy hai bước này khi push lên `main`, hoặc chạy tay với `base_url`.
 
 ## Job định kỳ
 

@@ -19,6 +19,7 @@ Toàn bộ P0–P4 và phần chính của P5 đã có code trên nhánh, gom th
 | E2E Playwright theo 11.1 | 14 test xanh (`e2e/tests`) |
 | CI GitHub Actions, runbook | Xong (`.github/workflows/ci.yml`, `docs/RUNBOOK.md`) |
 | Bảo mật: CSP có nonce, giới hạn tần suất theo IP | Xong · `apps/web/proxy.ts` + `server/csp.ts` (test E2E không vi phạm CSP trên mọi màn), `server/ratelimit.ts` + bảng `rate_hits` (5 test tích hợp) |
+| Hiệu năng (BRD 9.4) | Đo local (bản production, dữ liệu demo): k6 20 req/s → API p95 21 ms (mục tiêu < 300 ms); Lighthouse mobile Slow 4G → LCP trang Đội 904 ms (< 1.5 s), điểm 91; `buildPlan` 20 người < 200 ms có test. Script `e2e/perf/`, workflow `Perf`. Cần đo lại trên staging thật (Vercel `sin1` + Neon) |
 | So giao diện với prototype (11.1 #15) | Xong · `e2e/visual`: 13 màn/modal × 4 độ rộng, ngân sách ≤ 6 % pixel lệch (ngoại lệ có ghi lý do); báo cáo HTML là artifact CI |
 
 ### Điểm lệch so với kế hoạch ban đầu (có chủ đích)
@@ -33,7 +34,7 @@ Toàn bộ P0–P4 và phần chính của P5 đã có code trên nhánh, gom th
 
 - Chốt các câu hỏi mở mục 1 (MVP 60%, ngưỡng đủ người, tên miền).
 - Tạo hạ tầng thật: Neon (Singapore), Vercel (`sin1`), cron-job.org, R2, khoá VAPID, Resend; nối Sentry (`@sentry/nextjs`) khi có DSN.
-- Lighthouse LCP và k6 smoke.
+- Đo lại k6 + Lighthouse trên staging thật (chạy tay workflow `Perf` với `base_url`).
 
 ## 0. Tóm tắt
 
