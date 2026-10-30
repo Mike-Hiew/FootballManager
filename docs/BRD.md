@@ -401,7 +401,7 @@ Xoá trận: cần xác nhận; trận đã có tỉ số thì xoá mềm.
   - Số phiếu ≥ cần và người dẫn đầu không hoà → MVP = người dẫn đầu, `status = 'done'`, `by = 'vote'`, thông báo "MVP trận vs …: Quang Còi với 3/4 phiếu".
   - Ngược lại (thiếu phiếu hoặc hoà) → `status = 'need'`, báo ĐT "cần chỉ định MVP", tab Duyệt +1.
 - **ĐT chỉ định** bất kỳ lúc nào (kể cả không mở vote): `by = 'captain'`, thông báo người Đi.
-- Quy tắc 60% được hiểu là **ngưỡng số người tham gia bỏ phiếu** (quorum), không phải 60% số phiếu dồn cho một người. Câu hỏi mở: có giữ cách hiểu này không.
+- Quy tắc 60% là **ngưỡng số người tham gia bỏ phiếu** (quorum), không phải 60% số phiếu dồn cho một người. Đã chốt 30/10/2026.
 - **Hiển thị MVP**: sao vàng phát sáng trên thẻ sân chiến thuật + số lần MVP trong năm; bảng "Ngôi sao MVP" ở dashboard; cột MVP ở Thống kê.
 
 ### 6.7 Thống kê mùa (tab Thống kê)
@@ -783,7 +783,6 @@ Phase 1–2 làm nền dữ liệu và công thức; giao diện theme đầy đ
 ### 11.4 Câu hỏi mở
 
 - Stack chính thức: Next.js + PostgreSQL (đề xuất) hay OutSystems ODC?
-- Quy tắc MVP 60%: giữ cách hiểu quorum (60% người Đi bỏ phiếu) hay đổi thành người thắng phải có ≥ 60% phiếu?
 - Ngưỡng "đủ người" cố định 7 hay cho ĐT cấu hình (ví dụ 9 = 7 + 2 dự bị)?
 - Có cần đăng nhập bằng Zalo / Google ở phase 1 không?
 - Tên miền và tên sản phẩm chính thức (prototype dùng "Sân 7 Manager").

@@ -42,7 +42,7 @@ Tài khoản demo (chỉ khi `SEED_DEMO=true`): Admin `0900000000` / `admin123`;
 ## Kiểm thử
 
 ```bash
-pnpm --filter @san7/core test     # 59 test công thức (golden fixture sinh từ prototype)
+pnpm --filter @san7/core test     # 60 test công thức (golden fixture sinh từ prototype)
 ```
 
 ```bash
