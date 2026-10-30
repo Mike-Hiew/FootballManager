@@ -1,0 +1,13 @@
+# Dự phòng cho scheduler ngoài (cron-job.org): gọi /api/jobs/tick. GitHub Actions cron
+# có thể trễ vài phút nên chỉ là lớp dự phòng; mọi việc trong tick đều idempotent.
+name: Job tick (dự phòng)
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    if: ${{ vars.APP_URL != '' }}
+    steps:
+      - run: curl -fsS -X POST -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" "${{ vars.APP_URL }}/api/jobs/tick"

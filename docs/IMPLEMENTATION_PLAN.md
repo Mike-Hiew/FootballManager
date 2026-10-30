@@ -2,6 +2,38 @@
 
 Oct 30, 2026 · dựa trên `docs/BRD.md` (29/10), `docs/ARCHITECTURE.md` (30/10) và prototype `docs/prototype/domdom-fc.html` (v3)
 
+## Trạng thái thực hiện (30/10/2026)
+
+Toàn bộ P0–P4 và phần chính của P5 đã có code trên nhánh, gom thành vài commit lớn thay vì 18 PR riêng.
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| `packages/core` (mọi công thức BRD 4–7) | Xong · 58 test Vitest, golden fixture sinh từ chính prototype |
+| Schema Prisma 7 + migration + seed demo | Xong · seed port nguyên `sample()`/`seedDB()` của prototype |
+| Auth, phân quyền theo đội, DTO theo vai trò | Xong |
+| Mọi màn: Đội, Của tôi, Chiến thuật, Trận tới + kế hoạch thay người, Cầu thủ, Lịch + modal trận, Thống kê, Quỹ, Duyệt, Khám phá, Hệ thống | Xong · dùng lại CSS prototype nên giao diện khớp |
+| REST API theo BRD 9.2, job `/api/jobs/tick`, outbox thông báo | Xong |
+| PWA (service worker tự viết, offline, Web Push + nút Đi/Nghỉ) | Xong · cần khoá VAPID để bật push thật |
+| Upload ảnh R2 (presigned PUT) | Xong · chưa có R2 thì dùng data URL (chỉ dev/staging) |
+| Test tích hợp service trên Postgres thật | 23 test xanh (`apps/web/test`) |
+| E2E Playwright theo 11.1 | 13 test xanh (`e2e/tests`) |
+| CI GitHub Actions, runbook | Xong (`.github/workflows/ci.yml`, `docs/RUNBOOK.md`) |
+
+### Điểm lệch so với kế hoạch ban đầu (có chủ đích)
+
+- **Giao diện**: dùng lại nguyên CSS của prototype (`apps/web/app/prototype.css`) + component React sinh đúng markup, thay vì viết lại bằng Tailwind/Radix — nhanh hơn và khớp pixel hơn. Kéo thả dùng HTML5 drag & drop như prototype (không thêm dnd-kit); cập nhật lạc quan dùng `useOptimistic` + Server Actions (không thêm TanStack Query); service worker viết tay (không thêm Serwist).
+- **Ngày nghiệp vụ** lưu dạng chuỗi `YYYY-MM-DD` theo giờ VN (không dùng `@db.Date`) để tránh lệch múi giờ; thời điểm vẫn là `timestamptz`.
+- **inferStats**: thuật toán BRD (GD 600 vòng + ridge + làm tròn 0.5) lệch tới 0.5 ở điểm ≥ 9, vi phạm tiêu chí ≤ 0.3. Đã thêm bước tinh chỉnh ±0.5 chỉ chạy khi lệch > 0.3, nên kết quả trùng prototype ở mọi ca bình thường.
+- **Khoá job tick**: dùng lease trên `job_runs` thay cho `pg_try_advisory_lock` (advisory lock theo phiên không an toàn với pool kết nối serverless).
+- **Test DB**: dùng `prisma migrate deploy` + seed (Prisma chặn `migrate reset` khi chạy bởi agent).
+
+### Còn lại trước go-live
+
+- Chốt các câu hỏi mở mục 1 (MVP 60%, ngưỡng đủ người, tên miền).
+- Tạo hạ tầng thật: Neon (Singapore), Vercel (`sin1`), cron-job.org, R2, khoá VAPID, Resend; nối Sentry (`@sentry/nextjs`) khi có DSN.
+- Visual regression so ảnh prototype ở 1920/1440/1024/390 (hiện mới kiểm "không cuộn ngang"); Lighthouse LCP và k6 smoke.
+- Rà soát bảo mật (CSP header, rate limit theo IP cho API công khai).
+
 ## 0. Tóm tắt
 
 - **Mục tiêu:** dựng bản chính thức chạy được trên production, qua toàn bộ 15 tiêu chí nghiệm thu mục 11.1 BRD bằng test tự động.

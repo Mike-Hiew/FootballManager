@@ -9,6 +9,7 @@ import { usePlayerModal } from '../players/PlayersView';
 import { MatchModal } from '../matches/MatchModal';
 import { byKick, isPlayed, isSettled, seasonOf } from '@/lib/season';
 import { setAttendanceAction } from '@/app/actions';
+import { PushPrompt } from '../Pwa';
 
 /** Màn Của tôi (BRD 8.4). */
 export function MeView({ duesMonths }: { duesMonths: string[] }) {
@@ -46,6 +47,7 @@ export function MeView({ duesMonths }: { duesMonths: string[] }) {
           {view.myPendingEdit && <p className="note" style={{ gridColumn: '1/-1', margin: 0 }}><span className="chip le">Đang chờ duyệt</span> Bản cập nhật hồ sơ của bạn đang chờ đội trưởng duyệt.</p>}
         </div>
 
+        <PushPrompt />
         {nextOpen && (
           <div className="note" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <span>Bạn chưa điểm danh trận <b>vs {nextOpen.opponent}</b> ({dm(nextOpen.date)}{nextOpen.time ? ' ' + nextOpen.time : ''}).</span>

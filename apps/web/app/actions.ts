@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { redirect } from 'next/navigation';
 import { inferStats, type Foot, type Ratings, type Stats } from '@san7/core';
 import { run } from '@/server/result';
@@ -17,7 +18,7 @@ import * as fund from '@/server/services/fund';
 import * as tactics from '@/server/services/tactics';
 import * as admin from '@/server/services/admin';
 import { listNotifications, markAllRead } from '@/server/services/notify';
-import { saveSubscription } from '@/server/services/push';
+import { dispatchOutbox, saveSubscription } from '@/server/services/push';
 import { now } from '@/server/clock';
 import { prisma } from '@san7/db';
 
@@ -25,6 +26,8 @@ const refresh = (teamId: string) => revalidatePath(`/t/${teamId}`, 'layout');
 const inTeam = async <T>(teamId: string, fn: (ctx: Awaited<ReturnType<typeof teamCtx>>) => Promise<T>) => {
   const r = await fn(await teamCtx(teamId));
   refresh(teamId);
+  // Outbox: đẩy Web Push sau khi phản hồi xong (ARCHITECTURE 6.3); job tick quét lại phần sót.
+  after(() => dispatchOutbox(50).catch((e) => console.error('push', e)));
   return r;
 };
 

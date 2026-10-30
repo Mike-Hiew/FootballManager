@@ -7,10 +7,12 @@ test('11.1 #8 — thành viên chưa vote thấy viền nhấp nháy + "✓ Tôi
   await hydrated(page);
   const box = page.locator('.nxb');
   await expect(box).toHaveClass(/need/);
-  const count = box.locator('.nx-att .big b');
-  const before = Number(await count.textContent());
+  // aria-label của thanh điểm danh luôn là số thật (số lớn có hiệu ứng đếm từ 0)
+  const bar = box.locator('.nx-bar');
+  const before = Number((await bar.getAttribute('aria-label'))!.match(/^(\d+) đi/)![1]);
   await box.getByRole('button', { name: '✓ Tôi đi' }).click();
-  await expect(count).toHaveText(String(before + 1));
+  await expect(bar).toHaveAttribute('aria-label', new RegExp(`^${before + 1} đi`));
+  await expect(box.locator('.nx-att .big b')).toHaveText(String(before + 1));
   await expect(box).not.toHaveClass(/need/);
   await expect(page.locator('.toast')).toContainText('Đã điểm danh: bạn ĐI');
 });

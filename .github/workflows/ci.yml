@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: san7
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/san7
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/san7
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/san7_test
+      E2E_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/san7_e2e
+      CRON_SECRET: ci-secret
+      SEED_DEMO: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Tạo DB test
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -c 'CREATE DATABASE san7_test;'
+          PGPASSWORD=postgres psql -h localhost -U postgres -c 'CREATE DATABASE san7_e2e;'
+      - run: pnpm typecheck
+      - name: Vitest — công thức (packages/core)
+        run: pnpm --filter @san7/core test
+      - name: Vitest — service trên Postgres thật (apps/web)
+        run: pnpm --filter @san7/web test
+      - run: pnpm --filter @san7/web build
+      - name: Playwright
+        run: |
+          pnpm --filter @san7/e2e exec playwright install --with-deps chromium
+          pnpm --filter @san7/e2e test
+        env:
+          CI: 'true'
+          E2E_COMMAND: pnpm --filter @san7/web start -p 3200
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+          retention-days: 7

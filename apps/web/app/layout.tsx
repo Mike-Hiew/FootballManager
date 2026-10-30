@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Be_Vietnam_Pro, Jost } from 'next/font/google';
 import './prototype.css';
 import './app.css';
+import { RegisterSW } from '@/components/Pwa';
 
 const body = Be_Vietnam_Pro({ subsets: ['latin', 'vietnamese'], weight: ['300', '400', '500', '600', '700'], variable: '--font-body', display: 'swap' });
 const display = Jost({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], variable: '--font-display', display: 'swap' });
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <i className="field" /><i className="ring" /><i className="goal" />
         </div>
         {children}
+        <RegisterSW />
       </body>
     </html>
   );
