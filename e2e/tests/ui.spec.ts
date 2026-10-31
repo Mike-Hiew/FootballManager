@@ -47,7 +47,8 @@ test('11.1 #5 — chạm cầu thủ → slot sáng theo ngưỡng; chạm slot 
 
   await page.locator('.slot').nth(6).click(); // ST trống
   const sugg = page.locator('.pcard2 .sugg .sg');
-  await expect(sugg.first()).toContainText('Quang Còi');
+  // Quang Còi (p9); test chấm chỉ số có thể đã chốt biệt danh mới "Quang Sát Thủ"
+  await expect(sugg.first()).toContainText(/Quang (Còi|Sát Thủ)/);
   await expect(sugg.first()).toContainText('Hợp nhất');
   await page.getByRole('button', { name: 'Xếp tự động' }).click();
   await expect(page.locator('.slot.filled')).toHaveCount(7);

@@ -15,6 +15,7 @@ import { stadiumScene } from './stadium';
 import { TeamInfoModal } from './TeamInfoModal';
 import { PaymentReminders } from '../PaymentReminders';
 import { MatchModal } from '../matches/MatchModal';
+import { StatReviewModal } from '../players/StatReviewModal';
 import { remindVoteAction, setAttendanceAction, setVoteStateAction, skipClaimAction } from '@/app/actions';
 import { byKick, isPlayed, isSettled, seasonOf } from '@/lib/season';
 import type { MatchDTO } from '@/lib/types';
@@ -229,6 +230,34 @@ function NextMatch() {
 }
 
 /** Nhắc người đã Đi khai báo bàn/kiến tạo cho trận vừa có tỉ số (BRD 6.8). Tắt khi đã khai báo hoặc bấm "Không có". */
+/** Nhắc chấm chỉ số đồng đội đang chờ (BRD 4.7): mỗi bản mình chưa chấm một dòng, tối đa 3. */
+function StatReviewReminders() {
+  const { view, byId } = useTeam();
+  const [open, setOpen] = useState<string | null>(null);
+  const todo = view.statReviews.filter((r) => !r.myVote && byId(r.playerId));
+  const cur = open ? view.statReviews.find((r) => r.editId === open) : null;
+  if (!todo.length && !cur) return null;
+  return (
+    <>
+      {todo.slice(0, 3).map((r) => {
+        const p = byId(r.playerId)!;
+        return (
+          <div key={r.editId} className="note stat-remind" role="status" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Avatar p={p} size={28} />
+            <span>
+              <b>{shortName(p)}</b> {r.origin === 'join' ? 'vừa vào đội' : r.origin === 'captain' ? 'được đội trưởng nhờ chấm lại' : 'vừa cập nhật chỉ số'} — bạn xác nhận hoặc chỉnh giúp?
+              <span className="muted"> {r.voted}/{r.invited} đã chấm</span>
+            </span>
+            <button type="button" className="btn primary sm" onClick={() => setOpen(r.editId)}>Chấm chỉ số</button>
+          </div>
+        );
+      })}
+      {todo.length > 3 && <div className="hint" style={{ margin: 0 }}>Còn {todo.length - 3} người nữa chờ bạn chấm.</div>}
+      {cur && <StatReviewModal review={cur} onClose={() => setOpen(null)} />}
+    </>
+  );
+}
+
 function ClaimReminders() {
   const { view, teamId, act } = useTeam();
   const [hidden, setHidden] = useState<string[]>([]);
@@ -344,6 +373,7 @@ export function Dashboard({ isNew }: { isNew?: boolean }) {
         </div>
 
         <ClaimReminders />
+        <StatReviewReminders />
         <PaymentReminders />
         <NextMatch />
 

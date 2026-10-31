@@ -1,10 +1,12 @@
 import { z } from 'zod';
 import { prisma } from '@san7/db';
-import { addMonths, currentMonth, payTypeSchema, profileSchema } from '@san7/core';
+import { addMonths, averageStats, currentMonth, payTypeSchema, profileSchema } from '@san7/core';
 import { type Ctx, requireManager } from '../authz';
 import { audit } from '../audit';
 import { forbidden, invalid, notFound, zodMessage } from '../errors';
 import { captainUserIds, emit } from './notify';
+import { announceReview } from './statreview';
+import { statsOf } from './mappers';
 
 const captainEdit = profileSchema.extend({ payType: payTypeSchema, isCaptain: z.boolean().optional() });
 
@@ -96,15 +98,19 @@ export async function submitProfileEdit(ctx: Ctx, raw: unknown) {
         kind: 'edit', teamId: ctx.teamId, recipients: await captainUserIds(tx, ctx.teamId), actorId: ctx.user.id, view: 'duyet',
         text: `${me.nick || me.fullName} gửi cập nhật hồ sơ, chỉ số`,
       });
+      await announceReview(tx, ctx, ctx.teamId, me, 'self');
     }
   });
 }
 
 export async function approveProfileEdit(ctx: Ctx, editId: string, edited?: unknown) {
   requireManager(ctx);
-  const e = await prisma.profileEdit.findFirst({ where: { id: editId, teamId: ctx.teamId, status: 'pending' }, include: { player: true } });
+  const e = await prisma.profileEdit.findFirst({ where: { id: editId, teamId: ctx.teamId, status: 'pending' }, include: { player: true, votes: true } });
   if (!e) throw notFound('Bản cập nhật không còn chờ duyệt');
-  const p = profileSchema.safeParse(edited ?? e.payload);
+  // Không sửa gì thêm → chốt theo trung bình bản khai + phiếu đồng đội (cả đội chấm, BRD 4.7)
+  const payload = e.payload as Record<string, unknown>;
+  const fallback = { ...payload, stats: averageStats([statsOf(payload.stats), ...e.votes.map((v) => statsOf(v.stats))]) };
+  const p = profileSchema.safeParse(edited ?? fallback);
   if (!p.success) throw invalid(zodMessage(p.error));
   const d = p.data;
   await prisma.$transaction(async (tx) => {
@@ -113,7 +119,7 @@ export async function approveProfileEdit(ctx: Ctx, editId: string, edited?: unkn
       data: { fullName: d.fullName, nick: d.nick || null, dob: d.dob || null, num: d.num ?? null, foot: d.foot, styles: d.styles, stats: d.stats, avatarUrl: d.avatarUrl || null },
     });
     await tx.profileEdit.update({ where: { id: e.id }, data: { status: 'approved', payload: d, decidedById: ctx.user.id, decidedAt: ctx.now } });
-    await emit(tx, { kind: 'result', teamId: ctx.teamId, recipients: [e.player.userId], actorId: ctx.user.id, view: 'toi', text: 'Đội trưởng đã duyệt cập nhật hồ sơ của bạn' });
+    await emit(tx, { kind: 'result', teamId: ctx.teamId, recipients: [e.player.userId], actorId: ctx.user.id, view: 'toi', text: e.votes.length ? `Đội trưởng đã chốt chỉ số của bạn (${e.votes.length} đồng đội chấm)` : 'Đội trưởng đã duyệt cập nhật hồ sơ của bạn' });
     await audit(tx, ctx, 'profile.approve', 'player', e.playerId, e.player, d);
   });
 }

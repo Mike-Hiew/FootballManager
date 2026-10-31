@@ -91,7 +91,17 @@ export interface TeamDTO {
 
 export interface ApprovalsDTO {
   joins: Array<{ id: string; createdAt: string; phone: string; payload: Record<string, unknown> }>;
-  edits: Array<{ id: string; playerId: string; createdAt: string; payload: Record<string, unknown> }>;
+  edits: Array<{
+    id: string; playerId: string; createdAt: string; payload: Record<string, unknown>;
+    /** self = tự sửa · join = vừa vào đội · captain = ĐT yêu cầu chấm */
+    origin: 'self' | 'join' | 'captain';
+    /** trung bình bản khai + phiếu đồng đội (đề xuất chốt) */
+    average: Stats | null;
+    votes: Array<{ playerId: string; stats: Stats }>;
+    /** thành viên được mời mà chưa chấm */
+    pending: string[];
+    remindedAt: string | null;
+  }>;
   claims: Array<{ id: string; matchId: string; playerId: string; goals: number; assists: number; createdAt: string }>;
   mvpNeed: string[];
   /** thành viên báo đã đóng tiền, chờ ĐT xác nhận */
@@ -116,6 +126,8 @@ export interface TeamView {
   /** popup tỉ số trận vừa kết thúc + nhắc khai báo (BRD 6.8) */
   postMatch: { resultMatchId: string | null; claimMatchIds: string[] };
   /** khoản người đang xem còn phải đóng theo yêu cầu của ĐT */
+  /** bản chỉ số đồng đội đang chờ cả đội chấm (BRD 4.7) */
+  statReviews: Array<{ editId: string; playerId: string; origin: 'self' | 'join' | 'captain'; proposed: Stats; myVote: Stats | null; voted: number; invited: number }>;
   myPayments: Array<{ id: string; kind: 'dues' | 'le'; label: string; amount: number; note: string | null; matchId: string | null; status: 'due' | 'pending' | 'rejected' }>;
   now: string;
   year: number;

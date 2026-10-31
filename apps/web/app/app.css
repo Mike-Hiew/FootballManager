@@ -154,3 +154,16 @@ select.mini{width:auto}
 .install-sheet.k-ipad{animation:none}
 @keyframes is-nudge{0%,100%{margin-bottom:0}50%{margin-bottom:-6px}}
 @media (prefers-reduced-motion:reduce){.install-sheet,.is-arrow{animation:none}}
+
+/* ===== Chấm chỉ số đồng đội (BRD 4.7) ===== */
+.sr-head{display:flex;gap:12px;align-items:center}
+.sr-track{position:relative;display:flex;align-items:center}
+.sr-track input{width:100%}
+.sr-mark{position:absolute;top:50%;width:3px;height:16px;margin-left:-1.5px;transform:translateY(-50%);border-radius:2px;background:var(--accent);opacity:.75;pointer-events:none}
+.sr-row .val small{display:block;font-size:10.5px;font-weight:700}
+.sr-row .val small.up{color:var(--good)}.sr-row .val small.down{color:var(--bad)}
+.sr-diff .code{color:var(--accent)}
+.vote-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.vote-list .chip{display:inline-flex;align-items:center;gap:6px}
+.vote-list .chip.wait{opacity:.75}
+.vote-list .linkbtn{font-size:11.5px}

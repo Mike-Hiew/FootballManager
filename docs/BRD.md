@@ -272,6 +272,19 @@ Test: nhập {CB: 8.2, CM: 7} → tính lại CB nằm trong 8.2 ± 0.3. Giao di
 - Lọc theo nhóm vị trí (TM / Hậu vệ / Tiền vệ / Tiền đạo), tìm theo tên, sắp xếp theo số áo / điểm cao nhất / tên.
 - Bấm thẻ → modal 3 tab: Hồ sơ, Chỉ số (thanh trượt + bảng điểm 6 vị trí cập nhật trực tiếp), Từ điểm vị trí. Chế độ: sửa (ĐT), tự sửa → chờ duyệt (thành viên), xem (khách), duyệt đơn (ĐT).
 
+### 4.7 Cả đội chấm chỉ số, đội trưởng chốt
+
+Bổ sung 31/10/2026.
+
+- **Khi nào mở đợt chấm**: thành viên tự cập nhật hồ sơ/chỉ số; thành viên mới được duyệt vào đội (chỉ số khai lúc đăng ký dùng tạm); hoặc ĐT bấm **Yêu cầu cả đội chấm** ở hồ sơ một cầu thủ (bản đề xuất = chỉ số hiện tại). Mỗi cầu thủ có tối đa một đợt đang chờ.
+- **Ai chấm**: mọi thành viên đang hoạt động có tài khoản, trừ chính người đó. Họ nhận thông báo và thấy dòng "… vừa cập nhật chỉ số — bạn xác nhận hoặc chỉnh giúp?" ở tab Đội.
+- **Chấm**: bảng 17 chỉ số điền sẵn bản đề xuất (vạch vàng đánh dấu bản khai). **Xác nhận như bản khai** gửi đúng bản đề xuất; chỉnh thanh trượt rồi **Gửi chỉ số tôi chấm**. Chấm lại thì ghi đè phiếu cũ. Không tự chấm mình.
+- **Chỉ số đề xuất** = trung bình từng chỉ số của bản tự khai + mọi phiếu đồng đội (mỗi phiếu ngang nhau), làm tròn bước 0.5.
+- **ĐT chốt** ở tab Duyệt: thẻ hiện số người đã chấm / được mời, ai đã chấm (✓) và ai chưa; **Chốt theo trung bình** áp chỉ số trung bình; **Sửa thêm** mở bản trung bình để ĐT chỉnh (ĐT toàn quyền); **Từ chối** như cũ.
+- **Nhắc**: ĐT nhắc từng người chưa chấm hoặc **Nhắc tất cả**; ở hồ sơ cầu thủ, ĐT **Nhắc cập nhật chỉ số** để người đó tự sửa hồ sơ & chỉ số.
+- ĐT tự sửa chỉ số (của người khác hoặc của mình) vẫn áp dụng ngay, không qua đợt chấm.
+- Dữ liệu: `profile_edits.origin` (self | join | captain), `profile_edits.remindedAt`, bảng `stat_votes (editId, playerId, stats)`. API: `PUT /profile-edits/:id/vote`, `POST /profile-edits/:id/remind`, `POST /players/:id/request-review`, `POST /players/:id/remind-update`.
+
 ## 5. Module chiến thuật
 
 Tab Chiến thuật có 2 chế độ chuyển bằng nút pill: **Chiến thuật tổng** (đội hình mạnh nhất cả đội, route `#chien-thuat`) và **Trận sắp tới** (chỉ lấy người đã điểm danh Đi, route `#tran-toi`). Mỗi chế độ lưu đội hình riêng: tổng lưu ở đội, trận tới lưu ở từng trận. Không có đội hình A/B/C.

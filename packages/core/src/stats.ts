@@ -37,6 +37,20 @@ export function fillStats(partial: Partial<Record<string, number>>): Stats {
   return out;
 }
 
+/**
+ * Chỉ số chung khi cả đội chấm: trung bình từng chỉ số của mọi phiếu (bản tự khai + đồng đội),
+ * làm tròn bước 0.5 trong [1,10] như chỉ số nhập tay.
+ */
+export function averageStats(list: ReadonlyArray<Partial<Record<string, number>>>): Stats {
+  const all = list.map((s) => fillStats(s));
+  const out = {} as Stats;
+  for (const k of STAT_KEYS) {
+    const avg = all.length ? all.reduce((a, s) => a + s[k], 0) / all.length : 5;
+    out[k] = Math.min(10, Math.max(1, Math.round(avg * 2) / 2));
+  }
+  return out;
+}
+
 /** 6 chỉ số gộp kiểu FIFA hiển thị trên thẻ (BRD 4.2). */
 export const FACE: ReadonlyArray<readonly [string, Partial<Record<StatKey, number>>]> = [
   ['Tốc độ', { PAC: 1 }],

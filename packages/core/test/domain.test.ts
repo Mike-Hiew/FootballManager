@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addDays, balance, compareLines, dayOfWeek, dm, initials, leaderboard, money, monthFlow, mvpCounts, mvpQuorum, nextHomeDay,
+  addDays, averageStats, balance, compareLines, dayOfWeek, dm, initials, leaderboard, money, monthFlow, mvpCounts, mvpQuorum, nextHomeDay,
   normName, normPhone, outstanding, parseRules, playerSeason, recentMonths, resolveMvp, ruleIcon, seasonYear,
   shortName, teamSeason, todayVN, vnDateTime, type SeasonMatch, passwordSchema, phoneSchema, statsSchema, fillStats,
 } from '../src';
@@ -164,5 +164,23 @@ describe('schemas', () => {
     expect(statsSchema.safeParse(fillStats({})).success).toBe(true);
     expect(statsSchema.safeParse(fillStats({ PAC: 7.3 })).success).toBe(false);
     expect(statsSchema.safeParse(fillStats({ PAC: 10.5 })).success).toBe(false);
+  });
+});
+
+describe('chỉ số chung (cả đội chấm)', () => {
+  it('trung bình từng chỉ số, làm tròn bước 0.5', () => {
+    const a = fillStats({ PAC: 8, DRI: 6 });
+    const b = fillStats({ PAC: 7, DRI: 6.5 });
+    const c = fillStats({ PAC: 7.5, DRI: 9 });
+    const m = averageStats([a, b, c]);
+    expect(m.PAC).toBe(7.5); // 7.5
+    expect(m.DRI).toBe(7); // 7.17 → 7
+    expect(m.FIN).toBe(5);
+    expect(averageStats([fillStats({ PAC: 7 }), fillStats({ PAC: 8 })]).PAC).toBe(7.5);
+  });
+  it('một phiếu thì giữ nguyên, rỗng thì 5', () => {
+    const a = fillStats({ HAN: 9.5 });
+    expect(averageStats([a])).toEqual(a);
+    expect(averageStats([]).HAN).toBe(5);
   });
 });

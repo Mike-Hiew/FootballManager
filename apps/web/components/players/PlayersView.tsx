@@ -7,7 +7,7 @@ import { Avatar } from '../ui';
 import { InvitePanel } from '../InvitePanel';
 import { seasonOf } from '@/lib/season';
 import { PlayerModal, blankPlayer, type PlayerDraft } from './PlayerModal';
-import { removePlayerAction, savePlayerAction, submitProfileEditAction } from '@/app/actions';
+import { removePlayerAction, savePlayerAction, submitProfileEditAction, requestStatReviewAction, remindUpdateStatsAction } from '@/app/actions';
 import type { PlayerDTO } from '@/lib/types';
 
 const GROUPS = ['Tất cả', 'Thủ môn', 'Hậu vệ', 'Tiền vệ', 'Tiền đạo', 'Đá lẻ'] as const;
@@ -43,11 +43,22 @@ export function usePlayerModal() {
         pendingNote={mode === 'self' && view.myPendingEdit}
         onClose={() => setOpen(null)}
         onSave={async (d) => {
-          if (mode === 'self') return !!(await act(() => submitProfileEditAction(teamId, profilePayload(d)), 'Đã gửi đội trưởng duyệt'));
+          if (mode === 'self') return !!(await act(() => submitProfileEditAction(teamId, profilePayload(d)), 'Đã gửi — cả đội chấm, đội trưởng chốt'));
           const r = await act(() => savePlayerAction(teamId, p?.id ?? null, profilePayload(d)), p ? 'Đã lưu hồ sơ' : 'Đã thêm cầu thủ');
           return !!r;
         }}
         onDelete={p ? async () => void (await act(() => removePlayerAction(teamId, p.id), (r) => (r.soft ? `Đã chuyển ${shortName(p)} sang "đã rời đội"` : `Đã xoá ${shortName(p)}`))) : undefined}
+        footerExtra={
+          // ĐT: lấy ý kiến cả đội về chỉ số của người này, hoặc nhắc người đó tự cập nhật (BRD 4.7)
+          mode === 'edit' && p ? (
+            <>
+              <button type="button" className="btn sm" onClick={() => act(() => requestStatReviewAction(teamId, p.id), (n) => `Đã nhờ ${n} người chấm chỉ số ${shortName(p)}`)}>Yêu cầu cả đội chấm</button>
+              {p.hasAccount && p.id !== view.myPlayerId && (
+                <button type="button" className="btn sm" onClick={() => act(() => remindUpdateStatsAction(teamId, p.id), `Đã nhắc ${shortName(p)} cập nhật chỉ số`)}>Nhắc cập nhật chỉ số</button>
+              )}
+            </>
+          ) : undefined
+        }
       />
     );
   })();
