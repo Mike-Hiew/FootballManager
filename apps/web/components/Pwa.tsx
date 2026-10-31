@@ -133,7 +133,8 @@ export function PushAsk() {
         return;
       }
       clearInterval(timer);
-      if (s === 'hidden' || dismissed()) return setState('hidden');
+      // iPhone chưa cài app: lời mời cài (InstallPrompt) đã hướng dẫn, không hỏi trùng ở đây
+      if (s === 'hidden' || s === 'ios' || dismissed()) return setState('hidden');
       if (shown.current) return setState(s); // popup đang mở: chỉ cập nhật nội dung
       // nhường popup khác (tỉ số trận vừa đá…) hiện trước
       timer = setInterval(() => {

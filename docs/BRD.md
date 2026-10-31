@@ -676,7 +676,7 @@ Tính toán điểm vị trí, inferStats, buildPlan, teamSeason đặt trong m�
 | Bảo mật | argon2id; cookie httpOnly + SameSite=Lax; CSRF token cho form; rate limit login 5/15 phút; kiểm tra quyền phía server; escape mọi nội dung người dùng; link bản đồ chỉ nhận http(s) |
 | Riêng tư | Khách không thấy SĐT, email, ngày sinh, quỹ của đội khác; SĐT thành viên chỉ ĐT thấy |
 | Đồng thời | Ghi điểm danh/phiếu MVP là upsert theo khoá (matchId, playerId); đóng vote MVP trong transaction, idempotent |
-| Khả dụng | PWA: cài lên màn hình chính, xem được dữ liệu lần cuối khi mất mạng |
+| Khả dụng | PWA: cài lên màn hình chính, xem được dữ liệu lần cuối khi mất mạng. Lời mời cài app (bổ sung 31/10/2026): Android/Chrome có nút "Cài app" mở hộp cài của trình duyệt; iPhone/iPad (Safari không có hộp cài tự động) hướng dẫn Chia sẻ → "Thêm vào MH chính"; mở trong Zalo/Facebook/Messenger thì hướng dẫn mở bằng Safari/Chrome + nút sao chép link. Không chặn thao tác, "Để sau" ẩn tới lần mở app sau, đã mở từ icon thì không hiện. Icon PNG 180/192/512 + maskable cho màn hình chính. |
 | Truy cập | WCAG 2.1 AA: tương phản, focus rõ, tooltip mở được bằng bàn phím, `aria-label` cho nút icon, hỗ trợ reduced-motion |
 | Ngôn ngữ | Tiếng Việt; ngày d/M, tiền `vi-VN` + "đ" |
 | Nhật ký | `audit_logs` cho thao tác của ĐT: sửa tỉ số, đổi vote hộ, xoá khoản thu chi, duyệt/từ chối |
