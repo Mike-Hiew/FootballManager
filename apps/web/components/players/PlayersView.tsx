@@ -3,11 +3,11 @@
 import { useMemo, useState } from 'react';
 import { POS_INFO, ageOf, faceStats, foldText, rankedPositions, shortName, playerSeason } from '@san7/core';
 import { useTeam } from '../TeamContext';
-import { Avatar } from '../ui';
+import { Avatar, Modal } from '../ui';
 import { InvitePanel } from '../InvitePanel';
 import { seasonOf } from '@/lib/season';
 import { PlayerModal, blankPlayer, type PlayerDraft } from './PlayerModal';
-import { removePlayerAction, savePlayerAction, submitProfileEditAction, requestStatReviewAction, remindUpdateStatsAction } from '@/app/actions';
+import { removePlayerAction, savePlayerAction, submitProfileEditAction, requestStatReviewAction, requestStatReviewManyAction, remindUpdateStatsAction } from '@/app/actions';
 import type { PlayerDTO } from '@/lib/types';
 
 const GROUPS = ['Tất cả', 'Thủ môn', 'Hậu vệ', 'Tiền vệ', 'Tiền đạo', 'Đá lẻ'] as const;
@@ -71,6 +71,7 @@ export function PlayersView() {
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<Sort>('num');
   const modal = usePlayerModal();
+  const [poll, setPoll] = useState(false);
   const now = new Date(view.now);
   const season = useMemo(() => seasonOf(view.matches), [view.matches]);
 
@@ -105,6 +106,7 @@ export function PlayersView() {
               <option value="best">Điểm cao nhất</option>
               <option value="name">Theo tên</option>
             </select>
+            {canEdit && <button className="btn" type="button" onClick={() => setPoll(true)}>Trưng cầu chỉ số</button>}
             {canEdit && <button className="btn primary" type="button" onClick={() => modal.open(null)}>+ Thêm cầu thủ</button>}
           </div>
         </div>
@@ -151,6 +153,56 @@ export function PlayersView() {
         </div>
       </div>
       {modal.node}
+      {poll && <StatPollModal onClose={() => setPoll(false)} />}
     </section>
+  );
+}
+
+/**
+ * ĐT trưng cầu ý kiến cả đội về chỉ số của nhiều cầu thủ cùng lúc (BRD 4.7): mỗi người được chọn mở một
+ * đợt chấm, mỗi thành viên nhận một thông báo gộp. Người đang có đợt chấm thì giữ đợt cũ.
+ */
+function StatPollModal({ onClose }: { onClose: () => void }) {
+  const { view, players, act, teamId } = useTeam();
+  const open = new Set(view.statReviews.map((r) => r.playerId));
+  const [pick, setPick] = useState<Set<string>>(() => new Set(players.map((p) => p.id)));
+  const all = pick.size === players.length;
+  const toggle = (id: string) => setPick((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  return (
+    <Modal
+      title="Trưng cầu chỉ số"
+      wide={560}
+      onClose={onClose}
+      footer={
+        <>
+          <span className="hint" style={{ margin: 0, marginRight: 'auto' }}>Đã chọn {pick.size}/{players.length}</span>
+          <button type="button" className="btn" onClick={onClose}>Huỷ</button>
+          <button
+            type="button"
+            className="btn primary"
+            disabled={!pick.size}
+            onClick={async () => {
+              const r = await act(() => requestStatReviewManyAction(teamId, [...pick]), (d) => `Đã mở ${d.rounds} đợt chấm, báo ${d.notified} người`);
+              if (r) onClose();
+            }}
+          >
+            Gửi cả đội chấm
+          </button>
+        </>
+      }
+    >
+      <p style={{ marginTop: 0 }}>Cả đội (kể cả bạn) chấm chỉ số những người được chọn; bạn chốt theo trung bình ở tab Duyệt.</p>
+      <label className="poll-all"><input type="checkbox" checked={all} onChange={() => setPick(all ? new Set() : new Set(players.map((p) => p.id)))} /> Chọn tất cả</label>
+      <div className="poll-list">
+        {players.map((p) => (
+          <label key={p.id} className="poll-row">
+            <input type="checkbox" checked={pick.has(p.id)} onChange={() => toggle(p.id)} />
+            <Avatar p={p} size={28} />
+            <span>{shortName(p)}{p.num != null ? <small> · số {p.num}</small> : null}</span>
+            {open.has(p.id) && <span className="chip le" style={{ marginLeft: 'auto' }}>Đang chấm</span>}
+          </label>
+        ))}
+      </div>
+    </Modal>
   );
 }

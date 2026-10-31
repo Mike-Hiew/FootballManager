@@ -50,4 +50,15 @@ test('BRD 4.7 — đồng đội chấm chỉ số, đội trưởng thấy số
   await page.locator('.pcard .who b', { hasText: 'Khánh Mười' }).first().click();
   await page.getByRole('dialog').getByRole('button', { name: 'Yêu cầu cả đội chấm' }).click();
   await expect(page.locator('.toast')).toContainText(/Đã nhờ \d+ người chấm chỉ số Khánh Mười/);
+
+  // ĐT trưng cầu chỉ số nhiều người một lúc
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Trưng cầu chỉ số' }).click();
+  const poll = page.getByRole('dialog', { name: 'Trưng cầu chỉ số' });
+  await poll.getByLabel('Chọn tất cả').uncheck();
+  await poll.locator('.poll-row', { hasText: 'Đức Cò' }).locator('input').check();
+  await poll.locator('.poll-row', { hasText: 'Sơn Thép' }).locator('input').check();
+  await expect(poll).toContainText('Đã chọn 2/');
+  await poll.getByRole('button', { name: 'Gửi cả đội chấm' }).click();
+  await expect(page.locator('.toast')).toContainText(/Đã mở 2 đợt chấm, báo \d+ người/);
 });

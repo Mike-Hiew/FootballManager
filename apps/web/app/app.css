@@ -32,7 +32,7 @@ select.mini{width:auto}
   animation:rp-pop .55s cubic-bezier(.2,1.4,.4,1) both}
 .rp-win .rp-card{background:linear-gradient(160deg,rgba(84,58,12,.96),rgba(30,21,5,.97));border-color:rgba(255,214,120,.6);box-shadow:0 0 0 1px rgba(255,214,120,.25),0 0 60px rgba(255,190,70,.35),0 30px 90px rgba(0,0,0,.45)}
 .rp-loss .rp-card{background:linear-gradient(160deg,rgba(40,50,64,.96),rgba(15,19,27,.97));animation:rp-sink .7s ease-out both}
-.rp-x{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.3);
+.rp-x{position:absolute;z-index:2;top:12px;right:12px;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.3);
   background:rgba(0,0,0,.25);color:#fff;font-size:16px;cursor:pointer;line-height:1}
 .rp-x:hover,.rp-x:focus-visible{background:rgba(255,255,255,.2);outline:2px solid rgba(255,255,255,.6);outline-offset:2px}
 .rp-kicker{font-size:12px;letter-spacing:.06em;text-transform:uppercase;opacity:.75;padding:0 40px}
@@ -167,3 +167,8 @@ select.mini{width:auto}
 .vote-list .chip{display:inline-flex;align-items:center;gap:6px}
 .vote-list .chip.wait{opacity:.75}
 .vote-list .linkbtn{font-size:11.5px}
+.poll-all{display:flex;gap:8px;align-items:center;font-weight:600;margin:4px 0 10px}
+.poll-list{display:grid;gap:4px;max-height:52vh;overflow:auto}
+.poll-row{display:flex;gap:10px;align-items:center;padding:6px 8px;border-radius:12px;cursor:pointer}
+.poll-row:hover{background:var(--surface-2)}
+.poll-row small{color:var(--muted)}

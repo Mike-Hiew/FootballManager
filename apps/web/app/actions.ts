@@ -158,6 +158,9 @@ export async function castStatVoteAction(teamId: string, editId: string, stats: 
 export async function requestStatReviewAction(teamId: string, playerId: string) {
   return run(() => inTeam(teamId, (c) => statreview.requestReview(c, playerId)));
 }
+export async function requestStatReviewManyAction(teamId: string, playerIds: string[]) {
+  return run(() => inTeam(teamId, (c) => statreview.requestReviewMany(c, playerIds)));
+}
 export async function remindStatReviewAction(teamId: string, editId: string, voterId?: string) {
   return run(() => inTeam(teamId, (c) => statreview.remindReview(c, editId, voterId)));
 }

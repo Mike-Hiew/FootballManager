@@ -43,22 +43,55 @@ export async function castStatVote(ctx: Ctx, editId: string, raw: unknown) {
   });
 }
 
+type PlayerRow = NonNullable<Awaited<ReturnType<typeof prisma.player.findFirst>>>;
+
+/** Mở (hoặc giữ) đợt chấm do ĐT yêu cầu cho một cầu thủ; bản đề xuất = chỉ số hiện tại. */
+async function openCaptainRound(tx: Db, ctx: Ctx, pl: PlayerRow) {
+  const cur = await tx.profileEdit.findFirst({ where: { playerId: pl.id, status: 'pending' } });
+  if (cur) {
+    await tx.profileEdit.update({ where: { id: cur.id }, data: { remindedAt: ctx.now } });
+    return;
+  }
+  const payload = { fullName: pl.fullName, nick: pl.nick, dob: pl.dob, num: pl.num, foot: pl.foot, styles: pl.styles, avatarUrl: pl.avatarUrl, stats: statsOf(pl.stats) };
+  await tx.profileEdit.create({ data: { teamId: ctx.teamId, playerId: pl.id, payload, origin: 'captain', remindedAt: ctx.now } });
+}
+
 /** ĐT yêu cầu cả đội chấm lại chỉ số một người (không cần người đó tự sửa). */
 export async function requestReview(ctx: Ctx, playerId: string) {
   requireManager(ctx);
   const pl = await prisma.player.findFirst({ where: { id: playerId, teamId: ctx.teamId, status: 'active' } });
   if (!pl) throw notFound('Không tìm thấy cầu thủ');
   return prisma.$transaction(async (tx) => {
-    const cur = await tx.profileEdit.findFirst({ where: { playerId, status: 'pending' } });
-    if (!cur) {
-      const payload = { fullName: pl.fullName, nick: pl.nick, dob: pl.dob, num: pl.num, foot: pl.foot, styles: pl.styles, avatarUrl: pl.avatarUrl, stats: statsOf(pl.stats) };
-      await tx.profileEdit.create({ data: { teamId: ctx.teamId, playerId, payload, origin: 'captain', remindedAt: ctx.now } });
-    } else {
-      await tx.profileEdit.update({ where: { id: cur.id }, data: { remindedAt: ctx.now } });
-    }
+    await openCaptainRound(tx, ctx, pl);
     const sent = await announceReview(tx, ctx, ctx.teamId, pl, 'captain');
     await audit(tx, ctx, 'stats.request_review', 'player', playerId);
     return sent;
+  });
+}
+
+/**
+ * ĐT trưng cầu chỉ số nhiều người một lúc. Mỗi thành viên nhận một thông báo gộp (không mỗi người một
+ * thông báo). Trả về số đợt chấm đang mở cho các người được chọn và số người được báo.
+ */
+export async function requestReviewMany(ctx: Ctx, playerIds: string[]) {
+  requireManager(ctx);
+  const ids = [...new Set(playerIds)];
+  if (!ids.length) throw invalid('Chọn ít nhất một cầu thủ');
+  const subjects = await prisma.player.findMany({ where: { id: { in: ids }, teamId: ctx.teamId, status: 'active' } });
+  if (!subjects.length) throw notFound('Không tìm thấy cầu thủ');
+  return prisma.$transaction(async (tx) => {
+    for (const pl of subjects) await openCaptainRound(tx, ctx, pl);
+    const members = await tx.player.findMany({ where: { teamId: ctx.teamId, status: 'active', userId: { not: null } }, select: { id: true, userId: true } });
+    const chosen = new Set(subjects.map((p) => p.id));
+    const n = subjects.length;
+    const msg = (k: number) => (k === 1 ? 'Đội trưởng trưng cầu chỉ số 1 đồng đội — chấm ở tab Đội' : `Đội trưởng trưng cầu chỉ số ${k} đồng đội — chấm ở tab Đội`);
+    // người nằm trong danh sách được chấm thì không tự chấm mình → ít hơn 1
+    const others = members.filter((m) => !chosen.has(m.id)).map((m) => m.userId);
+    const inside = members.filter((m) => chosen.has(m.id)).map((m) => m.userId);
+    let notified = await emit(tx, { kind: 'edit', teamId: ctx.teamId, recipients: others, actorId: ctx.user.id, view: 'doi', text: msg(n) });
+    if (n > 1) notified += await emit(tx, { kind: 'edit', teamId: ctx.teamId, recipients: inside, actorId: ctx.user.id, view: 'doi', text: msg(n - 1) });
+    await audit(tx, ctx, 'stats.request_review_many', 'team', ctx.teamId, null, { players: subjects.map((p) => p.id) });
+    return { rounds: n, notified };
   });
 }
 

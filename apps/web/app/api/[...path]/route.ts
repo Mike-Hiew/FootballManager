@@ -147,6 +147,7 @@ const routes: Array<[string, H]> = [
   ['POST /matches/:id/claims', async ({ p, body }) => { await claim.submitClaim(await tc(await teamOf.match(p[0])), p[0], await body()); return { ok: true }; }],
   ['PUT /profile-edits/:id/vote', async ({ p, body }) => { await statreview.castStatVote(await tc(await teamOf.edit(p[0])), p[0], (await body()).stats); return { ok: true }; }],
   ['POST /profile-edits/:id/remind', async ({ p, body }) => ({ reminded: await statreview.remindReview(await tc(await teamOf.edit(p[0])), p[0], (await body()).playerId as string | undefined) })],
+  ['POST /teams/:id/stat-reviews', async ({ p, body }) => statreview.requestReviewMany(await tc(p[0]), ((await body()).playerIds as string[]) ?? [])],
   ['POST /players/:id/request-review', async ({ p }) => ({ notified: await statreview.requestReview(await tc(await teamOf.player(p[0])), p[0]) })],
   ['POST /players/:id/remind-update', async ({ p }) => ({ notified: await statreview.remindUpdateStats(await tc(await teamOf.player(p[0])), p[0]) })],
   ['POST /matches/:id/result-seen', async ({ p }) => { await postmatch.markResultSeen(await tc(await teamOf.match(p[0])), p[0]); return { ok: true }; }],

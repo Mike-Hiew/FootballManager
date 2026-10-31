@@ -281,6 +281,7 @@ Bổ sung 31/10/2026.
 - **Chấm**: bảng 17 chỉ số điền sẵn bản đề xuất (vạch vàng đánh dấu bản khai). **Xác nhận như bản khai** gửi đúng bản đề xuất; chỉnh thanh trượt rồi **Gửi chỉ số tôi chấm**. Chấm lại thì ghi đè phiếu cũ. Không tự chấm mình.
 - **Chỉ số đề xuất** = trung bình từng chỉ số của bản tự khai + mọi phiếu đồng đội (mỗi phiếu ngang nhau), làm tròn bước 0.5.
 - **ĐT chốt** ở tab Duyệt: thẻ hiện số người đã chấm / được mời, ai đã chấm (✓) và ai chưa; **Chốt theo trung bình** áp chỉ số trung bình; **Sửa thêm** mở bản trung bình để ĐT chỉnh (ĐT toàn quyền); **Từ chối** như cũ.
+- **Trưng cầu nhiều người**: ở tab Cầu thủ, ĐT bấm **Trưng cầu chỉ số**, tích chọn cầu thủ (mặc định tất cả) → mở đợt chấm cho từng người (người đang có đợt thì giữ đợt cũ). Mỗi thành viên nhận **một** thông báo gộp "Đội trưởng trưng cầu chỉ số N đồng đội". ĐT cũng chấm như mọi thành viên rồi chốt ở tab Duyệt.
 - **Nhắc**: ĐT nhắc từng người chưa chấm hoặc **Nhắc tất cả**; ở hồ sơ cầu thủ, ĐT **Nhắc cập nhật chỉ số** để người đó tự sửa hồ sơ & chỉ số.
 - ĐT tự sửa chỉ số (của người khác hoặc của mình) vẫn áp dụng ngay, không qua đợt chấm.
 - Dữ liệu: `profile_edits.origin` (self | join | captain), `profile_edits.remindedAt`, bảng `stat_votes (editId, playerId, stats)`. API: `PUT /profile-edits/:id/vote`, `POST /profile-edits/:id/remind`, `POST /players/:id/request-review`, `POST /players/:id/remind-update`.

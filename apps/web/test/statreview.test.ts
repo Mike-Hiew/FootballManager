@@ -3,7 +3,7 @@ import { prisma } from '@san7/db';
 import { averageStats, fillStats, type Stats } from '@san7/core';
 import * as player from '@/server/services/player';
 import * as join from '@/server/services/join';
-import { castStatVote, remindReview, remindUpdateStats, requestReview, reviewSummaries } from '@/server/services/statreview';
+import { castStatVote, remindReview, remindUpdateStats, requestReview, requestReviewMany, reviewSummaries } from '@/server/services/statreview';
 import { teamView } from '@/server/services/view';
 import { CAPTAIN, DOM, MEMBER, OTHER_CAPTAIN, ctxFor, expectStatus } from './helpers';
 
@@ -85,5 +85,19 @@ describe('Cả đội chấm chỉ số, ĐT chốt (BRD 4.7)', () => {
     const e = await prisma.profileEdit.findFirstOrThrow({ where: { playerId: pl.id, status: 'pending' } });
     expect(e.origin).toBe('join');
     expect(await prisma.notification.count({ where: { text: { contains: 'vừa vào đội — chấm giúp chỉ số' } } })).toBeGreaterThan(5);
+  });
+
+  it('ĐT trưng cầu nhiều người: mỗi thành viên một thông báo gộp, giữ đợt đang mở', async () => {
+    const cap = await ctxFor(CAPTAIN, DOM);
+    const before = await prisma.notification.count({ where: { userId: 'u-p8' } });
+    const r = await requestReviewMany(cap, ['p3', 'p4', 'p6', 'p6']); // p6 đã có đợt từ test trước
+    expect(r.rounds).toBe(3);
+    expect(await prisma.profileEdit.count({ where: { playerId: { in: ['p3', 'p4', 'p6'] }, status: 'pending' } })).toBe(3);
+    expect(await prisma.notification.count({ where: { userId: 'u-p8' } })).toBe(before + 1);
+    expect((await prisma.notification.findFirstOrThrow({ where: { userId: 'u-p8' }, orderBy: { createdAt: 'desc' } })).text).toContain('3 đồng đội');
+    // người nằm trong danh sách chỉ chấm 2 người còn lại
+    expect((await prisma.notification.findFirstOrThrow({ where: { userId: 'u-p3' }, orderBy: { createdAt: 'desc' } })).text).toContain('2 đồng đội');
+    await expectStatus(requestReviewMany(await ctxFor(P7, DOM), ['p3']), 403);
+    await expectStatus(requestReviewMany(cap, []), 422);
   });
 });
