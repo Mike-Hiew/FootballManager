@@ -24,7 +24,7 @@ test('BRD 6.8 — popup tỉ số hiện một lần cho thành viên; nhắc kh
   await expect(pop.locator('.rp-score')).toHaveAttribute('aria-label', /4 – 1 Anh Em Mỹ Đình/);
   await expect(pop).toContainText('Quang Còi ×2');
   await expect(pop.getByRole('button', { name: 'Khai báo bàn/kiến tạo' })).toBeVisible();
-  await pop.getByRole('button', { name: 'Đóng', exact: true }).first().click();
+  await pop.locator('.rp-acts').getByRole('button', { name: 'Đóng' }).click();
   await expect(page.locator('.rp-overlay')).toHaveCount(0);
 
   // Đã xem → tải lại không hiện nữa, kể cả ở tab khác

@@ -8,7 +8,7 @@ import { InvitePanel } from './InvitePanel';
 import { MatchModal } from './matches/MatchModal';
 import { PlayerModal, type PlayerDraft } from './players/PlayerModal';
 import { profilePayload } from './players/PlayersView';
-import { approveEditAction, approveJoinAction, decideClaimAction, decidePaymentAction, rejectEditAction, rejectJoinAction } from '@/app/actions';
+import { approveEditAction, approveJoinAction, decideClaimAction, decidePaymentAction, rejectEditAction, rejectJoinAction, remindStatReviewAction } from '@/app/actions';
 import type { ApprovalsDTO, PlayerDTO } from '@/lib/types';
 
 function ago(iso: string) {
@@ -93,17 +93,35 @@ export function ApprovalsView({ data }: { data: ApprovalsDTO }) {
             {data.edits.length ? data.edits.map((e) => {
               const p = byId(e.playerId);
               if (!p) return null;
-              const d = draftOf({ ...e.payload, payType: p.payType });
+              // Chốt theo trung bình bản khai + phiếu đồng đội (BRD 4.7); ĐT vẫn sửa được trước khi chốt
+              const d = draftOf({ ...e.payload, payType: p.payType, stats: e.average ?? (e.payload as { stats?: Stats }).stats });
+              const invited = e.votes.length + e.pending.length;
+              const waiting = e.pending.filter((id) => id !== view.myPlayerId);
+              const src = e.origin === 'join' ? 'Vừa vào đội' : e.origin === 'captain' ? 'Đội trưởng nhờ chấm lại' : 'Tự cập nhật';
               return (
                 <div key={e.id} className="apcard">
                   <Avatar p={p} size={40} />
-                  <div className="t"><b>{shortName(p)}</b><small>Gửi {ago(e.createdAt)}</small></div>
+                  <div className="t"><b>{shortName(p)}</b><small>{src} · {ago(e.createdAt)} · {e.votes.length}/{invited} đồng đội đã chấm</small></div>
                   <div className="acts">
                     <button type="button" className="btn sm" onClick={() => setEditEdit({ id: e.id, draft: d, name: shortName(p) })}>Sửa thêm</button>
-                    <button type="button" className="btn primary sm" onClick={() => act(() => approveEditAction(teamId, e.id), 'Đã duyệt cập nhật hồ sơ')}>Duyệt</button>
+                    <button type="button" className="btn primary sm" onClick={() => act(() => approveEditAction(teamId, e.id), e.votes.length ? 'Đã chốt chỉ số theo trung bình' : 'Đã duyệt cập nhật hồ sơ')}>
+                      {e.votes.length ? 'Chốt theo trung bình' : 'Duyệt'}
+                    </button>
                     <button type="button" className="btn ghost sm danger" onClick={() => reject((r) => act(() => rejectEditAction(teamId, e.id, r), 'Đã từ chối cập nhật'))}>Từ chối</button>
                   </div>
                   <Diff p={p} d={d} />
+                  <div className="vote-list" style={{ gridColumn: '1/-1' }}>
+                    {e.votes.map((v) => <span key={v.playerId} className="chip quy">✓ {nameOf(v.playerId)}</span>)}
+                    {waiting.map((id) => (
+                      <span key={id} className="chip wait">
+                        {nameOf(id)}
+                        <button type="button" className="linkbtn" onClick={() => act(() => remindStatReviewAction(teamId, e.id, id), `Đã nhắc ${nameOf(id)} chấm`)}>Nhắc</button>
+                      </span>
+                    ))}
+                    {waiting.length > 1 && (
+                      <button type="button" className="btn sm" onClick={() => act(() => remindStatReviewAction(teamId, e.id), (n) => `Đã nhắc ${n} người chấm`)}>Nhắc tất cả ({waiting.length})</button>
+                    )}
+                  </div>
                 </div>
               );
             }) : <div className="empty-list">Không có thay đổi nào.</div>}

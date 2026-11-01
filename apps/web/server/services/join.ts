@@ -10,6 +10,7 @@ import { audit } from '../audit';
 import { AppError, conflict, invalid, notFound, zodMessage } from '../errors';
 import { captainUserIds, emit } from './notify';
 import { limitIp } from '../ratelimit';
+import { announceReview } from './statreview';
 
 const joinSchema = z.object({
   fullName: z.string().trim().min(1, 'Nhập họ tên').max(60),
@@ -103,11 +104,17 @@ export async function approveJoin(ctx: Ctx, requestId: string, edited?: unknown)
       fullName: d.fullName, nick: d.nick ?? null, dob: d.dob ?? null, num: d.num ?? null, foot: d.foot, payType: d.payType,
       avatarUrl: d.avatarUrl ?? null, styles: d.styles, stats: d.stats, status: 'active', payTypeFrom: null, prevPayType: null,
     };
-    await tx.player.upsert({
+    const pl = await tx.player.upsert({
       where: { teamId_userId: { teamId: ctx.teamId, userId: r.userId } },
       create: { ...data, teamId: ctx.teamId, userId: r.userId },
       update: data,
     });
+    // Chỉ số khai lúc xin vào dùng tạm; mở đợt cho cả đội chấm, ĐT chốt sau (BRD 4.7)
+    if (!(await tx.profileEdit.findFirst({ where: { playerId: pl.id, status: 'pending' }, select: { id: true } }))) {
+      const payload = { fullName: pl.fullName, nick: pl.nick, dob: pl.dob, num: pl.num, foot: pl.foot, styles: pl.styles, avatarUrl: pl.avatarUrl, stats: d.stats };
+      await tx.profileEdit.create({ data: { teamId: ctx.teamId, playerId: pl.id, payload, origin: 'join' } });
+      await announceReview(tx, ctx, ctx.teamId, pl, 'join');
+    }
     await tx.joinRequest.update({ where: { id: r.id }, data: { status: 'approved', payload: d, decidedById: ctx.user.id, decidedAt: ctx.now } });
     await emit(tx, { kind: 'result', teamId: ctx.teamId, recipients: [r.userId], actorId: ctx.user.id, view: 'doi', text: `Bạn đã vào đội ${r.team.name}` });
     await audit(tx, ctx, 'join.approve', 'join_request', r.id, r.payload, d);

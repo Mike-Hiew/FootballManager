@@ -175,6 +175,7 @@ model Player {
   claims      Claim[]
   dues        DuesPayment[]
   profileEdit ProfileEdit[]
+  statVotes   StatVote[]
   payNotices  PaymentNotice[]
 
   @@unique([teamId, userId])
@@ -209,12 +210,16 @@ model ProfileEdit {
   playerId    String
   payload     Json
   status      String    @default("pending")
+  /// self = thành viên tự sửa · join = vừa vào đội · captain = ĐT yêu cầu cả đội chấm
+  origin      String    @default("self")
+  remindedAt  DateTime? @db.Timestamptz
   reason      String?
   decidedById String?
   decidedAt   DateTime? @db.Timestamptz
   createdAt   DateTime  @default(now()) @db.Timestamptz
   updatedAt   DateTime  @updatedAt @db.Timestamptz
   player      Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  votes       StatVote[]
 
   // partial unique (playerId) WHERE status = 'pending' — migration SQL
   @@index([teamId, status])
@@ -478,4 +483,20 @@ model PaymentNotice {
   @@id([requestId, playerId])
   @@index([playerId])
   @@map("payment_notices")
+}
+
+/// Phiếu chấm chỉ số của một đồng đội cho một bản cập nhật đang chờ (cả đội chấm, ĐT chốt).
+model StatVote {
+  editId    String
+  playerId  String // người chấm
+  stats     Json
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  edit  ProfileEdit @relation(fields: [editId], references: [id], onDelete: Cascade)
+  voter Player      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@id([editId, playerId])
+  @@index([playerId])
+  @@map("stat_votes")
 }
