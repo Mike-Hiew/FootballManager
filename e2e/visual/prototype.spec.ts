@@ -48,7 +48,8 @@ const VIEWS: View[] = [
   // + danh sách đồng đội đã chấm / chưa chấm chỉ số (thêm 31/10) — ẩn khi so; dòng "x/N đồng đội đã chấm" làm thẻ cao hơn ở 390
   { name: 'duyet', proto: 'duyet', app: '/t/t-domdom/duyet', budget: { 1024: 0.17, 390: 0.3 }, hide: '.vote-list' },
   { name: 'kham-pha', proto: 'kham-pha', app: '/kham-pha' },
-  { name: 'he-thong', proto: 'he-thong', app: '/he-thong', who: 'admin', budget: { 1024: 0.07 } },
+  // 1024 (CI): thanh tab của prototype (9 tab có icon) xuống 2 dòng, của app (12 tab, bỏ icon ở màn vừa) vẫn 1 dòng → app thấp hơn ~35px
+  { name: 'he-thong', proto: 'he-thong', app: '/he-thong', who: 'admin', budget: { 1024: 0.12 } },
   {
     name: 'modal-cau-thu', proto: 'cau-thu', app: '/t/t-domdom/cau-thu', budget: { 1024: 0.075 },
     prep: async (p) => openModal(p, p.locator('.pcard .who b', { hasText: 'Khánh Mười' }).first()),
