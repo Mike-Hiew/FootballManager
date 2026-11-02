@@ -20,9 +20,12 @@ export const RULES = {
 export type Scope = keyof typeof RULES;
 
 /** Đếm số lần trong cửa sổ rồi ghi thêm một lần; quá ngưỡng → 429. */
+/** Hệ số nhân ngưỡng — chỉ đặt cho máy chạy E2E (nhiều lượt đăng nhập từ 127.0.0.1); production để mặc định 1. */
+const SCALE = Math.max(1, Number(process.env.RATE_LIMIT_SCALE) || 1);
+
 export async function hit(key: string, rule: Rule, at = now()) {
   const n = await prisma.rateHit.count({ where: { key, at: { gt: new Date(at.getTime() - rule.windowMs) } } });
-  if (n >= rule.max) throw new AppError(429, 'Bạn thao tác quá nhiều lần. Thử lại sau ít phút.');
+  if (n >= rule.max * SCALE) throw new AppError(429, 'Bạn thao tác quá nhiều lần. Thử lại sau ít phút.');
   await prisma.rateHit.create({ data: { key, at } });
 }
 

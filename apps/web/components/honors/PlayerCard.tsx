@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { TIER_NAME, cardTier, type CardSnapshot, type CardTier } from '@san7/core';
+import { TIER_NAME, cardOf, cardTier, fillStats, type CardSnapshot, type CardTier, type Stats } from '@san7/core';
 
 /**
  * Thẻ cầu thủ kiểu thẻ sưu tầm (Vinh danh, BRD 13): bay vào úp mặt → rung → lật, lóe sáng, tia lửa, đom đóm nền.
@@ -308,7 +308,11 @@ export function CardReveal({ c, team, kicker, note, onClose, extra }: {
       aria-label={`Thẻ ${c.name}: ${kicker}`}
       onMouseDown={(e) => e.target === e.currentTarget && close()}
       onKeyDown={(e) => {
-        if (e.key === 'Escape') close();
+        // lớp phủ có thể nằm trong modal khác (portal vẫn nổi sự kiện React lên cha) — không để Esc đóng luôn modal đó
+        if (e.key === 'Escape') {
+          e.stopPropagation();
+          close();
+        }
         if (e.key === 'Tab') {
           const els = e.currentTarget.querySelectorAll<HTMLElement>('.hc-card, button');
           const first = els[0];
@@ -339,5 +343,23 @@ export function CardReveal({ c, team, kicker, note, onClose, extra }: {
       </div>
     </div>,
     document.body,
+  );
+}
+
+/** Nút mở thẻ hiện tại của một cầu thủ (Của tôi, hồ sơ cầu thủ) — ai cũng xem được bất cứ lúc nào. */
+export function ViewCardButton({ p, team, label = 'Xem thẻ', kicker, className = 'btn sm' }: {
+  p: { nick: string | null; fullName: string; num: number | null; avatarUrl: string | null; foot: string; styles: string[]; stats: Partial<Stats> };
+  team: string;
+  label?: string;
+  kicker?: string;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const c = cardOf(p, fillStats(p.stats as Record<string, number>));
+  return (
+    <>
+      <button type="button" className={className} onClick={() => setOpen(true)}>{label}</button>
+      {open && <CardReveal c={c} team={team} kicker={kicker ?? `Thẻ của ${c.name}`} onClose={() => setOpen(false)} />}
+    </>
   );
 }

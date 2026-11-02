@@ -24,6 +24,6 @@ export default defineConfig({
     url: `http://localhost:${PORT}/dang-nhap`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
-    env: { DATABASE_URL: DB, DIRECT_URL: DB, SEED_DEMO: 'true', CRON_SECRET: 'e2e-secret', APP_URL: `http://localhost:${PORT}` },
+    env: { DATABASE_URL: DB, DIRECT_URL: DB, SEED_DEMO: 'true', CRON_SECRET: 'e2e-secret', APP_URL: `http://localhost:${PORT}`, RATE_LIMIT_SCALE: '20' },
   },
 });

@@ -168,3 +168,9 @@
 .hv-presets{display:flex;flex-wrap:wrap;gap:6px}
 .hv-presets .chip{cursor:pointer}
 .hv-presets .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* Nút mở thẻ (Của tôi, hồ sơ cầu thủ) */
+.mehead-acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:560px){.mehead-acts{grid-column:1/-1;justify-content:flex-start}}
+.btn.card-btn{background:#0E2117;border-color:#2c5a3a;color:#D4FF3A;box-shadow:0 0 0 0 rgba(212,255,58,0);transition:box-shadow .2s}
+.btn.card-btn:hover{box-shadow:0 0 16px rgba(212,255,58,.35)}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ageOf, dm, money, monthLabel, playerSeason, rankedPositions, recentMonths, resultOf, shortName, todayVN, fmt1 } from '@san7/core';
 import { useTeam } from '../TeamContext';
+import { ViewCardButton } from '../honors/PlayerCard';
 import { Avatar, tierColor } from '../ui';
 import { Radar } from '../players/Radar';
 import { usePlayerModal } from '../players/PlayersView';
@@ -44,7 +45,10 @@ export function MeView({ duesMonths }: { duesMonths: string[] }) {
               {me.fullName}{me.num != null ? ' · số ' + me.num : ''}{a != null ? ` · ${a} tuổi` : ''} · <span className={`chip ${me.payType}`}>{me.payType === 'le' ? 'Đá lẻ' : 'Quỹ'}</span>
             </div>
           </div>
-          <button type="button" className="btn primary sm" onClick={() => modal.open(me.id)}>{canEdit ? 'Sửa hồ sơ' : 'Cập nhật hồ sơ & chỉ số'}</button>
+          <div className="mehead-acts">
+            <ViewCardButton p={me} team={view.team.name} label="Mở thẻ của tôi" kicker="Thẻ của tôi" className="btn sm card-btn" />
+            <button type="button" className="btn primary sm" onClick={() => modal.open(me.id)}>{canEdit ? 'Sửa hồ sơ' : 'Cập nhật hồ sơ & chỉ số'}</button>
+          </div>
           {view.myPendingEdit && <p className="note" style={{ gridColumn: '1/-1', margin: 0 }}><span className="chip le">Đang chờ duyệt</span> Bản cập nhật hồ sơ của bạn đang chờ đội trưởng duyệt.</p>}
         </div>
 
