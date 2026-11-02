@@ -71,6 +71,32 @@ describe('Đội & gia nhập (BRD 3, 11.1 #1–2)', () => {
     expect(player.effectivePayType(after, '2026-11')).toBe('le');
     await prisma.player.update({ where: { id: 'p4' }, data: { payType: 'quy', payTypeFrom: null, prevPayType: null } });
   });
+
+  it('đổi quỹ ↔ đá lẻ áp dụng ngay: tháng này theo loại mới, tháng trước giữ loại cũ', async () => {
+    const cap = await ctxFor(CAPTAIN, DOM, new Date('2026-10-15T05:00:00Z'));
+    const p = await prisma.player.findUniqueOrThrow({ where: { id: 'p4' } });
+    const base = { fullName: p.fullName, foot: p.foot, styles: p.styles, stats: p.stats };
+    await player.updatePlayer(cap, 'p4', { ...base, payType: 'le', payFrom: 'now' });
+    let after = await prisma.player.findUniqueOrThrow({ where: { id: 'p4' } });
+    expect(after).toMatchObject({ payType: 'le', payTypeFrom: '2026-10', prevPayType: 'quy' });
+    expect(player.effectivePayType(after, '2026-09')).toBe('quy');
+    expect(player.effectivePayType(after, '2026-10')).toBe('le');
+    // đổi lại ngay trong cùng tháng → như chưa từng đổi
+    await player.updatePlayer(cap, 'p4', { ...base, payType: 'quy', payFrom: 'now' });
+    after = await prisma.player.findUniqueOrThrow({ where: { id: 'p4' } });
+    expect(after).toMatchObject({ payType: 'quy', payTypeFrom: null, prevPayType: null });
+
+    // đã hẹn đổi tháng sau → chọn "ngay" thì áp dụng luôn; chọn lại loại hiện tại thì huỷ hẹn
+    await player.updatePlayer(cap, 'p4', { ...base, payType: 'le', payFrom: 'next' });
+    expect(await prisma.player.findUniqueOrThrow({ where: { id: 'p4' } })).toMatchObject({ payTypeFrom: '2026-11' });
+    await player.updatePlayer(cap, 'p4', { ...base, payType: 'le', payFrom: 'now' });
+    expect(await prisma.player.findUniqueOrThrow({ where: { id: 'p4' } })).toMatchObject({ payType: 'le', payTypeFrom: '2026-10', prevPayType: 'quy' });
+    await prisma.player.update({ where: { id: 'p4' }, data: { payType: 'quy', payTypeFrom: '2026-11', prevPayType: 'quy' } });
+    await player.updatePlayer(cap, 'p4', { ...base, payType: 'quy', payFrom: 'next' });
+    await prisma.player.update({ where: { id: 'p4' }, data: { payType: 'le', payTypeFrom: '2026-11', prevPayType: 'quy' } });
+    await player.updatePlayer(cap, 'p4', { ...base, payType: 'quy' });
+    expect(await prisma.player.findUniqueOrThrow({ where: { id: 'p4' } })).toMatchObject({ payType: 'quy', payTypeFrom: null, prevPayType: null });
+  });
 });
 
 describe('Ngưỡng "đủ người" (đội tự cấu hình)', () => {

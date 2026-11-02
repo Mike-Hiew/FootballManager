@@ -39,15 +39,21 @@ test('Android: sự kiện cài của Chrome → nút "Cài app" mở hộp cài
   const page = await ctx.newPage();
   await page.goto('/dang-nhap');
   await page.waitForFunction(() => document.documentElement.dataset.hydrated === '1' || document.readyState === 'complete');
-  await page.evaluate(() => {
-    const e = new Event('beforeinstallprompt', { cancelable: true }) as Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
-    e.prompt = async () => {
-      (window as unknown as { __prompted: boolean }).__prompted = true;
-    };
-    e.userChoice = Promise.resolve({ outcome: 'accepted' });
-    window.dispatchEvent(e);
-  });
+  const fire = () =>
+    page.evaluate(() => {
+      const e = new Event('beforeinstallprompt', { cancelable: true }) as Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
+      e.prompt = async () => {
+        (window as unknown as { __prompted: boolean }).__prompted = true;
+      };
+      e.userChoice = Promise.resolve({ outcome: 'accepted' });
+      window.dispatchEvent(e);
+    });
   const sheet = page.getByRole('dialog', { name: /lên màn hình chính/ });
+  // dev server có thể hydrate chậm hơn readyState: bắn lại sự kiện tới khi component đã lắng nghe
+  await expect(async () => {
+    await fire();
+    await expect(sheet).toBeVisible({ timeout: 1000 });
+  }).toPass({ timeout: 30_000 });
   await sheet.getByRole('button', { name: 'Cài app' }).click();
   await expect(sheet).toHaveCount(0);
   expect(await page.evaluate(() => (window as unknown as { __prompted?: boolean }).__prompted)).toBe(true);

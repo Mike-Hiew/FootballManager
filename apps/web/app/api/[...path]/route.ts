@@ -162,6 +162,7 @@ const routes: Array<[string, H]> = [
   ['PUT /teams/:id/dues/:month/:playerId', async ({ p, body }) => { await fund.setDues(await tc(p[0]), p[1], p[2], (await body()).paid !== false); return { ok: true }; }],
   ['PUT /matches/:id/le-paid/:playerId', async ({ p, body }) => { await fund.setLePaid(await tc(await teamOf.match(p[0])), p[0], p[1], (await body()).paid !== false); return { ok: true }; }],
   ['POST /teams/:id/fund/entries', async ({ p, body }) => ({ id: (await fund.addManualEntry(await tc(p[0]), await body())).id })],
+  ['PATCH /teams/:id/fund/entries/:entryId', async ({ p, body }) => { await fund.updateManualEntry(await tc(p[0]), p[1], await body()); return { ok: true }; }],
   ['DELETE /teams/:id/fund/entries/:entryId', async ({ p }) => { await fund.deleteManualEntry(await tc(p[0]), p[1]); return { ok: true }; }],
 
   ['GET /version', async () => ({ version: process.env.NEXT_PUBLIC_BUILD_ID ?? 'dev' })],

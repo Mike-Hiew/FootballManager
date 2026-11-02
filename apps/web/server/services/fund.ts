@@ -130,6 +130,20 @@ export async function addManualEntry(ctx: Ctx, raw: unknown) {
   return e;
 }
 
+/** ĐT sửa khoản ghi tay (khoản tự sinh sửa ở dữ liệu gốc: trận, đóng quỹ…). */
+export async function updateManualEntry(ctx: Ctx, entryId: string, raw: unknown) {
+  requireManager(ctx);
+  const p = manualSchema.safeParse(raw);
+  if (!p.success) throw invalid(zodMessage(p.error));
+  const d = p.data;
+  const e = await prisma.fundEntry.findFirst({ where: { id: entryId, teamId: ctx.teamId, deletedAt: null } });
+  if (!e) throw notFound('Không tìm thấy khoản thu chi');
+  if (e.source !== 'manual') throw invalid('Khoản tự sinh không sửa tay được — sửa ở trận hoặc bảng đóng quỹ');
+  const after = await prisma.fundEntry.update({ where: { id: e.id }, data: { date: d.date, amount: d.kind === 'in' ? d.amount : -d.amount, note: d.note } });
+  await audit(prisma, ctx, 'fund.update', 'fund_entry', e.id, e, after);
+  return after;
+}
+
 /** Chỉ khoản ghi tay xoá được; xoá mềm + nhật ký người xoá (BRD 7.2). */
 export async function deleteManualEntry(ctx: Ctx, entryId: string) {
   requireManager(ctx);

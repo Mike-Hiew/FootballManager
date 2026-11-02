@@ -57,6 +57,20 @@ describe('Quỹ (BRD 7, 11.1 #12)', () => {
     expect(row.deletedById).toBe(cap.user.id);
   });
 
+  it('ĐT sửa khoản ghi tay (có nhật ký); khoản tự sinh / đã xoá không sửa được', async () => {
+    const cap = await ctxFor(CAPTAIN, DOM);
+    const e = await fund.addManualEntry(cap, { kind: 'out', amount: 300000, date: '2026-10-21', note: 'Mua bóng' });
+    await fund.updateManualEntry(cap, e.id, { kind: 'in', amount: 50000, date: '2026-10-22', note: 'Bán bóng cũ' });
+    expect(await prisma.fundEntry.findUniqueOrThrow({ where: { id: e.id } })).toMatchObject({ amount: 50000, date: '2026-10-22', note: 'Bán bóng cũ', source: 'manual' });
+    expect(await prisma.auditLog.count({ where: { action: 'fund.update', entityId: e.id } })).toBe(1);
+    await expectStatus(fund.updateManualEntry(await ctxFor(MEMBER, DOM), e.id, { kind: 'in', amount: 1, date: '2026-10-22', note: 'x' }), 403);
+    await expectStatus(fund.updateManualEntry(cap, e.id, { kind: 'in', amount: 0, date: '2026-10-22', note: 'x' }), 422);
+    const auto = await prisma.fundEntry.findFirstOrThrow({ where: { teamId: DOM, source: 'pitch' } });
+    await expectStatus(fund.updateManualEntry(cap, auto.id, { kind: 'out', amount: 1, date: '2026-10-22', note: 'x' }), 422);
+    await fund.deleteManualEntry(cap, e.id);
+    await expectStatus(fund.updateManualEntry(cap, e.id, { kind: 'in', amount: 1, date: '2026-10-22', note: 'x' }), 404);
+  });
+
   it('đánh dấu đã trả đá lẻ chỉ cho người đá lẻ có Đi; sang Nghỉ thì bỏ đánh dấu', async () => {
     const cap = await ctxFor(CAPTAIN, DOM);
     await expectStatus(fund.setLePaid(cap, 'm4', 'p9', true), 422); // p9 đóng quỹ

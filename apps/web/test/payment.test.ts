@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { prisma } from '@san7/db';
-import { addMonths, currentMonth } from '@san7/core';
+import { addMonths, currentMonth, monthLabel } from '@san7/core';
 import * as match from '@/server/services/match';
 import * as fund from '@/server/services/fund';
 import * as payment from '@/server/services/payment';
@@ -41,6 +41,18 @@ describe('Yêu cầu đóng tiền', () => {
     expect((await payment.myPayments(p3)).some((x) => x.id === id)).toBe(false);
     expect(await notes('u-p3', 'Đội trưởng đã xác nhận bạn đóng')).toBe(1);
     await expectStatus(payment.declarePaid(p3, id), 422);
+  });
+
+  it('ĐT yêu cầu đóng quỹ một tháng cụ thể (tháng cũ) → chỉ báo người quỹ chưa đóng tháng đó', async () => {
+    const cap = await ctxFor(CAPTAIN, DOM);
+    const month = addMonths(currentMonth(cap.now), -5);
+    await prisma.duesPayment.create({ data: { teamId: DOM, playerId: 'p3', month, amount: 200000 } });
+    const { sent } = await payment.requestDues(cap, { month });
+    const quy = (await prisma.player.findMany({ where: { teamId: DOM, status: 'active', userId: { not: null } } })).filter((p) => p.payType === 'quy' && !p.payTypeFrom);
+    expect(sent).toBe(quy.filter((p) => p.id !== 'p3' && p.id !== 'p2').length); // trừ người đã đóng và chính ĐT
+    expect(await notes('u-p3', `quỹ ${monthLabel(month)}`)).toBe(0);
+    expect(await notes('u-p1', `quỹ ${monthLabel(month)}`)).toBe(1);
+    await expectStatus(payment.requestDues(cap, { month: '2026-13' }), 422);
   });
 
   it('thành viên không tạo / xác nhận được yêu cầu', async () => {

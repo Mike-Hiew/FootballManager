@@ -69,7 +69,7 @@ async function notifyOwed(db: Db, ctx: Ctx | null, r: Req, prefix: string): Prom
 }
 
 const duesSchema = z.object({
-  month: z.string().regex(/^\d{4}-\d{2}$/, 'Tháng không hợp lệ'),
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Tháng không hợp lệ'),
   note: z.string().trim().max(80).optional().nullable(),
 });
 

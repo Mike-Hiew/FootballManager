@@ -455,20 +455,21 @@ Số dư quỹ = tổng 4 nguồn trong sổ thu chi; 3 nguồn đầu tự sinh
 | Đá lẻ | Trận đã qua, có người đã trả | + số người đã trả × match.fee | Ngày đá |
 | Ghi tay | ĐT nhập Thu / Chi | ± số tiền, nội dung bắt buộc | Ngày chọn (mặc định hôm nay) |
 
-Chỉ khoản ghi tay xoá được (có xác nhận, lưu nhật ký người xoá). Sắp xếp mới nhất trước. Bản thật nên ghi các khoản tự sinh thành bản ghi thật trong `fund_entries` (với khoá nguồn) để có lịch sử không đổi khi sửa trận.
+Chỉ khoản ghi tay sửa / xoá được (xoá có xác nhận; sửa và xoá đều lưu nhật ký người làm, giá trị trước/sau). Khoản tự sinh sửa ở dữ liệu gốc (trận, bảng đóng quỹ, đá lẻ). Sắp xếp mới nhất trước. Bản thật nên ghi các khoản tự sinh thành bản ghi thật trong `fund_entries` (với khoá nguồn) để có lịch sử không đổi khi sửa trận.
 
 ### 7.3 Tab Quỹ đội
 
 - **4 ô số**: Số dư quỹ (ô nền đen chữ vàng); Thu tháng này; Chi tháng này; Còn phải thu = (số thành viên quỹ chưa đóng tháng này × monthlyFee) + Σ phí các lượt đá lẻ đã đi nhưng chưa trả, kèm chip tên từng người nợ.
 - **Bảng quỹ tháng**: hàng = thành viên quỹ (theo số áo), cột = 4 tháng gần nhất; ô là nút bật/tắt ✓ (chỉ ĐT). Dòng cuối "Đã thu" theo tháng.
 - **Tiền theo trận**: ngày, trận, tiền sân (đỏ), đá lẻ đã trả a/b, đã thu (xanh). Bấm dòng → mở modal trận tab Điểm danh để đánh dấu đã trả.
-- **Sổ thu chi**: ngày, nội dung, chip nguồn, số tiền ± màu, nút Xoá (ghi tay). Form thêm: Thu/Chi, số tiền, ngày, nội dung.
+- **Sổ thu chi**: ngày, nội dung, chip nguồn, số tiền ± màu, nút Sửa / Xoá (ghi tay). Form thêm: Thu/Chi, số tiền, ngày, nội dung; bấm Sửa thì form chuyển sang sửa khoản đó (Lưu thay đổi / Huỷ sửa).
+- **Yêu cầu đóng tiền** (chỉ ĐT): chọn tháng cụ thể (12 tháng trước → 2 tháng tới) để yêu cầu đóng quỹ; gửi cho thành viên quỹ chưa đóng tháng đó.
 - **Form mức đóng** (chỉ ĐT) + ⓘ giải thích Quỹ vs Đá lẻ.
 - Thành viên xem toàn bộ tab ở chế độ chỉ đọc (minh bạch). Khách không thấy tab Quỹ.
 
 ### 7.4 Quy tắc
 
-- Chuyển thành viên từ quỹ sang đá lẻ (hoặc ngược lại) có hiệu lực từ tháng sau; không đổi dữ liệu đã thu.
+- ĐT chuyển thành viên từ quỹ sang đá lẻ (hoặc ngược lại) chọn **áp dụng ngay** (từ tháng này: tháng này tính theo loại mới, các tháng trước giữ loại cũ) hoặc **từ tháng sau**; không đổi dữ liệu đã thu. Đã hẹn từ tháng sau thì đổi sang áp dụng ngay được, chọn lại loại đang áp dụng là huỷ hẹn.
 - Đánh dấu "đã trả đá lẻ" chỉ cho người đá lẻ có trạng thái Đi.
 - Thông báo tự động ngày 5 hằng tháng cho thành viên quỹ chưa đóng (theo quy định "đóng trước ngày 10"); ĐT bật/tắt được.
 - Tiền phạt (đến muộn…) nhập như khoản Thu ghi tay, nội dung có tên người.
