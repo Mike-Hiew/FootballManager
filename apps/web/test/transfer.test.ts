@@ -11,6 +11,15 @@ const Q4 = '0902000004'; // Hiếu Còi (Phố Huế)
 const notes = (userId: string, text: string) => prisma.notification.count({ where: { userId, text: { contains: text } } });
 
 describe('Giá trị chuyển nhượng (BRD 12.1)', () => {
+  it('chưa tự định giá thì mặc định 1M (tối thiểu); người mới vào đội cũng 1M', async () => {
+    const mv = await transfer.marketView(await ctxFor(CAPTAIN, DOM));
+    expect(mv.squad.find((p) => p.id === 'p8')).toMatchObject({ value: 10, isDefault: true });
+    expect(mv.squad.find((p) => p.id === 'p9')).toMatchObject({ isDefault: false });
+    const fresh = await prisma.player.create({ data: { teamId: DOM, fullName: 'Người Mới Tinh', foot: 'Phải', payType: 'le', stats: {} } });
+    expect(fresh.marketValue).toBe(10);
+    await prisma.player.delete({ where: { id: fresh.id } });
+  });
+
   it('thành viên tự đặt giá, áp dụng ngay, có lịch sử; sai giá bị chặn', async () => {
     const me = await ctxFor(P8, DOM);
     await transfer.setMyValue(me, { value: 1200 });
