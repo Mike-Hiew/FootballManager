@@ -65,7 +65,7 @@ export function PlayerCard({ c, team, tilt = true, onActivate }: { c: CardSnapsh
   return (
     <div
       ref={ref}
-      className="hc-card"
+      className={`hc-card${up != null && up !== 0 ? ' has-up' : ''}`}
       data-tier={t}
       tabIndex={0}
       role="img"
@@ -107,8 +107,7 @@ export function PlayerCard({ c, team, tilt = true, onActivate }: { c: CardSnapsh
                 const d = c.prevStats ? v - c.prevStats[i][1] : 0;
                 return (
                   <div key={k} className="hc-stat">
-                    <b>{v}</b><span>{k}</span>
-                    {d !== 0 && <em className={d > 0 ? 'pos' : 'neg'}>{d > 0 ? `+${d}` : d}</em>}
+                    <b>{v}{d !== 0 && <em className={d > 0 ? 'pos' : 'neg'} aria-label={`${d > 0 ? 'tăng' : 'giảm'} ${Math.abs(d)}`}>{d > 0 ? `+${d}` : d}</em>}</b><span>{k}</span>
                   </div>
                 );
               })}
