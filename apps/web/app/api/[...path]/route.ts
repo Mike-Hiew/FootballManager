@@ -24,6 +24,7 @@ import * as payment from '@/server/services/payment';
 import * as tactics from '@/server/services/tactics';
 import * as admin from '@/server/services/admin';
 import * as transfer from '@/server/services/transfer';
+import * as honors from '@/server/services/honors';
 import { approvals, teamView } from '@/server/services/view';
 import { listNotifications, markAllRead } from '@/server/services/notify';
 import { dispatchOutbox, saveSubscription } from '@/server/services/push';
@@ -170,6 +171,10 @@ const routes: Array<[string, H]> = [
   ['GET /version', async () => ({ version: process.env.NEXT_PUBLIC_BUILD_ID ?? 'dev' })],
 
   // Yêu cầu đóng tiền
+  ['GET /teams/:id/honors', async ({ p }) => honors.honorsView(await tc(p[0]))],
+  ['POST /teams/:id/honors', async ({ p, body }) => ({ id: (await honors.giveHonor(await tc(p[0]), await body())).id })],
+  ['DELETE /teams/:id/honors/:honorId', async ({ p }) => { await honors.removeHonor(await tc(p[0]), p[1]); return { ok: true }; }],
+  ['POST /teams/:id/honors/:honorId/seen', async ({ p }) => { await honors.markHonorSeen(await tc(p[0]), p[1]); return { ok: true }; }],
   ['GET /teams/:id/market', async ({ p }) => transfer.marketView(await tc(p[0]))],
   ['PUT /teams/:id/market/me', async ({ p, body }) => { await transfer.setMyValue(await tc(p[0]), await body()); return { ok: true }; }],
   ['PUT /players/:id/market-value', async ({ p, body }) => { await transfer.setPlayerValue(await tc(await teamOf.player(p[0])), p[0], await body()); return { ok: true }; }],

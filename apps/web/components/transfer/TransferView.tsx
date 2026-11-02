@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import {
-  MV_MAX, MV_MIN, OFFER_LABEL, POS_INFO, POSITIONS, dm, formatValue, formatValueFull, formatValueShort, parseValue, shortName, valueChange,
+  MV_MAX, MV_MIN, OFFER_LABEL, cardTier, POS_INFO, POSITIONS, dm, formatValue, formatValueFull, formatValueShort, parseValue, shortName, valueChange,
   type OfferStatus, type Position,
 } from '@san7/core';
 import { useTeam } from '../TeamContext';
@@ -16,7 +16,8 @@ type Tab = 'doi-hinh' | 'thi-truong' | 'de-nghi' | 'bang-tin';
 
 /* ---------------- Phụ trợ ---------------- */
 
-const tier = (ovr: number) => (ovr >= 80 ? 'gold' : ovr >= 65 ? 'silver' : 'bronze');
+/** Hạng thẻ dùng chung toàn app (BRD 13): Đom Đóm ≥ 85 · Vàng 75–84 · Bạc < 75. */
+const tier = cardTier;
 
 function Trend({ prev, cur }: { prev: number | null; cur: number | null }) {
   const c = valueChange(prev, cur);

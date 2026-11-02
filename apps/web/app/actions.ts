@@ -20,6 +20,7 @@ import * as fund from '@/server/services/fund';
 import * as payment from '@/server/services/payment';
 import * as tactics from '@/server/services/tactics';
 import * as transfer from '@/server/services/transfer';
+import * as honors from '@/server/services/honors';
 import * as admin from '@/server/services/admin';
 import { listNotifications, markAllRead } from '@/server/services/notify';
 import { dispatchOutbox, saveSubscription } from '@/server/services/push';
@@ -323,4 +324,19 @@ export async function respondOfferAction(teamId: string, offerId: string, input:
       return r.status;
     }),
   );
+}
+
+/* ---------- Vinh danh ---------- */
+export async function giveHonorAction(teamId: string, input: { playerId: string; title: string; note?: string }) {
+  return run(() => inTeam(teamId, (c) => honors.giveHonor(c, input).then((h) => h.id)));
+}
+export async function removeHonorAction(teamId: string, honorId: string) {
+  return run(() => inTeam(teamId, (c) => honors.removeHonor(c, honorId).then(() => null)));
+}
+/** Không revalidate: popup đang mở không bị tải lại giữa chừng. */
+export async function markHonorSeenAction(teamId: string, honorId: string) {
+  return run(async () => {
+    await honors.markHonorSeen(await teamCtx(teamId), honorId);
+    return null;
+  });
 }

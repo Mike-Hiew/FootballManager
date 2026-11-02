@@ -6,6 +6,7 @@ import { audit } from '../audit';
 import { forbidden, invalid, notFound, zodMessage } from '../errors';
 import { captainUserIds, emit } from './notify';
 import { announceReview } from './statreview';
+import { statsHonor } from './honors';
 import { statsOf } from './mappers';
 
 const captainEdit = profileSchema.extend({
@@ -70,12 +71,16 @@ export async function updatePlayer(ctx: Ctx, playerId: string, raw: unknown) {
   if (!before) throw notFound('Không tìm thấy cầu thủ');
   const payChange = nextPayState(before, d.payType, d.payFrom ?? 'next', currentMonth(ctx.now));
   const warning = await numWarning(ctx.teamId, d.num, playerId);
-  const player = await prisma.player.update({
-    where: { id: playerId },
-    data: {
-      fullName: d.fullName, nick: d.nick || null, dob: d.dob || null, num: d.num ?? null, foot: d.foot, styles: d.styles,
-      stats: d.stats, avatarUrl: d.avatarUrl || null, isCaptain: d.isCaptain ?? before.isCaptain, ...payChange,
-    },
+  const player = await prisma.$transaction(async (tx) => {
+    const pl = await tx.player.update({
+      where: { id: playerId },
+      data: {
+        fullName: d.fullName, nick: d.nick || null, dob: d.dob || null, num: d.num ?? null, foot: d.foot, styles: d.styles,
+        stats: d.stats, avatarUrl: d.avatarUrl || null, isCaptain: d.isCaptain ?? before.isCaptain, ...payChange,
+      },
+    });
+    await statsHonor(tx, ctx, pl, statsOf(before.stats), d.stats);
+    return pl;
   });
   await audit(prisma, ctx, 'player.update', 'player', playerId, before, player);
   return { player, warning };
@@ -135,10 +140,11 @@ export async function approveProfileEdit(ctx: Ctx, editId: string, edited?: unkn
   if (!p.success) throw invalid(zodMessage(p.error));
   const d = p.data;
   await prisma.$transaction(async (tx) => {
-    await tx.player.update({
+    const after = await tx.player.update({
       where: { id: e.playerId },
       data: { fullName: d.fullName, nick: d.nick || null, dob: d.dob || null, num: d.num ?? null, foot: d.foot, styles: d.styles, stats: d.stats, avatarUrl: d.avatarUrl || null },
     });
+    await statsHonor(tx, ctx, after, statsOf(e.player.stats), d.stats);
     await tx.profileEdit.update({ where: { id: e.id }, data: { status: 'approved', payload: d, decidedById: ctx.user.id, decidedAt: ctx.now } });
     await emit(tx, { kind: 'result', teamId: ctx.teamId, recipients: [e.player.userId], actorId: ctx.user.id, view: 'toi', text: e.votes.length ? `Đội trưởng đã chốt chỉ số của bạn (${e.votes.length} đồng đội chấm)` : 'Đội trưởng đã duyệt cập nhật hồ sơ của bạn' });
     await audit(tx, ctx, 'profile.approve', 'player', e.playerId, e.player, d);

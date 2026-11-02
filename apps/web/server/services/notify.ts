@@ -1,6 +1,6 @@
 import { prisma, type Db } from '@san7/db';
 
-export type NotifyKind = 'vote' | 'mvp' | 'join' | 'edit' | 'claim' | 'result' | 'fund' | 'season' | 'transfer';
+export type NotifyKind = 'vote' | 'mvp' | 'join' | 'edit' | 'claim' | 'result' | 'fund' | 'season' | 'transfer' | 'honor';
 
 export interface EmitInput {
   kind: NotifyKind;

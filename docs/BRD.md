@@ -832,3 +832,27 @@ Tab **Chuyển nhượng** (route `chuyen-nhuong`), công khai cho mọi ngườ
 - Mọi thao tác ghi nhật ký; thông báo loại `transfer` mở tab Chuyển nhượng.
 - Giá trị chuyển nhượng là giá trị tham khảo, **không** ghi vào sổ quỹ.
 
+## 13. Vinh danh và thẻ cầu thủ
+
+Tab **Vinh danh** (route `vinh-danh`), công khai như Thống kê. Mỗi lần vinh danh lưu **ảnh chụp thẻ** của cầu thủ tại thời điểm đó.
+
+### 13.1 Thẻ cầu thủ
+
+- **Hạng thẻ** theo OVR, dùng chung toàn app (cả tab Chuyển nhượng): **Đom Đóm ≥ 85** (xanh dạ quang) · **Vàng 75–84** · **Bạc < 75**. OVR = điểm vị trí tốt nhất × 10.
+- Mặt thẻ: OVR, vị trí, số áo, huy hiệu, ảnh (hoặc hình bóng), tên, vị trí phụ (2 vị trí kế tiếp), 6 chỉ số thang 0–99 (cầu thủ: TỐC, RÊ, SÚT, THỦ, CHUYỀN, THỂ; thủ môn: BẮT, PHẢN, PHÁT, ĐỌC, CHUYỀN, THỂ), chân thuận, phong cách chính.
+- **Hiệu ứng mở thẻ**: thẻ úp bay vào → rung → lật, lóe sáng, tia sáng toả, tia lửa và đom đóm nền; nghiêng theo chuột / ngón tay. Bấm thẻ để lật ngay, "Mở lại" để xem lại. Người dùng bật giảm chuyển động thì hiện thẳng mặt trước.
+
+### 13.2 Ai được vinh danh
+
+- **Tự động** (chỉ sự kiện sau thời điểm bật tính năng, không tràn thông báo cho dữ liệu cũ):
+  - **MVP trận** khi trận có MVP.
+  - **Vua phá lưới / Vua kiến tạo** của tháng vừa kết thúc (bằng nhau thì vinh danh tất cả).
+- **Đội trưởng vinh danh** một người bất kỳ kèm danh hiệu (gợi ý sẵn hoặc tự gõ) và lời khen; gỡ được lần vinh danh thủ công.
+- **Chỉ số mới**: khi đội trưởng chốt / sửa chỉ số làm đổi OVR hoặc chỉ số thẻ → thẻ "lên chỉ số" hiện OVR cũ → mới và mức tăng giảm từng chỉ số.
+
+### 13.3 Thông báo và tự mở thẻ
+
+- Mỗi lần vinh danh / chỉ số mới: **cả đội nhận thông báo** (loại `honor`, mở tab Vinh danh).
+- **Người được vinh danh / được cập nhật chỉ số** tự mở thẻ (một lần) ở bất kỳ tab nào lần tới vào app.
+- Đồng đội: vào tab Vinh danh thì các thẻ vinh danh mới chưa xem tự mở lần lượt (thẻ chỉ số của người khác chỉ hiện trong danh sách).
+- Tab Vinh danh: thẻ mới nhất, lọc (Tất cả / MVP / Danh hiệu tháng / Đội trưởng / Chỉ số mới), danh sách có nhãn MỚI, **Bảng vàng** đếm số lần vinh danh theo người.

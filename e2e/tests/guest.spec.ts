@@ -6,7 +6,7 @@ test('11.1 #13 — khách xem đội khác: 4 tab + Chuyển nhượng (công kh
   await page.goto('/t/t-domdom/doi');
   await expect(page.getByText('ở chế độ chỉ xem')).toBeVisible();
   const tabs = page.locator('nav.tabs a');
-  await expect(tabs).toHaveText([/Đội/, /Cầu thủ/, /Lịch đấu/, /Thống kê/, /Chuyển nhượng/, /Khám phá/]);
+  await expect(tabs).toHaveText([/Đội/, /Cầu thủ/, /Lịch đấu/, /Thống kê/, /Vinh danh/, /Chuyển nhượng/, /Khám phá/]);
   await expect(page.getByRole('button', { name: 'Sửa thông tin đội' })).toHaveCount(0);
   const html = await page.content();
   expect(html).not.toMatch(/0901000\d{3}/);

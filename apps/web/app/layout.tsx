@@ -4,6 +4,7 @@ import { connection } from 'next/server';
 import './prototype.css';
 import './app.css';
 import './transfer.css';
+import './honors.css';
 import { RegisterSW, UpdateBanner } from '@/components/Pwa';
 import { InstallPrompt } from '@/components/InstallPrompt';
 
