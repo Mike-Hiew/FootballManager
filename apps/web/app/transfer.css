@@ -219,3 +219,13 @@ button.tm-th:hover{color:var(--ink)}
 @media (max-width:720px){.tm-total b{font-size:32px}.tm-total span{font-size:16px}}
 .tm-offer-price b,.tm-news-fee b,.tm-me-val,.tm-hist-val{font-variant-numeric:tabular-nums}
 .tm-me-val{font-size:22px}
+
+/* Thêm tab Chuyển nhượng: thu gọn thanh tab ở màn vừa để vẫn một dòng */
+@media (min-width:761px) and (max-width:1279px){
+  .tabs{gap:0}
+  .tabs a{padding:7px 8px;gap:5px;letter-spacing:0}
+  .tabs a svg{width:15px;height:15px}
+}
+@media (min-width:761px) and (max-width:1100px){
+  .tabs a{padding:7px 6px;gap:4px;font-size:12.5px}
+}
