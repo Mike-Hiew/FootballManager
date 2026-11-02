@@ -172,3 +172,11 @@ select.mini{width:auto}
 .poll-row{display:flex;gap:10px;align-items:center;padding:6px 8px;border-radius:12px;cursor:pointer}
 .poll-row:hover{background:var(--surface-2)}
 .poll-row small{color:var(--muted)}
+/* ĐT đổi quỹ ↔ đá lẻ: chọn áp dụng ngay / từ tháng sau */
+.pay-from{display:grid;gap:6px}
+.pay-from .lbl{font-size:12px;font-weight:500;color:var(--muted)}
+.pay-from .seg{width:max-content;max-width:100%}
+.pay-from .hint{margin:0}
+/* Sổ thu chi: đang sửa một khoản */
+.ledger tr.editing td{background:color-mix(in srgb,var(--gold) 14%,transparent)}
+.ledger .row-acts{display:flex;gap:4px;justify-content:flex-end}

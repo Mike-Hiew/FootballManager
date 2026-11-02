@@ -8,7 +8,32 @@ import { captainUserIds, emit } from './notify';
 import { announceReview } from './statreview';
 import { statsOf } from './mappers';
 
-const captainEdit = profileSchema.extend({ payType: payTypeSchema, isCaptain: z.boolean().optional() });
+const captainEdit = profileSchema.extend({
+  payType: payTypeSchema,
+  isCaptain: z.boolean().optional(),
+  /** đổi quỹ ↔ đá lẻ: áp dụng ngay từ tháng này hay từ tháng sau (mặc định tháng sau) */
+  payFrom: z.enum(['now', 'next']).optional(),
+});
+
+type PayState = { payType: string; payTypeFrom: string | null; prevPayType: string | null };
+
+/**
+ * Tính trạng thái quỹ/đá lẻ mới khi ĐT đổi (BRD 7.4). Chỉ lưu một mốc đổi: tháng < payTypeFrom dùng prevPayType.
+ * - Chọn lại đúng loại đang áp dụng → huỷ lịch đổi tháng sau (nếu có).
+ * - "now": đổi từ tháng này (các tháng trước giữ loại cũ); "next": từ tháng sau.
+ */
+export function nextPayState(before: PayState, payType: string, from: 'now' | 'next', month: string): Partial<PayState> {
+  const cur = effectivePayType(before, month);
+  const pending = !!before.payTypeFrom && before.payTypeFrom > month;
+  if (payType === cur) {
+    if (!pending) return {};
+    return { payType, payTypeFrom: null, prevPayType: null };
+  }
+  if (from === 'next') return { payType, payTypeFrom: addMonths(month, 1), prevPayType: cur };
+  // đổi ngay: nếu đã có mốc đổi đúng tháng này thì các tháng trước vẫn theo loại trước mốc đó
+  const prev = before.payTypeFrom === month && before.prevPayType ? before.prevPayType : cur;
+  return prev === payType ? { payType, payTypeFrom: null, prevPayType: null } : { payType, payTypeFrom: month, prevPayType: prev };
+}
 
 async function numWarning(teamId: string, num: number | null | undefined, exceptId?: string) {
   if (num == null) return null;
@@ -34,8 +59,7 @@ export async function createPlayer(ctx: Ctx, raw: unknown) {
 }
 
 /**
- * ĐT sửa trực tiếp. Đổi quỹ ↔ đá lẻ có hiệu lực từ tháng sau (BRD 7.4):
- * lưu payType mới + payTypeFrom = tháng sau + prevPayType = loại cũ.
+ * ĐT sửa trực tiếp. Đổi quỹ ↔ đá lẻ áp dụng ngay (từ tháng này) hoặc từ tháng sau (BRD 7.4).
  */
 export async function updatePlayer(ctx: Ctx, playerId: string, raw: unknown) {
   requireManager(ctx);
@@ -44,10 +68,7 @@ export async function updatePlayer(ctx: Ctx, playerId: string, raw: unknown) {
   const d = p.data;
   const before = await prisma.player.findFirst({ where: { id: playerId, teamId: ctx.teamId } });
   if (!before) throw notFound('Không tìm thấy cầu thủ');
-  const payChange =
-    d.payType !== before.payType
-      ? { payType: d.payType, payTypeFrom: addMonths(currentMonth(ctx.now), 1), prevPayType: effectivePayType(before, currentMonth(ctx.now)) }
-      : {};
+  const payChange = nextPayState(before, d.payType, d.payFrom ?? 'next', currentMonth(ctx.now));
   const warning = await numWarning(ctx.teamId, d.num, playerId);
   const player = await prisma.player.update({
     where: { id: playerId },

@@ -215,6 +215,9 @@ export async function decidePaymentAction(teamId: string, requestId: string, pla
 export async function addEntryAction(teamId: string, input: unknown) {
   return run(() => inTeam(teamId, (c) => fund.addManualEntry(c, input).then(() => null)));
 }
+export async function updateEntryAction(teamId: string, entryId: string, input: unknown) {
+  return run(() => inTeam(teamId, (c) => fund.updateManualEntry(c, entryId, input).then(() => null)));
+}
 export async function deleteEntryAction(teamId: string, entryId: string) {
   return run(() => inTeam(teamId, (c) => fund.deleteManualEntry(c, entryId).then(() => null)));
 }

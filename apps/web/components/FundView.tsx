@@ -5,7 +5,7 @@ import { FUND_SOURCE_LABEL, addMonths, dm, monthFlow, monthLabel, money, recentM
 import { useTeam } from './TeamContext';
 import { Avatar } from './ui';
 import { MatchModal } from './matches/MatchModal';
-import { addEntryAction, deleteEntryAction, remindPaymentAction, requestDuesAction, setDuesAction, setDuesReminderAction, setFeesAction } from '@/app/actions';
+import { addEntryAction, deleteEntryAction, updateEntryAction, remindPaymentAction, requestDuesAction, setDuesAction, setDuesReminderAction, setFeesAction } from '@/app/actions';
 
 export interface FundData {
   monthlyFee: number;
@@ -23,7 +23,8 @@ export interface FundData {
 /** ĐT gửi yêu cầu đóng quỹ tháng và theo dõi / nhắc các yêu cầu còn người nợ. */
 function PayRequests({ data }: { data: FundData }) {
   const { nameOf, act, teamId } = useTeam();
-  const months = [addMonths(data.month, -1), data.month, addMonths(data.month, 1)];
+  // ĐT chọn tháng cụ thể: 12 tháng trước → 2 tháng tới (mới nhất lên đầu)
+  const months = Array.from({ length: 15 }, (_, i) => addMonths(data.month, 2 - i));
   const names = (ids: string[]) => ids.map((id) => nameOf(id)).join(', ');
   return (
     <div className="panel">
@@ -68,6 +69,8 @@ export function FundView({ data }: { data: FundData }) {
   const [kind, setKind] = useState<'in' | 'out'>('out');
   const [openMatch, setOpenMatch] = useState<string | null>(null);
   const [armDel, setArmDel] = useState<string | null>(null);
+  /** khoản ghi tay đang sửa (form Sổ thu chi chuyển sang chế độ sửa) */
+  const [editing, setEditing] = useState<FundData['entries'][number] | null>(null);
   const now = new Date(view.now);
   const today = todayVN(now);
   const cm = data.month;
@@ -178,12 +181,20 @@ export function FundView({ data }: { data: FundData }) {
             <form
               className="form-inline"
               style={{ marginBottom: 12 }}
+              key={editing?.id ?? 'new'}
+              aria-label={editing ? 'Sửa khoản thu chi' : 'Ghi khoản thu chi'}
               onSubmit={async (e) => {
                 e.preventDefault();
                 const form = e.currentTarget;
                 const f = new FormData(form);
                 const amount = Number(f.get('amount'));
-                const r = await act(() => addEntryAction(teamId, { kind, amount, date: String(f.get('date')), note: String(f.get('note') ?? '') }), (kind === 'in' ? 'Đã ghi thu ' : 'Đã ghi chi ') + money(amount));
+                const input = { kind, amount, date: String(f.get('date')), note: String(f.get('note') ?? '') };
+                if (editing) {
+                  const r = await act(() => updateEntryAction(teamId, editing.id, input), 'Đã sửa khoản ' + input.note);
+                  if (r !== undefined) setEditing(null);
+                  return;
+                }
+                const r = await act(() => addEntryAction(teamId, input), (kind === 'in' ? 'Đã ghi thu ' : 'Đã ghi chi ') + money(amount));
                 if (r !== undefined) form.reset();
               }}
             >
@@ -191,10 +202,11 @@ export function FundView({ data }: { data: FundData }) {
                 <button type="button" aria-pressed={kind === 'in'} onClick={() => setKind('in')}>Thu</button>
                 <button type="button" aria-pressed={kind === 'out'} onClick={() => setKind('out')}>Chi</button>
               </div>
-              <div className="field" style={{ width: 140 }}><label htmlFor="txAmt">Số tiền</label><input id="txAmt" name="amount" type="number" min={1} step={1000} inputMode="numeric" required placeholder="450000" /></div>
-              <div className="field" style={{ flex: 1, minWidth: 180 }}><label htmlFor="txNote">Nội dung</label><input id="txNote" name="note" required maxLength={80} placeholder="VD: Mua bóng mới / Phạt đến muộn (Minh)" /></div>
-              <div className="field" style={{ width: 150 }}><label htmlFor="txDate">Ngày</label><input id="txDate" name="date" type="date" required defaultValue={today} /></div>
-              <button className="btn primary" type="submit">Ghi sổ</button>
+              <div className="field" style={{ width: 140 }}><label htmlFor="txAmt">Số tiền</label><input id="txAmt" name="amount" type="number" min={1000} step={1000} inputMode="numeric" required placeholder="450000" defaultValue={editing ? Math.abs(editing.amount) : undefined} /></div>
+              <div className="field" style={{ flex: 1, minWidth: 180 }}><label htmlFor="txNote">Nội dung</label><input id="txNote" name="note" required maxLength={80} placeholder="VD: Mua bóng mới / Phạt đến muộn (Minh)" defaultValue={editing?.note} /></div>
+              <div className="field" style={{ width: 150 }}><label htmlFor="txDate">Ngày</label><input id="txDate" name="date" type="date" required defaultValue={editing?.date ?? today} /></div>
+              <button className="btn primary" type="submit">{editing ? 'Lưu thay đổi' : 'Ghi sổ'}</button>
+              {editing && <button className="btn ghost" type="button" onClick={() => { setEditing(null); setKind('out'); }}>Huỷ sửa</button>}
             </form>
           )}
           <div className="twrap">
@@ -203,21 +215,28 @@ export function FundView({ data }: { data: FundData }) {
                 <thead><tr><th>Ngày</th><th>Nội dung</th><th>Nguồn</th><th>Số tiền</th><th /></tr></thead>
                 <tbody>
                   {data.entries.map((x) => (
-                    <tr key={x.id}>
+                    <tr key={x.id} className={editing?.id === x.id ? 'editing' : undefined}>
                       <td>{dm(x.date)}</td>
                       <td style={{ whiteSpace: 'normal', minWidth: 160 }}>{x.note}</td>
                       <td><span className="chip">{FUND_SOURCE_LABEL[x.source as FundSource] ?? x.source}</span></td>
                       <td className={`amt ${x.amount >= 0 ? 'money-in' : 'money-out'}`}>{x.amount >= 0 ? '+' : ''}{money(x.amount)}</td>
                       <td>
                         {canEdit && x.source === 'manual' && (
-                          <button type="button" className="btn ghost sm" aria-label={`Xoá khoản ${x.note}`} onClick={() => {
-                            if (armDel !== x.id) {
-                              setArmDel(x.id);
-                              setTimeout(() => setArmDel(null), 2500);
-                              return;
-                            }
-                            act(() => deleteEntryAction(teamId, x.id), 'Đã xoá khoản ghi tay');
-                          }}>{armDel === x.id ? 'Xác nhận xoá' : 'Xoá'}</button>
+                          <span className="row-acts">
+                            <button type="button" className="btn ghost sm" aria-label={`Sửa khoản ${x.note}`} onClick={() => {
+                              setEditing(x);
+                              setKind(x.amount >= 0 ? 'in' : 'out');
+                              setTimeout(() => document.getElementById('txAmt')?.focus(), 0);
+                            }}>Sửa</button>
+                            <button type="button" className="btn ghost sm" aria-label={`Xoá khoản ${x.note}`} onClick={() => {
+                              if (armDel !== x.id) {
+                                setArmDel(x.id);
+                                setTimeout(() => setArmDel(null), 2500);
+                                return;
+                              }
+                              act(() => deleteEntryAction(teamId, x.id), 'Đã xoá khoản ghi tay').then(() => { if (editing?.id === x.id) setEditing(null); });
+                            }}>{armDel === x.id ? 'Xác nhận xoá' : 'Xoá'}</button>
+                          </span>
                         )}
                       </td>
                     </tr>

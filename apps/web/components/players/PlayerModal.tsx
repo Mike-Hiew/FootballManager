@@ -25,6 +25,10 @@ export interface PlayerDraft {
   stats: Stats;
   isCaptain?: boolean;
   ratings?: Ratings;
+  /** loại quỹ/đá lẻ đang áp dụng tháng này (khác payType khi đã hẹn đổi từ tháng sau) */
+  curPayType?: string;
+  /** ĐT đổi quỹ ↔ đá lẻ: áp dụng ngay hay từ tháng sau */
+  payFrom?: 'now' | 'next';
 }
 
 export const blankPlayer = (): PlayerDraft => ({
@@ -165,6 +169,20 @@ export function PlayerModal({ mode, initial, title, pendingNote, extra, saveLabe
                   <option value="le">Đá lẻ (trả theo trận)</option>
                 </select>
               </div>
+              {mode === 'edit' && d.id && d.curPayType && d.payType !== d.curPayType && (
+                <div className="field c6 pay-from">
+                  <span className="lbl" id="fPayFromL">Áp dụng đổi sang {d.payType === 'le' ? 'đá lẻ' : 'đóng quỹ'}</span>
+                  <div className="seg" role="group" aria-labelledby="fPayFromL">
+                    <button type="button" aria-pressed={d.payFrom !== 'next'} onClick={() => set('payFrom', 'now')}>Ngay (từ tháng này)</button>
+                    <button type="button" aria-pressed={d.payFrom === 'next'} onClick={() => set('payFrom', 'next')}>Từ tháng sau</button>
+                  </div>
+                  <small className="hint">
+                    {d.payFrom === 'next'
+                      ? `Tháng này vẫn ${d.curPayType === 'quy' ? 'đóng quỹ' : 'trả đá lẻ'}, tháng sau mới đổi.`
+                      : d.payType === 'le' ? 'Tháng này không tính quỹ nữa — các trận tháng này tính tiền đá lẻ.' : 'Tháng này tính quỹ tháng — các trận tháng này không tính tiền đá lẻ nữa.'}
+                  </small>
+                </div>
+              )}
               {mode === 'edit' && (
                 <div className="c6"><label className="check"><input type="checkbox" checked={!!d.isCaptain} onChange={(e) => set('isCaptain', e.target.checked)} /> Đội trưởng (đeo băng C)</label></div>
               )}

@@ -16,11 +16,12 @@ type Sort = 'num' | 'best' | 'name';
 export const toDraft = (p: PlayerDTO): PlayerDraft => ({
   id: p.id, fullName: p.fullName, nick: p.nick, dob: p.dob, num: p.num, foot: p.foot, payType: p.nextPayType ?? p.payType,
   avatarUrl: p.avatarUrl, styles: p.styles, stats: p.stats, isCaptain: p.isCaptain,
+  curPayType: p.payType, payFrom: p.nextPayType ? 'next' : 'now',
 });
 
 export const profilePayload = (d: PlayerDraft) => ({
   fullName: d.fullName.trim(), nick: d.nick?.trim() || null, dob: d.dob || null, num: d.num, foot: d.foot, styles: d.styles,
-  avatarUrl: d.avatarUrl || null, stats: d.stats, payType: d.payType, isCaptain: d.isCaptain,
+  avatarUrl: d.avatarUrl || null, stats: d.stats, payType: d.payType, isCaptain: d.isCaptain, payFrom: d.payFrom,
 });
 
 /** Hook mở modal cầu thủ đúng chế độ: sửa (ĐT), tự sửa (thành viên), xem (khách). */
