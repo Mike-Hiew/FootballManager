@@ -11,7 +11,8 @@ test('BRD 12.1 — thành viên tự định giá (M/B), ĐT nhắc người ch�
   await closeResultPopup(page);
   await expect(page.locator('.tm-total')).toContainText(/^Tổng giá trị đội hình[\d.]+đ$/);
   const row = page.locator('.tm-row', { hasText: 'Minh Lùn' });
-  await expect(row).toContainText('Chưa định giá');
+  await expect(row).toContainText('1.000.000');
+  await expect(row).toContainText('Mặc định');
   await row.getByRole('button', { name: 'Nhắc' }).click();
   await expect(page.locator('.toast')).toContainText('Đã nhắc Minh Lùn định giá');
 
@@ -21,7 +22,8 @@ test('BRD 12.1 — thành viên tự định giá (M/B), ĐT nhắc người ch�
   await hydrated(page);
   await closeResultPopup(page);
   const me = page.locator('.tm-me');
-  await expect(me).toContainText('Chưa định giá');
+  await expect(me).toContainText('1.000.000 đ');
+  await expect(me).toContainText('Mặc định');
   const input = me.getByLabel('Đặt giá trị chuyển nhượng của bạn');
   await input.fill('0.5M');
   await expect(me.locator('.tm-vin-out')).toContainText('bước 0,1M');

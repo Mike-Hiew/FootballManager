@@ -819,7 +819,7 @@ Tab **Chuyển nhượng** (route `chuyen-nhuong`), công khai cho mọi ngườ
 - Đơn vị **M** (triệu) và **B** (tỷ), tiền tệ **đồng (đ)**; khoảng **1M – 999B**, bước **0,1M**. Nhập kiểu `150M`, `1.2B`, `1,2 tỷ`, `150` (= 150M). Hiển thị `150M đ`, `1,2B đ`. Lưu số nguyên theo đơn vị 0,1M (100.000đ).
 - **Thành viên tự đặt** giá của mình, **áp dụng ngay**. **Đội trưởng** sửa được giá bất kỳ ai (báo người đó) và **khoá giá** (thành viên không tự sửa được nữa).
 - Mỗi lần đổi giá ghi lịch sử (tự đặt / đội trưởng / chuyển nhượng); giao diện hiện % tăng giảm so với giá trước và biểu đồ giá.
-- Người **chưa định giá** hiện "Chưa định giá"; đội trưởng **nhắc từng người** hoặc **nhắc tất cả**.
+- Giá **mặc định 1M** (cũng là mức tối thiểu) cho mọi cầu thủ, kể cả người mới vào đội. Người chưa tự định giá (chưa có lịch sử giá) hiện nhãn "Mặc định"; đội trưởng **nhắc từng người** hoặc **nhắc tất cả**.
 - Đầu tab: tổng giá trị đội hình, số người đã định giá, giá trung bình, người đắt giá nhất, số đề nghị đang mở. OVR = điểm vị trí tốt nhất × 10.
 
 ### 12.2 Thị trường và đề nghị

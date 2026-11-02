@@ -170,8 +170,8 @@ model Player {
   styles      String[] @default([])
   isCaptain   Boolean  @default(false)
   status      String   @default("active") // active | left
-  /// giá trị chuyển nhượng, đơn vị 0,1M (100.000đ); null = chưa định giá
-  marketValue Int?
+  /// giá trị chuyển nhượng, đơn vị 0,1M (100.000đ); mặc định 1M — chưa có lịch sử giá = chưa tự định giá
+  marketValue Int?      @default(10)
   marketValueAt DateTime? @db.Timestamptz
   /// ĐT khoá giá: thành viên không tự sửa được
   valueLocked Boolean  @default(false)

@@ -217,12 +217,12 @@ function MyValue({ me }: { me: MarketPlayer }) {
   const units = parseValue(v);
   const pts = me.history.map((h) => h.value);
   return (
-    <section className={`tm-me${me.value == null ? ' empty' : ''}`} aria-labelledby="tmMeT">
+    <section className={`tm-me${me.isDefault ? ' empty' : ''}`} aria-labelledby="tmMeT">
       <div className="tm-me-card">
         <div className={`tm-ovr big ${tier(me.ovr)}`}><b>{me.ovr}</b><span>{me.pos}</span></div>
         <div className="tm-me-info">
           <h3 id="tmMeT">Giá trị của tôi</h3>
-          <div className="tm-me-val">{formatValue(me.value)} <Trend prev={me.prevValue} cur={me.value} /></div>
+          <div className="tm-me-val">{formatValue(me.value)} {me.isDefault ? <span className="tm-nov">Mặc định — hãy tự định giá</span> : <Trend prev={me.prevValue} cur={me.value} />}</div>
           {me.valueAt && <small className="muted">Cập nhật {dm(me.valueAt.slice(0, 10))}</small>}
         </div>
         <Spark points={pts} />
@@ -239,8 +239,8 @@ function MyValue({ me }: { me: MarketPlayer }) {
             if (r !== undefined) setV('');
           }}
         >
-          <ValueInput id="tmMyVal" value={v} onChange={setV} label={me.value == null ? 'Đặt giá trị chuyển nhượng của bạn' : 'Đổi giá trị (áp dụng ngay)'} />
-          <button className="btn primary" type="submit" disabled={units == null}>{me.value == null ? 'Đặt giá' : 'Cập nhật giá'}</button>
+          <ValueInput id="tmMyVal" value={v} onChange={setV} label={me.isDefault ? 'Đặt giá trị chuyển nhượng của bạn' : 'Đổi giá trị (áp dụng ngay)'} />
+          <button className="btn primary" type="submit" disabled={units == null}>{me.isDefault ? 'Đặt giá' : 'Cập nhật giá'}</button>
         </form>
       )}
     </section>
@@ -364,7 +364,7 @@ function PriceTable({ rows, showTeam, myPlayerId, onOpen, actions, rank }: {
         {sorted.map((p) => {
           const acts = actions?.(p);
           return (
-            <li key={p.id} className={`tm-row${p.value == null ? ' nov' : ''}${p.id === myPlayerId ? ' me' : ''}`}>
+            <li key={p.id} className={`tm-row${p.isDefault ? ' nov' : ''}${p.id === myPlayerId ? ' me' : ''}`}>
               <span className={`tm-pos ${POS_GROUP[p.pos]}`} title={POS_INFO[p.pos].vn}>{p.pos}</span>
               <button type="button" className="tm-who" onClick={() => onOpen(p)} aria-label={`${shortName(p)}: xem lịch sử giá`}>
                 {rank && <span className="tm-rank">{ranks.get(p.id) ?? '–'}</span>}
@@ -382,7 +382,7 @@ function PriceTable({ rows, showTeam, myPlayerId, onOpen, actions, rank }: {
               <span className={`tm-o ${tier(p.ovr)}`}>{p.ovr}</span>
               {showTeam && <span className="tm-team">{p.teamName}</span>}
               <span className="tm-val">
-                {p.value != null ? <><b>{formatValueFull(p.value)}</b><Trend prev={p.prevValue} cur={p.value} /></> : <span className="tm-nov">Chưa định giá</span>}
+                {p.value != null ? <><b>{formatValueFull(p.value)}</b>{p.isDefault ? <span className="tm-nov">Mặc định</span> : <Trend prev={p.prevValue} cur={p.value} />}</> : <span className="tm-nov">Chưa định giá</span>}
               </span>
               {withActs && <span className="tm-acts">{acts}</span>}
             </li>
@@ -409,7 +409,7 @@ export function TransferView({ data }: { data: MarketData }) {
   const [layout, setLayout] = useState<'list' | 'cards'>('list');
   const me = data.squad.find((p) => p.id === data.myPlayerId) ?? null;
   const top = data.squad.find((p) => p.id === data.totals.top) ?? null;
-  const unvalued = data.squad.filter((p) => p.value == null);
+  const unvalued = data.squad.filter((p) => p.isDefault);
   const canBuyHere = data.buyerTeams.length > 0 && !data.myTeamIds.includes(teamId);
   const open = data.offers.filter((o) => ['pending', 'countered', 'agreed'].includes(o.status));
   const done = data.offers.filter((o) => !['pending', 'countered', 'agreed'].includes(o.status));
@@ -484,7 +484,7 @@ export function TransferView({ data }: { data: MarketData }) {
                 <>
                   {data.canEdit && (
                     <>
-                      {p.value == null && p.hasAccount && (
+                      {p.isDefault && p.hasAccount && (
                         <button type="button" className="btn sm" onClick={() => act(() => remindValueAction(teamId, p.id), `Đã nhắc ${shortName(p)} định giá`)}>Nhắc</button>
                       )}
                       <button type="button" className="btn ghost sm" aria-label={`Sửa giá ${shortName(p)}`} onClick={() => setEdit(p)}>Sửa giá</button>

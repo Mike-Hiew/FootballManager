@@ -86,7 +86,8 @@ export async function setListed(ctx: Ctx, playerId: string, listed: boolean) {
 export async function remindValue(ctx: Ctx, playerId?: string | null) {
   requireManager(ctx);
   const targets = await prisma.player.findMany({
-    where: { teamId: ctx.teamId, status: 'active', marketValue: null, userId: { not: null }, ...(playerId ? { id: playerId } : {}) },
+    // chưa tự định giá = chưa có lịch sử giá (đang giữ mức mặc định 1M)
+    where: { teamId: ctx.teamId, status: 'active', valueHistory: { none: {} }, userId: { not: null }, ...(playerId ? { id: playerId } : {}) },
     select: { userId: true },
   });
   if (!targets.length) throw invalid(playerId ? 'Người này đã định giá hoặc chưa có tài khoản' : 'Mọi người đã định giá');
@@ -328,6 +329,8 @@ export interface MarketPlayer {
   hasAccount: boolean;
   isCaptain: boolean;
   history: Array<{ value: number; at: string; source: string }>;
+  /** chưa tự định giá — đang giữ mức mặc định 1M */
+  isDefault: boolean;
 }
 
 export interface OfferDTO {
@@ -370,7 +373,7 @@ function toMarket(p: PlayerRow, caps: Set<string>): MarketPlayer {
   return {
     id: p.id, teamId: p.teamId, teamName: p.team.name, fullName: p.fullName, nick: p.nick, num: p.num, avatarUrl: p.avatarUrl, foot: p.foot,
     pos, ovr, value: p.marketValue, prevValue: prev?.value ?? null, valueAt: p.marketValueAt?.toISOString() ?? null,
-    listedAt: p.listedAt?.toISOString() ?? null, locked: p.valueLocked, hasAccount: !!p.userId,
+    listedAt: p.listedAt?.toISOString() ?? null, locked: p.valueLocked, hasAccount: !!p.userId, isDefault: hist.length === 0,
     isCaptain: !!p.userId && caps.has(`${p.teamId}:${p.userId}`),
     history: hist.map((h) => ({ value: h.value, at: h.createdAt.toISOString(), source: h.source })).reverse(),
   };
@@ -434,6 +437,7 @@ export async function marketView(ctx: Ctx) {
   };
 
   const valued = squad.filter((p) => p.value != null);
+  const priced = squad.filter((p) => !p.isDefault);
   return {
     teamId: ctx.teamId,
     canEdit: manager,
@@ -445,7 +449,7 @@ export async function marketView(ctx: Ctx) {
     squad,
     totals: {
       value: valued.reduce((a, p) => a + (p.value ?? 0), 0),
-      valued: valued.length,
+      valued: priced.length,
       players: squad.length,
       top: valued[0]?.id ?? null,
       avg: valued.length ? Math.round(valued.reduce((a, p) => a + (p.value ?? 0), 0) / valued.length) : 0,
