@@ -4,7 +4,7 @@
  */
 import { hash } from '@node-rs/argon2';
 import {
-  STAT_KEYS, addDays, addMonths, autoPick, currentMonth, fillStats, inferStats, normName, todayVN, vnDateTime,
+  STAT_KEYS, addDays, addMonths, autoPick, cardOf, currentMonth, fillStats, inferStats, monthLabel, normName, todayVN, vnDateTime,
   type Ratings, type Stats,
 } from '@san7/core';
 import { prisma } from '../src/index';
@@ -25,7 +25,7 @@ const statsOf = (arr: number[]): Stats => fillStats(Object.fromEntries(STAT_KEYS
 async function main() {
   // Xoá sạch theo thứ tự phụ thuộc
   await prisma.$transaction([
-    prisma.auditLog.deleteMany(), prisma.jobRun.deleteMany(), prisma.notification.deleteMany(),
+    prisma.honorView.deleteMany(), prisma.honor.deleteMany(), prisma.auditLog.deleteMany(), prisma.jobRun.deleteMany(), prisma.notification.deleteMany(),
     prisma.pushSubscription.deleteMany(), prisma.seasonSnapshot.deleteMany(), prisma.fundEntry.deleteMany(),
     prisma.duesPayment.deleteMany(), prisma.mvpBallot.deleteMany(), prisma.mvpVote.deleteMany(), prisma.claim.deleteMany(),
     prisma.matchEvent.deleteMany(), prisma.attendance.deleteMany(), prisma.match.deleteMany(), prisma.profileEdit.deleteMany(),
@@ -217,6 +217,46 @@ async function main() {
   await n('u-p2', 'join', 'Lương Văn Hải xin vào đội Đom Đóm FC', 24 * H, { view: 'duyet' });
   await n('u-p2', 'edit', 'Quang Còi gửi cập nhật hồ sơ, chỉ số', 2 * H, { view: 'duyet' });
   await n('u-p2', 'claim', `Minh Lùn khai 1 bàn, 1 kiến tạo trận vs ${m4.opp}`, 5 * H, { matchId: 'm4', view: 'duyet' });
+
+  // ================= CHUYỂN NHƯỢNG (BRD 12) =================
+  // Đơn vị 0,1M. Hai người Đom Đóm chưa định giá (Minh Lùn, Bảo Béo) để ĐT nhắc.
+  const values: Record<string, [number, number]> = {
+    p1: [1800, 1500], p2: [2200, 2200], p3: [1500, 1200], p4: [1600, 1800], p5: [9500, 8000], p6: [12000, 10000],
+    p7: [3500, 3000], p9: [15000, 12500], p10: [1900, 1700], p12: [2800, 2500],
+    q1: [1400, 1400], q2: [2600, 2400], q3: [1300, 1100], q4: [6500, 5000], q5: [2100, 2300], q6: [8800, 7000], q7: [1700, 1700], q8: [11000, 9000], q9: [4200, 3600],
+  };
+  for (const [id, [cur, prev]] of Object.entries(values)) {
+    const pl = await prisma.player.findUnique({ where: { id } });
+    if (!pl) continue;
+    const at = new Date(now.getTime() - 3 * 24 * H);
+    await prisma.player.update({
+      where: { id },
+      data: { marketValue: cur, marketValueAt: at, listedAt: ['p12', 'q4', 'q9', 'q5'].includes(id) ? new Date(now.getTime() - 24 * H) : null },
+    });
+    await prisma.marketValueLog.createMany({
+      data: [
+        { playerId: id, value: prev, source: 'self', setById: pl.userId, createdAt: new Date(now.getTime() - 40 * 24 * H) },
+        ...(cur !== prev ? [{ playerId: id, value: cur, source: 'self', setById: pl.userId, createdAt: at }] : []),
+      ],
+    });
+  }
+
+  // ================= VINH DANH (BRD 13) =================
+  // Dữ liệu mẫu đã "xem" sẵn cho mọi thành viên để không bật popup. Sự kiện cũ không tự vinh danh (team.honorsFrom = lúc seed).
+  async function honor(teamId: string, playerId: string, kind: string, title: string, periodKey: string | null, daysAgo: number, note?: string) {
+    const pl = await prisma.player.findUniqueOrThrow({ where: { id: playerId } });
+    const h = await prisma.honor.create({
+      data: { teamId, playerId, kind, title, note: note ?? null, periodKey, card: cardOf(pl, fillStats(pl.stats as Record<string, number>)) as object, createdAt: new Date(now.getTime() - daysAgo * 24 * H) },
+    });
+    const users = await prisma.player.findMany({ where: { teamId, userId: { not: null } }, select: { userId: true } });
+    await prisma.honorView.createMany({ data: users.map((u) => ({ honorId: h.id, userId: u.userId! })) });
+  }
+  for (const m of await prisma.match.findMany({ where: { teamId: dom.id, mvpPlayerId: { not: null } }, orderBy: { date: 'asc' } })) {
+    await honor(dom.id, m.mvpPlayerId!, 'mvp', `MVP trận vs ${m.opponent}`, m.id, Math.max(1, Math.round((now.getTime() - m.kickoffAt.getTime()) / 864e5)));
+  }
+  await honor(dom.id, 'p9', 'top_scorer', `Vua phá lưới ${monthLabel(mk(-1))} · 4 bàn`, mk(-1), 2);
+  await honor(dom.id, 'p6', 'top_assist', `Vua kiến tạo ${monthLabel(mk(-1))} · 3 kiến tạo`, mk(-1), 2);
+  await honor(dom.id, 'p5', 'captain', 'Cầu thủ của tháng', null, 1, 'Cầm nhịp cả hiệp hai, chuyền 3 đường quyết định');
 
   console.log(`Seed xong: ${await prisma.user.count()} tài khoản, ${await prisma.team.count()} đội, ${await prisma.match.count()} trận.`);
 }

@@ -46,3 +46,15 @@ export async function closeResultPopup(page: Page) {
   await pop.locator('.rp-acts').getByRole('button', { name: 'Đóng' }).click();
   await pop.waitFor({ state: 'detached' });
 }
+
+/** Đóng thẻ vinh danh tự mở (chỉ số mới / được vinh danh) nếu đang hiện. */
+export async function closeHonorPopup(page: Page) {
+  const pop = page.locator('.hc-overlay');
+  try {
+    await pop.waitFor({ state: 'visible', timeout: 2500 });
+  } catch {
+    return;
+  }
+  await pop.locator('.hc-actions').getByRole('button', { name: 'Đóng' }).click();
+  await pop.waitFor({ state: 'detached' });
+}

@@ -106,6 +106,8 @@ model Team {
   fullSquad      Int      @default(9) // ngưỡng "đủ người": 7 ra sân + dự bị, ĐT tự chỉnh
   duesReminder   Boolean  @default(true)
   hidden         Boolean  @default(false)
+  /// chỉ tự vinh danh sự kiện sau mốc này (không tràn thông báo cho dữ liệu cũ)
+  honorsFrom     DateTime @default(now()) @db.Timestamptz
   createdById    String?
   createdAt      DateTime @default(now()) @db.Timestamptz
   updatedAt      DateTime @updatedAt @db.Timestamptz
@@ -119,6 +121,9 @@ model Team {
   dues         DuesPayment[]
   snapshots    SeasonSnapshot[]
   payRequests  PaymentRequest[]
+  offersSold   TransferOffer[] @relation("offersSold")
+  offersBought TransferOffer[] @relation("offersBought")
+  honors       Honor[]
 
   @@map("teams")
 }
@@ -165,6 +170,13 @@ model Player {
   styles      String[] @default([])
   isCaptain   Boolean  @default(false)
   status      String   @default("active") // active | left
+  /// giá trị chuyển nhượng, đơn vị 0,1M (100.000đ); null = chưa định giá
+  marketValue Int?
+  marketValueAt DateTime? @db.Timestamptz
+  /// ĐT khoá giá: thành viên không tự sửa được
+  valueLocked Boolean  @default(false)
+  /// đang rao bán trên thị trường
+  listedAt    DateTime? @db.Timestamptz
   createdAt   DateTime @default(now()) @db.Timestamptz
   updatedAt   DateTime @updatedAt @db.Timestamptz
 
@@ -177,6 +189,9 @@ model Player {
   profileEdit ProfileEdit[]
   statVotes   StatVote[]
   payNotices  PaymentNotice[]
+  valueHistory MarketValueLog[]
+  offers      TransferOffer[]
+  honors      Honor[]
 
   @@unique([teamId, userId])
   @@index([teamId, status])
@@ -499,4 +514,83 @@ model StatVote {
   @@id([editId, playerId])
   @@index([playerId])
   @@map("stat_votes")
+}
+
+/// Lịch sử giá trị chuyển nhượng của một cầu thủ (tự đặt / ĐT sửa / sau chuyển nhượng).
+model MarketValueLog {
+  id        String   @id @default(cuid())
+  playerId  String
+  value     Int
+  source    String // self | captain | transfer
+  setById   String?
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, createdAt])
+  @@map("market_value_logs")
+}
+
+/// Đề nghị chuyển nhượng: ĐT đội mua gửi → ĐT đội bán chấp nhận / trả giá / từ chối → cầu thủ đồng ý → hoàn tất.
+model TransferOffer {
+  id           String    @id @default(cuid())
+  playerId     String // cầu thủ ở đội bán
+  sellerTeamId String
+  buyerTeamId  String
+  amount       Int // giá đội mua đề nghị (đơn vị 0,1M)
+  counter      Int? // giá đội bán trả lại
+  message      String?
+  status       String    @default("pending") // pending | countered | agreed | completed | rejected | withdrawn | cancelled
+  reason       String? // lý do từ chối / huỷ
+  createdById  String
+  decidedById  String?
+  newPlayerId  String? // hồ sơ cầu thủ ở đội mua sau khi hoàn tất
+  createdAt    DateTime  @default(now()) @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @db.Timestamptz
+  completedAt  DateTime? @db.Timestamptz
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  seller Team   @relation("offersSold", fields: [sellerTeamId], references: [id], onDelete: Cascade)
+  buyer  Team   @relation("offersBought", fields: [buyerTeamId], references: [id], onDelete: Cascade)
+
+  @@index([sellerTeamId, status])
+  @@index([buyerTeamId, status])
+  @@index([playerId, status])
+  @@index([status, completedAt])
+  @@map("transfer_offers")
+}
+
+/// Vinh danh (BRD 13): MVP trận, vua phá lưới / kiến tạo tháng, ĐT chọn, lên chỉ số. Lưu ảnh chụp thẻ lúc vinh danh.
+model Honor {
+  id          String   @id @default(cuid())
+  teamId      String
+  playerId    String
+  kind        String // mvp | top_scorer | top_assist | captain | stats
+  title       String
+  note        String?
+  periodKey   String? // matchId (mvp) | 'YYYY-MM' (tháng) | null
+  card        Json
+  createdById String?
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  team   Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  player Player       @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  views  HonorView[]
+
+  @@unique([teamId, kind, periodKey, playerId])
+  @@index([teamId, createdAt])
+  @@map("honors")
+}
+
+/// Người đã mở thẻ vinh danh (popup chỉ hiện một lần).
+model HonorView {
+  honorId String
+  userId  String
+  seenAt  DateTime @default(now()) @db.Timestamptz
+
+  honor Honor @relation(fields: [honorId], references: [id], onDelete: Cascade)
+
+  @@id([honorId, userId])
+  @@index([userId])
+  @@map("honor_views")
 }

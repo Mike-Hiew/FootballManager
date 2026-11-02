@@ -125,6 +125,8 @@ export interface TeamView {
   pendingJoins: number;
   /** popup tỉ số trận vừa kết thúc + nhắc khai báo (BRD 6.8) */
   postMatch: { resultMatchId: string | null; claimMatchIds: string[] };
+  /** thẻ vinh danh / chỉ số mới của chính người xem chưa mở */
+  honorPopup: import('@/server/services/honors').HonorDTO | null;
   /** khoản người đang xem còn phải đóng theo yêu cầu của ĐT */
   /** bản chỉ số đồng đội đang chờ cả đội chấm (BRD 4.7) */
   statReviews: Array<{ editId: string; playerId: string; origin: 'self' | 'join' | 'captain'; proposed: Stats; myVote: Stats | null; voted: number; invited: number }>;

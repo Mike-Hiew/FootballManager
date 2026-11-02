@@ -59,10 +59,10 @@ export function requireAdmin(user: SessionUser) {
 
 /** Các tab được phép theo vai trò (BRD 2.2). */
 export function allowedViews(role: Role, hasPlayer: boolean): string[] {
-  if (role === 'guest') return ['doi', 'cau-thu', 'lich', 'thong-ke'];
+  if (role === 'guest') return ['doi', 'cau-thu', 'lich', 'thong-ke', 'vinh-danh', 'chuyen-nhuong'];
   const v = ['doi'];
   if (hasPlayer) v.push('toi');
-  v.push('chien-thuat', 'tran-toi', 'cau-thu', 'lich', 'thong-ke', 'quy');
+  v.push('chien-thuat', 'tran-toi', 'cau-thu', 'lich', 'thong-ke', 'vinh-danh', 'chuyen-nhuong', 'quy');
   if (canManage(role)) v.push('duyet');
   return v;
 }

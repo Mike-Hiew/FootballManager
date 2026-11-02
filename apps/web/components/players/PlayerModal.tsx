@@ -9,6 +9,7 @@ import { Avatar, Modal, Tabs, tierColor } from '../ui';
 import { Radar } from './Radar';
 import { useTeam } from '../TeamContext';
 import { uploadImage } from '@/lib/image';
+import { ViewCardButton } from '../honors/PlayerCard';
 
 export type PlayerMode = 'edit' | 'self' | 'view' | 'app';
 
@@ -57,7 +58,8 @@ const WEIGHT_COLS: Position[] = ['GK', 'CB', 'LB', 'CM', 'ST'];
 
 /** Modal hồ sơ cầu thủ 3 tab: Hồ sơ · Chỉ số & vị trí · Ước lượng từ vị trí (BRD 4.6). */
 export function PlayerModal({ mode, initial, title, pendingNote, extra, saveLabel, onClose, onSave, onDelete, footerExtra }: Props) {
-  const { draft: draftRef, toast } = useTeam();
+  const { draft: draftRef, toast, view } = useTeam();
+  const teamName = view.team.name;
   const [d, setD] = useState<PlayerDraft>(initial);
   const [tab, setTab] = useState<Tab>('ho-so');
   const [self, setSelf] = useState<Ratings>(initial.ratings ?? {});
@@ -115,6 +117,7 @@ export function PlayerModal({ mode, initial, title, pendingNote, extra, saveLabe
             </button>
           )}
           {footerExtra}
+          {initial.id && <ViewCardButton p={initial} team={teamName} className="btn card-btn" />}
           <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
             <button className="btn" type="button" onClick={onClose}>{lock ? 'Đóng' : 'Huỷ'}</button>
             {!lock && (

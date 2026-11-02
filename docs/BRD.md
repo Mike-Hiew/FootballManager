@@ -809,3 +809,50 @@ Phase 1–2 làm nền dữ liệu và công thức; giao diện theme đầy đ
 - Stack chính thức: Next.js + PostgreSQL (đề xuất) hay OutSystems ODC?
 - Có cần đăng nhập bằng Zalo / Google ở phase 1 không?
 - Tên miền và tên sản phẩm chính thức (prototype dùng "Sân 7 Manager").
+
+## 12. Chuyển nhượng
+
+Tab **Chuyển nhượng** (route `chuyen-nhuong`), công khai cho mọi người đăng nhập (kể cả khách xem đội khác), gồm 4 mục: Đội hình · Thị trường · Đề nghị · Bảng tin.
+
+### 12.1 Giá trị chuyển nhượng
+
+- Đơn vị **M** (triệu) và **B** (tỷ), tiền tệ **đồng (đ)**; khoảng **1M – 999B**, bước **0,1M**. Nhập kiểu `150M`, `1.2B`, `1,2 tỷ`, `150` (= 150M). Hiển thị `150M đ`, `1,2B đ`. Lưu số nguyên theo đơn vị 0,1M (100.000đ).
+- **Thành viên tự đặt** giá của mình, **áp dụng ngay**. **Đội trưởng** sửa được giá bất kỳ ai (báo người đó) và **khoá giá** (thành viên không tự sửa được nữa).
+- Mỗi lần đổi giá ghi lịch sử (tự đặt / đội trưởng / chuyển nhượng); giao diện hiện % tăng giảm so với giá trước và biểu đồ giá.
+- Người **chưa định giá** hiện "Chưa định giá"; đội trưởng **nhắc từng người** hoặc **nhắc tất cả**.
+- Đầu tab: tổng giá trị đội hình, số người đã định giá, giá trung bình, người đắt giá nhất, số đề nghị đang mở. OVR = điểm vị trí tốt nhất × 10.
+
+### 12.2 Thị trường và đề nghị
+
+- Đội trưởng **rao bán** một cầu thủ đã có giá → hiện trên **Thị trường** chung của mọi đội (lọc vị trí, giá tối đa, tìm tên/đội, sắp xếp giá / chỉ số / mới rao).
+- Đội trưởng đội mua gửi **đề nghị** cho cầu thủ đội khác (có rao hoặc không), kèm lời nhắn. Gửi lại = nâng giá cùng đề nghị. Không mua được: người đã ở đội mình, **đội trưởng** đội bạn.
+- Luồng: **Chờ đội bán** → đội bán *Chấp nhận* / *Trả giá* (cao hơn giá đề nghị) / *Từ chối* → khi trả giá, đội mua *Đồng ý* hoặc *Không đồng ý* → **Chờ cầu thủ đồng ý** → cầu thủ *Đồng ý chuyển đội* / *Từ chối*. Đội mua *Rút* được khi chưa hoàn tất. Cầu thủ không có tài khoản: hai đội thống nhất là hoàn tất.
+- **Hoàn tất**: hồ sơ ở đội bán chuyển "đã rời" (giữ thống kê cũ), tạo hồ sơ mới ở đội mua (giữ chỉ số, số áo nếu còn trống, giá = giá chuyển nhượng). Các đề nghị khác cho người đó tự huỷ. Thông báo cả hai đội ("HERE WE GO!").
+- **Bảng tin**: các thương vụ hoàn tất gần nhất của mọi đội (ẩn đội bị khoá).
+- Mọi thao tác ghi nhật ký; thông báo loại `transfer` mở tab Chuyển nhượng.
+- Giá trị chuyển nhượng là giá trị tham khảo, **không** ghi vào sổ quỹ.
+
+## 13. Vinh danh và thẻ cầu thủ
+
+Tab **Vinh danh** (route `vinh-danh`), công khai như Thống kê. Mỗi lần vinh danh lưu **ảnh chụp thẻ** của cầu thủ tại thời điểm đó.
+
+### 13.1 Thẻ cầu thủ
+
+- **Hạng thẻ** theo OVR, dùng chung toàn app (cả tab Chuyển nhượng): **Đom Đóm ≥ 85** (xanh dạ quang) · **Vàng 75–84** · **Bạc < 75**. OVR = điểm vị trí tốt nhất × 10.
+- Mặt thẻ: OVR, vị trí, số áo, huy hiệu, ảnh (hoặc hình bóng), tên, vị trí phụ (2 vị trí kế tiếp), 6 chỉ số thang 0–99 (cầu thủ: TỐC, RÊ, SÚT, THỦ, CHUYỀN, THỂ; thủ môn: BẮT, PHẢN, PHÁT, ĐỌC, CHUYỀN, THỂ), chân thuận, phong cách chính.
+- **Hiệu ứng mở thẻ**: thẻ úp bay vào → rung → lật, lóe sáng, tia sáng toả, tia lửa và đom đóm nền; nghiêng theo chuột / ngón tay. Bấm thẻ để lật ngay, "Mở lại" để xem lại. Người dùng bật giảm chuyển động thì hiện thẳng mặt trước.
+
+### 13.2 Ai được vinh danh
+
+- **Tự động** (chỉ sự kiện sau thời điểm bật tính năng, không tràn thông báo cho dữ liệu cũ):
+  - **MVP trận** khi trận có MVP.
+  - **Vua phá lưới / Vua kiến tạo** của tháng vừa kết thúc (bằng nhau thì vinh danh tất cả).
+- **Đội trưởng vinh danh** một người bất kỳ kèm danh hiệu (gợi ý sẵn hoặc tự gõ) và lời khen; gỡ được lần vinh danh thủ công.
+- **Chỉ số mới**: khi đội trưởng chốt / sửa chỉ số làm đổi OVR hoặc chỉ số thẻ → thẻ "lên chỉ số" hiện OVR cũ → mới và mức tăng giảm từng chỉ số.
+
+### 13.3 Thông báo và tự mở thẻ
+
+- Mỗi lần vinh danh / chỉ số mới: **cả đội nhận thông báo** (loại `honor`, mở tab Vinh danh).
+- **Người được vinh danh / được cập nhật chỉ số** tự mở thẻ (một lần) ở bất kỳ tab nào lần tới vào app.
+- Đồng đội: vào tab Vinh danh thì các thẻ vinh danh mới chưa xem tự mở lần lượt (thẻ chỉ số của người khác chỉ hiện trong danh sách).
+- Tab Vinh danh: thẻ mới nhất, lọc (Tất cả / MVP / Danh hiệu tháng / Đội trưởng / Chỉ số mới), danh sách có nhãn MỚI, **Bảng vàng** đếm số lần vinh danh theo người.

@@ -9,6 +9,7 @@ import { effectivePayType } from './player';
 import { postMatch } from './postmatch';
 import { reviewSummaries } from './statreview';
 import { myPayments, pendingNotices } from './payment';
+import { myHonorPopup, syncHonors } from './honors';
 
 /**
  * Ảnh chụp dữ liệu đội cho giao diện, lọc theo vai trò (BRD 2, 8.5):
@@ -17,10 +18,11 @@ import { myPayments, pendingNotices } from './payment';
  */
 export async function teamView(ctx: Ctx): Promise<TeamView> {
   await sweepTeamMvp(ctx.teamId, ctx.now); // chốt lười (ARCHITECTURE 6.2)
+  await syncHonors(ctx.teamId, ctx.now);
   const manager = canManage(ctx.role);
   const insider = ctx.role !== 'guest';
   const month = currentMonth(ctx.now);
-  const [team, players, matches, captains, invite, myEdit, approvalCount, pendingJoins, after, myPay, reviews] = await Promise.all([
+  const [team, players, matches, captains, invite, myEdit, approvalCount, pendingJoins, after, myPay, reviews, honorPopup] = await Promise.all([
     prisma.team.findUniqueOrThrow({ where: { id: ctx.teamId } }),
     prisma.player.findMany({ where: { teamId: ctx.teamId }, include: { user: { select: { phone: true } } }, orderBy: [{ num: 'asc' }, { fullName: 'asc' }] }),
     prisma.match.findMany({
@@ -36,6 +38,7 @@ export async function teamView(ctx: Ctx): Promise<TeamView> {
     postMatch(ctx),
     insider ? myPayments(ctx) : Promise.resolve([]),
     ctx.playerId ? reviewSummaries(ctx.teamId) : Promise.resolve([]),
+    myHonorPopup(ctx),
   ]);
 
   const toPlayer = (p: (typeof players)[number]): PlayerDTO => ({
@@ -94,6 +97,7 @@ export async function teamView(ctx: Ctx): Promise<TeamView> {
     approvalCount,
     pendingJoins,
     postMatch: after,
+    honorPopup,
     // Bản chỉ số đồng đội đang chờ cả đội chấm (không gồm bản của chính mình)
     statReviews: reviews
       .filter((r) => r.playerId !== ctx.playerId)

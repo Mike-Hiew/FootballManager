@@ -36,7 +36,8 @@ const VIEWS: View[] = [
   // Ngưỡng "đủ người" mặc định 9 (prototype: 7) → 7 người Đi hiện thêm dòng "Thiếu 2 người", đẩy bố cục mobile
   { name: 'tran-toi', proto: 'tran-toi', app: '/t/t-domdom/tran-toi', budget: { 390: 0.08 } },
   // Ô tìm + sắp xếp (BRD 4.6, prototype không có) làm thanh công cụ xuống dòng ở màn hẹp
-  { name: 'cau-thu', proto: 'cau-thu', app: '/t/t-domdom/cau-thu', budget: { 1024: 0.15, 390: 0.12 } },
+  // 1024: app có thêm tab Vinh danh + Chuyển nhượng (12 tab, màn vừa bỏ icon trên thanh tab) → lệch thêm ở thanh tab
+  { name: 'cau-thu', proto: 'cau-thu', app: '/t/t-domdom/cau-thu', budget: { 1024: 0.17, 390: 0.12 } },
   { name: 'lich', proto: 'lich', app: '/t/t-domdom/lich' },
   { name: 'thong-ke', proto: 'thong-ke', app: '/t/t-domdom/thong-ke' },
   // Công tắc nhắc đóng quỹ ngày 5 (BRD 7.4) xuống dòng trên mobile
@@ -47,9 +48,10 @@ const VIEWS: View[] = [
   // + danh sách đồng đội đã chấm / chưa chấm chỉ số (thêm 31/10) — ẩn khi so; dòng "x/N đồng đội đã chấm" làm thẻ cao hơn ở 390
   { name: 'duyet', proto: 'duyet', app: '/t/t-domdom/duyet', budget: { 1024: 0.17, 390: 0.3 }, hide: '.vote-list' },
   { name: 'kham-pha', proto: 'kham-pha', app: '/kham-pha' },
-  { name: 'he-thong', proto: 'he-thong', app: '/he-thong', who: 'admin' },
+  // 1024 (CI): thanh tab của prototype (9 tab có icon) xuống 2 dòng, của app (12 tab, bỏ icon ở màn vừa) vẫn 1 dòng → app thấp hơn ~35px
+  { name: 'he-thong', proto: 'he-thong', app: '/he-thong', who: 'admin', budget: { 1024: 0.12 } },
   {
-    name: 'modal-cau-thu', proto: 'cau-thu', app: '/t/t-domdom/cau-thu',
+    name: 'modal-cau-thu', proto: 'cau-thu', app: '/t/t-domdom/cau-thu', budget: { 1024: 0.075 },
     prep: async (p) => openModal(p, p.locator('.pcard .who b', { hasText: 'Khánh Mười' }).first()),
   },
   {
@@ -79,7 +81,7 @@ async function appFonts(request: APIRequestContext, base: string) {
   const html = await (await request.get(`${base}/dang-nhap`)).text();
   const sheets = [...html.matchAll(/href="([^"]+\.css[^"]*)"/g)].map((m) => new URL(m[1], base).href);
   const css = await Promise.all(sheets.map(async (u) => (await request.get(u)).text()));
-  const faces = css.join('\n').match(/@font-face\{[^}]*\}/g) ?? [];
+  const faces = css.join("\n").match(/@font-face\s*\{[^}]*\}/g) ?? [];
   if (!faces.length) throw new Error('Không tìm thấy @font-face trong CSS của app');
   return faces.join('\n').replace(/url\((?:\.\.\/media\/|\/_next\/static\/media\/)/g, 'url(https://fonts.gstatic.com/__app/');
 }

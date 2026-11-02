@@ -23,6 +23,8 @@ import * as fund from '@/server/services/fund';
 import * as payment from '@/server/services/payment';
 import * as tactics from '@/server/services/tactics';
 import * as admin from '@/server/services/admin';
+import * as transfer from '@/server/services/transfer';
+import * as honors from '@/server/services/honors';
 import { approvals, teamView } from '@/server/services/view';
 import { listNotifications, markAllRead } from '@/server/services/notify';
 import { dispatchOutbox, saveSubscription } from '@/server/services/push';
@@ -37,6 +39,7 @@ const teamOf = {
   player: async (id: string) => (await prisma.player.findUnique({ where: { id }, select: { teamId: true } }))?.teamId ?? notFoundT(),
   join: async (id: string) => (await prisma.joinRequest.findUnique({ where: { id }, select: { teamId: true } }))?.teamId ?? notFoundT(),
   edit: async (id: string) => (await prisma.profileEdit.findUnique({ where: { id }, select: { teamId: true } }))?.teamId ?? notFoundT(),
+  offer: async (id: string) => (await prisma.transferOffer.findUnique({ where: { id }, select: { sellerTeamId: true } }))?.sellerTeamId ?? notFoundT(),
   payReq: async (id: string) => (await prisma.paymentRequest.findUnique({ where: { id }, select: { teamId: true } }))?.teamId ?? notFoundT(),
   claim: async (id: string) => (await prisma.claim.findUnique({ where: { id }, select: { match: { select: { teamId: true } } } }))?.match.teamId ?? notFoundT(),
 };
@@ -168,6 +171,18 @@ const routes: Array<[string, H]> = [
   ['GET /version', async () => ({ version: process.env.NEXT_PUBLIC_BUILD_ID ?? 'dev' })],
 
   // Yêu cầu đóng tiền
+  ['GET /teams/:id/honors', async ({ p }) => honors.honorsView(await tc(p[0]))],
+  ['POST /teams/:id/honors', async ({ p, body }) => ({ id: (await honors.giveHonor(await tc(p[0]), await body())).id })],
+  ['DELETE /teams/:id/honors/:honorId', async ({ p }) => { await honors.removeHonor(await tc(p[0]), p[1]); return { ok: true }; }],
+  ['POST /teams/:id/honors/:honorId/seen', async ({ p }) => { await honors.markHonorSeen(await tc(p[0]), p[1]); return { ok: true }; }],
+  ['GET /teams/:id/market', async ({ p }) => transfer.marketView(await tc(p[0]))],
+  ['PUT /teams/:id/market/me', async ({ p, body }) => { await transfer.setMyValue(await tc(p[0]), await body()); return { ok: true }; }],
+  ['PUT /players/:id/market-value', async ({ p, body }) => { await transfer.setPlayerValue(await tc(await teamOf.player(p[0])), p[0], await body()); return { ok: true }; }],
+  ['PUT /players/:id/market-lock', async ({ p, body }) => { await transfer.setValueLock(await tc(await teamOf.player(p[0])), p[0], (await body()).locked !== false); return { ok: true }; }],
+  ['PUT /players/:id/market-listing', async ({ p, body }) => { await transfer.setListed(await tc(await teamOf.player(p[0])), p[0], (await body()).listed !== false); return { ok: true }; }],
+  ['POST /teams/:id/market/remind', async ({ p, body }) => ({ sent: await transfer.remindValue(await tc(p[0]), ((await body()).playerId as string | undefined) ?? null) })],
+  ['POST /players/:id/offers', async ({ p, body }) => ({ id: (await transfer.makeOffer(await tc(await teamOf.player(p[0])), p[0], await body())).id })],
+  ['POST /offers/:id/respond', async ({ p, body }) => transfer.respondOffer(await tc(await teamOf.offer(p[0])), p[0], await body())],
   ['POST /teams/:id/payment-requests', async ({ p, body }) => payment.requestDues(await tc(p[0]), await body())],
   ['POST /matches/:id/payment-request', async ({ p, body }) => payment.requestLe(await tc(await teamOf.match(p[0])), p[0], await body())],
   ['POST /payment-requests/:id/remind', async ({ p }) => ({ sent: await payment.remindRequest(await tc(await teamOf.payReq(p[0])), p[0]) })],

@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { OTHER_CAPTAIN, login } from './helpers';
 
-test('11.1 #13 — khách xem đội khác: 4 tab, không Quỹ/SĐT/nút sửa; API sửa → 403', async ({ page }) => {
+test('11.1 #13 — khách xem đội khác: 4 tab + Chuyển nhượng (công khai), không Quỹ/SĐT/nút sửa; API sửa → 403', async ({ page }) => {
   await login(page, OTHER_CAPTAIN);
   await page.goto('/t/t-domdom/doi');
   await expect(page.getByText('ở chế độ chỉ xem')).toBeVisible();
   const tabs = page.locator('nav.tabs a');
-  await expect(tabs).toHaveText([/Đội/, /Cầu thủ/, /Lịch đấu/, /Thống kê/, /Khám phá/]);
+  await expect(tabs).toHaveText([/Đội/, /Cầu thủ/, /Lịch đấu/, /Thống kê/, /Vinh danh/, /Chuyển nhượng/, /Khám phá/]);
   await expect(page.getByRole('button', { name: 'Sửa thông tin đội' })).toHaveCount(0);
   const html = await page.content();
   expect(html).not.toMatch(/0901000\d{3}/);
