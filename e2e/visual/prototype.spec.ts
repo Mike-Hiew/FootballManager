@@ -79,7 +79,7 @@ async function appFonts(request: APIRequestContext, base: string) {
   const html = await (await request.get(`${base}/dang-nhap`)).text();
   const sheets = [...html.matchAll(/href="([^"]+\.css[^"]*)"/g)].map((m) => new URL(m[1], base).href);
   const css = await Promise.all(sheets.map(async (u) => (await request.get(u)).text()));
-  const faces = css.join('\n').match(/@font-face\{[^}]*\}/g) ?? [];
+  const faces = css.join("\n").match(/@font-face\s*\{[^}]*\}/g) ?? [];
   if (!faces.length) throw new Error('Không tìm thấy @font-face trong CSS của app');
   return faces.join('\n').replace(/url\((?:\.\.\/media\/|\/_next\/static\/media\/)/g, 'url(https://fonts.gstatic.com/__app/');
 }
