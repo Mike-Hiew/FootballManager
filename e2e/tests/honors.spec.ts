@@ -31,11 +31,12 @@ test('BRD 13 — ĐT vinh danh → thẻ lật có hiệu ứng; người đư�
   await login(page, P7);
   await page.goto('/t/t-domdom/doi');
   await hydrated(page);
+  // popup tỉ số (nếu có) hiện trước; thẻ vinh danh đợi nó đóng rồi mới mở
+  await closeResultPopup(page);
   const mine = page.getByRole('dialog', { name: /Thẻ Phong Gió: Chiến binh của trận/ });
   await expect(mine).toBeVisible();
   await mine.locator('.hc-actions').getByRole('button', { name: 'Đóng' }).click();
   await expect(mine).toHaveCount(0);
-  await closeResultPopup(page);
   await page.reload();
   await hydrated(page);
   await page.waitForTimeout(800);
@@ -43,7 +44,7 @@ test('BRD 13 — ĐT vinh danh → thẻ lật có hiệu ứng; người đư�
   await page.goto('/t/t-domdom/vinh-danh');
   await hydrated(page);
   await closeResultPopup(page);
-  await expect(page.locator('.hv-row', { hasText: 'Chiến binh của trận' })).toContainText('Phong Gió');
+  await expect(page.locator('.hv-row', { hasText: 'Chiến binh của trận' }).first()).toContainText('Phong Gió');
   await expect(page.locator('.hv-row.new')).toHaveCount(0);
 });
 

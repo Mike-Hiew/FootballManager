@@ -45,8 +45,23 @@ export function HonorPopup() {
   const { view } = useTeam();
   const path = usePathname();
   const [done, setDone] = useState<string[]>([]);
+  // Không chồng lên popup tỉ số trận: đợi popup đó đóng rồi mới mở thẻ
+  const [clear, setClear] = useState(false);
   const h = view.honorPopup;
-  if (!h || done.includes(h.id) || path?.endsWith('/vinh-danh')) return null;
+  const want = !!h && !done.includes(h.id) && !path?.endsWith('/vinh-danh');
+  useEffect(() => {
+    if (!want) return;
+    let calm = 0;
+    const t = setInterval(() => {
+      calm = document.querySelector('.rp-overlay') ? 0 : calm + 1;
+      if (calm >= 2) {
+        setClear(true);
+        clearInterval(t);
+      }
+    }, 300);
+    return () => clearInterval(t);
+  }, [want]);
+  if (!h || !want || !clear) return null;
   return <HonorRevealFor h={h} onClose={() => setDone((d) => [...d, h.id])} />;
 }
 
