@@ -46,10 +46,15 @@ export function formatValueShort(units: number): string {
   return `${trim1(units / 10)}M`;
 }
 
-/** "150M đ" / "1,2B đ"; null → "Chưa định giá". */
+/** Số tiền đầy đủ, nhóm nghìn bằng dấu chấm: 1.500.000.000 (không kèm đ). */
+export function formatValueFull(units: number): string {
+  return String(units * MV_UNIT).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+/** Hiện đủ số như bảng giá cầu thủ: "1.500.000.000 đ"; null → "Chưa định giá". */
 export function formatValue(units: number | null | undefined): string {
   if (units == null) return 'Chưa định giá';
-  return `${formatValueShort(units)} đ`;
+  return `${formatValueFull(units)} đ`;
 }
 
 /** Giá trị sang đồng (để tính %, so sánh). */

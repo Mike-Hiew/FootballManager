@@ -74,32 +74,56 @@
 /* Bảng giá trị đội hình */
 .tm-squad-h{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px}
 .tm-squad-h .st{margin:0}
+.tm-table{--cols:66px minmax(0,1fr) 54px minmax(150px,auto);display:grid}
+.tm-table.team{--cols:66px minmax(0,1fr) 54px minmax(110px,.6fr) minmax(150px,auto)}
+.tm-thead,.tm-row{display:grid;grid-template-columns:var(--cols);gap:6px 14px;align-items:center}
+.tm-table.acts .tm-thead,.tm-table.acts .tm-row{grid-template-columns:var(--cols) var(--acts,250px)}
+.tm-table.team.acts{--acts:130px}
+.tm-thead{padding:6px 10px 8px;border-bottom:1px solid var(--line)}
+.tm-th{font-size:12.5px;font-weight:500;color:var(--muted);background:none;border:0;padding:0;text-align:left;display:inline-flex;gap:4px;align-items:center;white-space:nowrap}
+button.tm-th:hover{color:var(--ink)}
+.tm-th.on{color:var(--ink);font-weight:700}
+.tm-th i{font-style:normal}
+.tm-th.c-ovr{justify-content:center}
+.tm-th.c-val{justify-content:flex-end}
 .tm-rows{list-style:none;margin:0;padding:0;display:grid}
-.tm-row{display:grid;grid-template-columns:28px 46px minmax(0,1fr) auto auto;gap:10px 12px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line)}
+.tm-row{padding:9px 10px;border-bottom:1px solid var(--line)}
 .tm-row:last-child{border-bottom:0}
-.tm-row.me{background:color-mix(in srgb,var(--gold) 10%,transparent);border-radius:10px}
-.tm-row.nov .tm-ovr{opacity:.55}
-.tm-rank{font-family:var(--f-display);font-size:18px;font-weight:700;color:var(--muted);text-align:center}
-.tm-row:nth-child(1) .tm-rank{color:#c9a063}
+.tm-row:hover{background:var(--surface-2)}
+.tm-row.me{background:color-mix(in srgb,var(--gold) 12%,transparent)}
+.tm-row.nov .tm-o{opacity:.5}
+.tm-pos{font-family:var(--f-display);font-weight:700;font-size:17px;letter-spacing:.02em;padding-left:9px;border-left:3px solid var(--muted);line-height:1.2}
+.tm-pos.gk{border-color:#e0a100}.tm-pos.df{border-color:#3d7be0}.tm-pos.mf{border-color:#2f9e55}.tm-pos.fw{border-color:#d9443a}
 .tm-who{display:flex;align-items:center;gap:10px;min-width:0;background:none;border:0;padding:0;text-align:left}
-.tm-who>span{display:grid;min-width:0}
+.tm-who>span:last-child{display:grid;min-width:0}
+.tm-rank{min-width:18px;font-family:var(--f-display);font-weight:700;color:var(--muted);text-align:center}
 .tm-nm{display:flex;align-items:center;gap:6px;min-width:0}
-.tm-nm b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tm-nm b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;font-size:15px}
 .tm-who small{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tm-who:hover b{color:var(--accent)}
-.tm-val{display:flex;align-items:baseline;gap:8px;justify-content:flex-end;white-space:nowrap;min-width:120px}
-.tm-val b{font-family:var(--f-display);font-size:17px}
+.tm-o{font-family:var(--f-display);font-weight:700;font-size:19px;text-align:center}
+.tm-o.gold{color:#b88a2e}.tm-o.silver{color:var(--ink)}.tm-o.bronze{color:#a8602f}
+.tm-team{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tm-val{display:grid;justify-items:end;white-space:nowrap}
+.tm-val b{font-family:var(--f-display);font-size:17px;font-weight:600;letter-spacing:.02em;font-variant-numeric:tabular-nums}
 .tm-nov{color:var(--muted);font-style:italic;font-size:13px}
 .tm-acts{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
-.tm-acts:empty{display:none}
-@media (max-width:860px){
-  .tm-row{grid-template-columns:22px 42px minmax(0,1fr);row-gap:4px}
-  .tm-who{grid-column:3}
-  .tm-val{grid-column:3;justify-content:flex-start;min-width:0;padding-left:46px}
-  .tm-acts{grid-column:1/-1;justify-content:flex-start;padding-left:74px}
-  .tm-rank,.tm-row>.tm-ovr{grid-row:1/3}
+@media (max-width:980px){
+  .tm-table.acts .tm-thead,.tm-table.acts .tm-row{grid-template-columns:var(--cols)}
+  .tm-acts{grid-column:2/-1;justify-content:flex-start}
+  .tm-acts:empty{display:none}
 }
-@media (max-width:420px){.tm-acts{padding-left:0}.tm-val b{font-size:15px}}
+@media (max-width:640px){
+  .tm-table,.tm-table.team{--cols:44px minmax(0,1fr) 34px auto}
+  .tm-thead,.tm-row{gap:4px 8px;padding-inline:4px}
+  .tm-th.c-team,.tm-team{display:none}
+  .tm-pos{font-size:14px;padding-left:6px}
+  .tm-who .av,.tm-rank{display:none}
+  .tm-nm b{font-size:14px}
+  .tm-o{font-size:16px}
+  .tm-val b{font-size:14px}
+  .tm-acts{grid-column:1/-1}
+}
 
 /* Thị trường */
 .tm-market{display:grid;gap:14px}
@@ -185,3 +209,13 @@
 .tm-hist-list{list-style:none;margin:0;padding:0;display:grid}
 .tm-hist-list li{display:grid;grid-template-columns:90px 1fr auto;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
 .tm-hist-list li:last-child{border-bottom:0}
+/* Số tiền ghi đủ: thu nhỏ chỗ hẹp */
+.tm-card-val b{font-size:14px;letter-spacing:.01em;font-variant-numeric:tabular-nums}
+.tm-card-val{padding:5px 10px;max-width:100%}
+.tm-hero-r dd{font-size:17px}
+.tm-hero-r dd small{display:block;font-size:12px;margin-top:2px}
+.tm-layout{width:max-content}
+.tm-total b{font-variant-numeric:tabular-nums}
+@media (max-width:720px){.tm-total b{font-size:32px}.tm-total span{font-size:16px}}
+.tm-offer-price b,.tm-news-fee b,.tm-me-val,.tm-hist-val{font-variant-numeric:tabular-nums}
+.tm-me-val{font-size:22px}

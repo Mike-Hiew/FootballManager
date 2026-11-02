@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import {
-  MV_MAX, MV_MIN, OFFER_LABEL, POS_INFO, POSITIONS, dm, formatValue, formatValueShort, parseValue, shortName, valueChange,
+  MV_MAX, MV_MIN, OFFER_LABEL, POS_INFO, POSITIONS, dm, formatValue, formatValueFull, formatValueShort, parseValue, shortName, valueChange,
   type OfferStatus, type Position,
 } from '@san7/core';
 import { useTeam } from '../TeamContext';
@@ -85,7 +85,7 @@ function MvCard({ p, onOffer, mine, onOpen }: { p: MarketPlayer; onOffer?: () =>
       <div className="tm-card-name">{shortName(p)}</div>
       <div className="tm-card-team">{p.teamName}{p.num != null ? ` · #${p.num}` : ''}</div>
       <div className="tm-card-val">
-        <b>{formatValueShort(p.value ?? 0)}</b><small>đ</small>
+        <b>{formatValueFull(p.value ?? 0)}</b><small>đ</small>
         <Trend prev={p.prevValue} cur={p.value} />
       </div>
       {(onOffer || mine) && (
@@ -261,7 +261,7 @@ function OfferCard({ o, buyerTeams }: { o: OfferDTO; buyerTeams: MarketData['buy
   const [armReject, setArmReject] = useState(false);
   const respond = (action: 'accept' | 'reject' | 'withdraw', msg: string) => act(() => respondOfferAction(teamId, o.id, { action }), msg);
   const closed = !['pending', 'countered', 'agreed'].includes(o.status);
-  const acceptLabel = o.status === 'pending' ? 'Chấp nhận' : o.status === 'countered' ? `Đồng ý ${formatValueShort(o.counter ?? 0)}` : 'Đồng ý chuyển đội';
+  const acceptLabel = o.status === 'pending' ? 'Chấp nhận' : o.status === 'countered' ? `Đồng ý giá ${formatValue(o.counter)}` : 'Đồng ý chuyển đội';
   const rejectLabel = o.status === 'agreed' && !o.can.includes('accept') ? 'Huỷ thương vụ' : o.status === 'countered' && o.can.includes('accept') ? 'Không đồng ý' : 'Từ chối';
   return (
     <article className={`tm-offer s-${o.status}`} aria-label={`Đề nghị ${o.player.name}: ${o.buyer.name} mua từ ${o.seller.name}`}>
@@ -274,8 +274,8 @@ function OfferCard({ o, buyerTeams }: { o: OfferDTO; buyerTeams: MarketData['buy
         </div>
         <div className="tm-offer-price">
           <b>{formatValue(o.status === 'countered' ? o.counter : o.amount)}</b>
-          {o.status === 'countered' && <small>Đội mua đề nghị {formatValueShort(o.amount)}</small>}
-          {o.status !== 'countered' && o.player.value != null && <small>Giá trị {formatValueShort(o.player.value)}</small>}
+          {o.status === 'countered' && <small>Đội mua đề nghị {formatValue(o.amount)}</small>}
+          {o.status !== 'countered' && o.player.value != null && <small>Giá trị {formatValue(o.player.value)}</small>}
         </div>
       </div>
       {!closed || o.status === 'completed' ? (
@@ -319,6 +319,79 @@ function OfferCard({ o, buyerTeams }: { o: OfferDTO; buyerTeams: MarketData['buy
   );
 }
 
+/* ---------------- Bảng giá cầu thủ (kiểu bảng giá thị trường) ---------------- */
+
+const POS_GROUP: Record<Position, string> = { GK: 'gk', CB: 'df', LB: 'df', RB: 'df', CM: 'mf', ST: 'fw' };
+type SortKey = 'value' | 'ovr' | 'pos';
+
+function PriceTable({ rows, showTeam, myPlayerId, onOpen, actions, rank }: {
+  rows: MarketPlayer[];
+  showTeam?: boolean;
+  myPlayerId?: string | null;
+  onOpen: (p: MarketPlayer) => void;
+  actions?: (p: MarketPlayer) => React.ReactNode;
+  rank?: boolean;
+}) {
+  const [key, setKey] = useState<SortKey>('value');
+  const [desc, setDesc] = useState(true);
+  const sorted = useMemo(() => {
+    const order = POSITIONS as readonly string[];
+    const cmp: Record<SortKey, (a: MarketPlayer, b: MarketPlayer) => number> = {
+      value: (a, b) => (a.value ?? -1) - (b.value ?? -1),
+      ovr: (a, b) => a.ovr - b.ovr,
+      pos: (a, b) => order.indexOf(b.pos) - order.indexOf(a.pos),
+    };
+    return [...rows].sort((a, b) => (desc ? -1 : 1) * cmp[key](a, b) || (b.value ?? -1) - (a.value ?? -1));
+  }, [rows, key, desc]);
+  const head = (k: SortKey, label: string, cls: string) => (
+    <button type="button" className={`tm-th ${cls}${key === k ? ' on' : ''}`} aria-label={`Sắp xếp theo ${label}`} onClick={() => (key === k ? setDesc((d) => !d) : (setKey(k), setDesc(true)))}>
+      {label}{key === k && <i aria-hidden>{desc ? '⌄' : '⌃'}</i>}
+    </button>
+  );
+  const withActs = !!actions && rows.some((p) => actions(p));
+  const ranks = new Map([...rows].filter((p) => p.value != null).sort((a, b) => (b.value ?? 0) - (a.value ?? 0)).map((p, i) => [p.id, i + 1]));
+  return (
+    <div className={`tm-table${showTeam ? ' team' : ''}${withActs ? ' acts' : ''}`}>
+      <div className="tm-thead">
+        {head('pos', 'Vị trí', 'c-pos')}
+        <span className="tm-th c-name">Tên cầu thủ</span>
+        {head('ovr', 'OVR', 'c-ovr')}
+        {showTeam && <span className="tm-th c-team">Thuộc</span>}
+        {head('value', 'Giá trị cầu thủ', 'c-val')}
+      </div>
+      <ol className="tm-rows">
+        {sorted.map((p) => {
+          const acts = actions?.(p);
+          return (
+            <li key={p.id} className={`tm-row${p.value == null ? ' nov' : ''}${p.id === myPlayerId ? ' me' : ''}`}>
+              <span className={`tm-pos ${POS_GROUP[p.pos]}`} title={POS_INFO[p.pos].vn}>{p.pos}</span>
+              <button type="button" className="tm-who" onClick={() => onOpen(p)} aria-label={`${shortName(p)}: xem lịch sử giá`}>
+                {rank && <span className="tm-rank">{ranks.get(p.id) ?? '–'}</span>}
+                <Avatar p={p} size={30} />
+                <span>
+                  <span className="tm-nm">
+                    <b>{shortName(p)}</b>
+                    {p.listedAt && <span className="tm-tag sale">Đang rao</span>}
+                    {p.locked && <span className="tm-tag lock">Khoá giá</span>}
+                    {p.isCaptain && <span className="tm-tag cap">ĐT</span>}
+                  </span>
+                  <small>{showTeam ? p.teamName : p.fullName}{p.num != null ? ` · #${p.num}` : ''}</small>
+                </span>
+              </button>
+              <span className={`tm-o ${tier(p.ovr)}`}>{p.ovr}</span>
+              {showTeam && <span className="tm-team">{p.teamName}</span>}
+              <span className="tm-val">
+                {p.value != null ? <><b>{formatValueFull(p.value)}</b><Trend prev={p.prevValue} cur={p.value} /></> : <span className="tm-nov">Chưa định giá</span>}
+              </span>
+              {withActs && <span className="tm-acts">{acts}</span>}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
 /* ---------------- Màn chính ---------------- */
 
 export function TransferView({ data }: { data: MarketData }) {
@@ -332,6 +405,7 @@ export function TransferView({ data }: { data: MarketData }) {
   const [sort, setSort] = useState<'val-desc' | 'val-asc' | 'ovr' | 'new'>('val-desc');
   const [maxV, setMaxV] = useState<number>(0);
   const [q, setQ] = useState('');
+  const [layout, setLayout] = useState<'list' | 'cards'>('list');
   const me = data.squad.find((p) => p.id === data.myPlayerId) ?? null;
   const top = data.squad.find((p) => p.id === data.totals.top) ?? null;
   const unvalued = data.squad.filter((p) => p.value == null);
@@ -366,13 +440,13 @@ export function TransferView({ data }: { data: MarketData }) {
           <h2 className="vt">Chuyển nhượng</h2>
           <div className="tm-total" aria-label={`Tổng giá trị đội hình ${formatValue(data.totals.value)}`}>
             <small>Tổng giá trị đội hình</small>
-            <b>{formatValueShort(data.totals.value)}</b><span>đ</span>
+            <b>{formatValueFull(data.totals.value)}</b><span>đ</span>
           </div>
         </div>
         <dl className="tm-hero-r">
           <div><dt>Đã định giá</dt><dd>{data.totals.valued}/{data.totals.players}</dd></div>
-          <div><dt>Trung bình</dt><dd>{data.totals.valued ? formatValueShort(data.totals.avg) : '–'}</dd></div>
-          <div><dt>Đắt giá nhất</dt><dd>{top ? <>{shortName(top)} <small>{formatValueShort(top.value ?? 0)}</small></> : '–'}</dd></div>
+          <div><dt>Trung bình</dt><dd>{data.totals.valued ? formatValue(data.totals.avg) : '–'}</dd></div>
+          <div><dt>Đắt giá nhất</dt><dd>{top ? <>{shortName(top)} <small>{formatValue(top.value)}</small></> : '–'}</dd></div>
           <div><dt>Đề nghị đang mở</dt><dd>{open.length}</dd></div>
         </dl>
       </div>
@@ -399,27 +473,14 @@ export function TransferView({ data }: { data: MarketData }) {
               <button type="button" className="btn sm" onClick={() => act(() => remindValueAction(teamId, null), (n) => `Đã nhắc ${n} người định giá`)}>Nhắc tất cả chưa định giá ({unvalued.filter((p) => p.hasAccount).length})</button>
             )}
           </div>
-          <ol className="tm-rows">
-            {data.squad.map((p, i) => (
-              <li key={p.id} className={`tm-row${p.value == null ? ' nov' : ''}${p.id === data.myPlayerId ? ' me' : ''}`}>
-                <span className="tm-rank">{p.value != null ? i + 1 : '–'}</span>
-                <span className={`tm-ovr ${tier(p.ovr)}`}><b>{p.ovr}</b><span>{p.pos}</span></span>
-                <button type="button" className="tm-who" onClick={() => setHist(p)} aria-label={`${shortName(p)}: xem lịch sử giá`}>
-                  <Avatar p={p} size={36} />
-                  <span>
-                    <span className="tm-nm">
-                      <b>{shortName(p)}</b>
-                      {p.listedAt && <span className="tm-tag sale">Đang rao</span>}
-                      {p.locked && <span className="tm-tag lock">Khoá giá</span>}
-                      {p.isCaptain && <span className="tm-tag cap">ĐT</span>}
-                    </span>
-                    <small>{p.fullName}{p.num != null ? ` · #${p.num}` : ''}</small>
-                  </span>
-                </button>
-                <span className="tm-val">
-                  {p.value != null ? <><b>{formatValue(p.value)}</b><Trend prev={p.prevValue} cur={p.value} /></> : <span className="tm-nov">Chưa định giá</span>}
-                </span>
-                <span className="tm-acts">
+          <PriceTable
+            rows={data.squad}
+            rank
+            myPlayerId={data.myPlayerId}
+            onOpen={setHist}
+            actions={(p) =>
+              data.canEdit || (canBuyHere && !p.isCaptain) ? (
+                <>
                   {data.canEdit && (
                     <>
                       {p.value == null && p.hasAccount && (
@@ -433,11 +494,11 @@ export function TransferView({ data }: { data: MarketData }) {
                     </>
                   )}
                   {canBuyHere && !p.isCaptain && <button type="button" className="btn primary sm" aria-label={`Đề nghị mua ${shortName(p)}`} onClick={() => setOffer(p)}>Đề nghị mua</button>}
-                </span>
-              </li>
-            ))}
-          </ol>
-          <p className="hint">Giá theo đơn vị M (triệu) và B (tỷ), tiền tệ đồng. Thành viên tự đặt giá, áp dụng ngay; đội trưởng sửa / khoá được. Bấm tên để xem lịch sử giá.</p>
+                </>
+              ) : null
+            }
+          />
+          <p className="hint">Giá trị tính bằng đồng (đ); khi nhập gõ tắt M = triệu, B = tỷ. Thành viên tự đặt giá, áp dụng ngay; đội trưởng sửa / khoá được. Bấm tên để xem lịch sử giá, bấm tiêu đề cột để sắp xếp.</p>
         </div>
       )}
 
@@ -466,18 +527,37 @@ export function TransferView({ data }: { data: MarketData }) {
               </select>
             </div>
           </div>
+          <div className="seg tm-layout" role="group" aria-label="Kiểu hiển thị">
+            <button type="button" aria-pressed={layout === 'list'} onClick={() => setLayout('list')}>Bảng giá</button>
+            <button type="button" aria-pressed={layout === 'cards'} onClick={() => setLayout('cards')}>Thẻ cầu thủ</button>
+          </div>
           {market.length ? (
-            <div className="tm-grid">
-              {market.map((p) => (
-                <MvCard
-                  key={p.id}
-                  p={p}
-                  onOpen={() => setHist(p)}
-                  mine={data.myTeamIds.includes(p.teamId)}
-                  onOffer={data.buyerTeams.some((t) => t.id !== p.teamId) && !data.myTeamIds.includes(p.teamId) ? () => setOffer(p) : undefined}
+            layout === 'list' ? (
+              <div className="panel tm-squad">
+                <PriceTable
+                  rows={market}
+                  showTeam
+                  onOpen={setHist}
+                  actions={(p) =>
+                    data.myTeamIds.includes(p.teamId) ? <span className="tm-mine">Đội của bạn</span>
+                    : data.buyerTeams.some((t) => t.id !== p.teamId) ? <button type="button" className="btn primary sm" aria-label={`Đề nghị mua ${shortName(p)}`} onClick={() => setOffer(p)}>Đề nghị mua</button>
+                    : null
+                  }
                 />
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="tm-grid">
+                {market.map((p) => (
+                  <MvCard
+                    key={p.id}
+                    p={p}
+                    onOpen={() => setHist(p)}
+                    mine={data.myTeamIds.includes(p.teamId)}
+                    onOffer={data.buyerTeams.some((t) => t.id !== p.teamId) && !data.myTeamIds.includes(p.teamId) ? () => setOffer(p) : undefined}
+                  />
+                ))}
+              </div>
+            )
           ) : <div className="empty-list">Không có cầu thủ nào đang rao khớp bộ lọc.</div>}
           {!data.buyerTeams.length && !data.canEdit && <p className="hint">Chỉ đội trưởng mới gửi được đề nghị mua.</p>}
         </div>

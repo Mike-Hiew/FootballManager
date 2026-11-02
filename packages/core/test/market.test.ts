@@ -17,10 +17,11 @@ describe('Giá trị chuyển nhượng (M/B, đồng)', () => {
   it('từ chối giá sai', () => {
     for (const s of ['', 'abc', '0.5M', '1000B', '1.25M', '-5M', '5K', '1.2.3B']) expect(parseValue(s), s).toBeNull();
   });
-  it('hiển thị M dưới 1 tỷ, B từ 1 tỷ, tiền tệ đ', () => {
-    expect(formatValue(1500)).toBe('150M đ');
-    expect(formatValue(25)).toBe('2,5M đ');
-    expect(formatValue(12000)).toBe('1,2B đ');
+  it('hiển thị đủ số (nhóm nghìn bằng dấu chấm) kèm đ; dạng ngắn M/B cho nhập nhanh', () => {
+    expect(formatValue(1500)).toBe('150.000.000 đ');
+    expect(formatValue(25)).toBe('2.500.000 đ');
+    expect(formatValue(12000)).toBe('1.200.000.000 đ');
+    expect(formatValue(MV_MAX)).toBe('999.000.000.000 đ');
     expect(formatValueShort(12500)).toBe('1,25B');
     expect(formatValueShort(10000)).toBe('1B');
     expect(formatValue(null)).toBe('Chưa định giá');

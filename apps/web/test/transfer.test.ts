@@ -26,7 +26,7 @@ describe('Giá trị chuyển nhượng (BRD 12.1)', () => {
     const cap = await ctxFor(CAPTAIN, DOM);
     await transfer.setPlayerValue(cap, 'p8', { value: 1500 });
     expect((await prisma.player.findUniqueOrThrow({ where: { id: 'p8' } })).marketValue).toBe(1500);
-    expect(await notes('u-p8', 'Đội trưởng đặt giá trị chuyển nhượng của bạn: 150M đ')).toBe(1);
+    expect(await notes('u-p8', 'Đội trưởng đặt giá trị chuyển nhượng của bạn: 150.000.000 đ')).toBe(1);
     await transfer.setValueLock(cap, 'p8', true);
     await expectStatus(transfer.setMyValue(await ctxFor(P8, DOM), { value: 2000 }), 403);
     await transfer.setValueLock(cap, 'p8', false);
@@ -75,7 +75,7 @@ describe('Đề nghị chuyển nhượng giữa các đội (BRD 12.2)', () => 
     await expectStatus(transfer.respondOffer(buyer, o.id, { action: 'accept' }), 403);
     await expectStatus(transfer.respondOffer(seller, o.id, { action: 'counter', counter: 2000 }), 422);
     await transfer.respondOffer(seller, o.id, { action: 'counter', counter: 3200 });
-    expect(await notes('u-q2', 'Đom Đóm FC trả giá Việt Kều: 320M đ')).toBe(1);
+    expect(await notes('u-q2', 'Đom Đóm FC trả giá Việt Kều: 320.000.000 đ')).toBe(1);
 
     await transfer.respondOffer(await ctxFor(OTHER_CAPTAIN, PH), o.id, { action: 'accept' });
     const agreed = await prisma.transferOffer.findUniqueOrThrow({ where: { id: o.id } });
