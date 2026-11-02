@@ -19,6 +19,7 @@ import * as mvp from '@/server/services/mvp';
 import * as fund from '@/server/services/fund';
 import * as payment from '@/server/services/payment';
 import * as tactics from '@/server/services/tactics';
+import * as transfer from '@/server/services/transfer';
 import * as admin from '@/server/services/admin';
 import { listNotifications, markAllRead } from '@/server/services/notify';
 import { dispatchOutbox, saveSubscription } from '@/server/services/push';
@@ -282,4 +283,44 @@ export async function adminTransferAction(teamId: string, userId: string) {
     revalidatePath('/he-thong');
     return null;
   });
+}
+
+/* ---------- Chuyển nhượng ---------- */
+const refreshTeams = (...ids: Array<string | null | undefined>) => {
+  for (const id of new Set(ids.filter(Boolean) as string[])) refresh(id);
+};
+export async function setMyValueAction(teamId: string, value: number) {
+  return run(() => inTeam(teamId, (c) => transfer.setMyValue(c, { value }).then(() => null)));
+}
+export async function setPlayerValueAction(teamId: string, playerId: string, value: number) {
+  return run(() => inTeam(teamId, (c) => transfer.setPlayerValue(c, playerId, { value }).then(() => null)));
+}
+export async function setValueLockAction(teamId: string, playerId: string, locked: boolean) {
+  return run(() => inTeam(teamId, (c) => transfer.setValueLock(c, playerId, locked).then(() => null)));
+}
+export async function setListedAction(teamId: string, playerId: string, listed: boolean) {
+  return run(() => inTeam(teamId, (c) => transfer.setListed(c, playerId, listed).then(() => null)));
+}
+export async function remindValueAction(teamId: string, playerId: string | null) {
+  return run(() => inTeam(teamId, (c) => transfer.remindValue(c, playerId)));
+}
+/** teamId = đội đang xem (ngữ cảnh); quyền xét theo đội mua / đội bán của đề nghị. */
+export async function makeOfferAction(teamId: string, playerId: string, input: { buyerTeamId: string; amount: number; message?: string }) {
+  return run(() =>
+    inTeam(teamId, async (c) => {
+      const o = await transfer.makeOffer(c, playerId, input);
+      refreshTeams(o.sellerTeamId, o.buyerTeamId);
+      return null;
+    }),
+  );
+}
+export async function respondOfferAction(teamId: string, offerId: string, input: { action: transfer.OfferAction; counter?: number; reason?: string }) {
+  return run(() =>
+    inTeam(teamId, async (c) => {
+      const r = await transfer.respondOffer(c, offerId, input);
+      const o = await prisma.transferOffer.findUnique({ where: { id: offerId }, select: { sellerTeamId: true, buyerTeamId: true } });
+      refreshTeams(o?.sellerTeamId, o?.buyerTeamId);
+      return r.status;
+    }),
+  );
 }

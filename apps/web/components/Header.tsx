@@ -10,7 +10,7 @@ import { Avatar } from './ui';
 import { Bell, TAB_ICONS } from './Icons';
 
 const TAB_LABEL: Record<string, string> = {
-  doi: 'Đội', toi: 'Của tôi', 'chien-thuat': 'Chiến thuật', 'cau-thu': 'Cầu thủ', lich: 'Lịch đấu', 'thong-ke': 'Thống kê',
+  doi: 'Đội', toi: 'Của tôi', 'chien-thuat': 'Chiến thuật', 'cau-thu': 'Cầu thủ', lich: 'Lịch đấu', 'thong-ke': 'Thống kê', 'chuyen-nhuong': 'Chuyển nhượng',
   quy: 'Quỹ đội', duyet: 'Duyệt', 'kham-pha': 'Khám phá', 'he-thong': 'Hệ thống',
 };
 const ROLE_LABEL: Record<Role, [string, string]> = { admin: ['Admin', 'admin'], captain: ['Đội trưởng', 'cap'], member: ['Thành viên', ''], guest: ['Khách', ''] };

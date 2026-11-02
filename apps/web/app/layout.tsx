@@ -3,6 +3,7 @@ import { Be_Vietnam_Pro, Jost } from 'next/font/google';
 import { connection } from 'next/server';
 import './prototype.css';
 import './app.css';
+import './transfer.css';
 import { RegisterSW, UpdateBanner } from '@/components/Pwa';
 import { InstallPrompt } from '@/components/InstallPrompt';
 

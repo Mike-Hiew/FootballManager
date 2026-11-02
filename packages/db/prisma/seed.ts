@@ -218,6 +218,29 @@ async function main() {
   await n('u-p2', 'edit', 'Quang Còi gửi cập nhật hồ sơ, chỉ số', 2 * H, { view: 'duyet' });
   await n('u-p2', 'claim', `Minh Lùn khai 1 bàn, 1 kiến tạo trận vs ${m4.opp}`, 5 * H, { matchId: 'm4', view: 'duyet' });
 
+  // ================= CHUYỂN NHƯỢNG (BRD 12) =================
+  // Đơn vị 0,1M. Hai người Đom Đóm chưa định giá (Minh Lùn, Bảo Béo) để ĐT nhắc.
+  const values: Record<string, [number, number]> = {
+    p1: [1800, 1500], p2: [2200, 2200], p3: [1500, 1200], p4: [1600, 1800], p5: [9500, 8000], p6: [12000, 10000],
+    p7: [3500, 3000], p9: [15000, 12500], p10: [1900, 1700], p12: [2800, 2500],
+    q1: [1400, 1400], q2: [2600, 2400], q3: [1300, 1100], q4: [6500, 5000], q5: [2100, 2300], q6: [8800, 7000], q7: [1700, 1700], q8: [11000, 9000], q9: [4200, 3600],
+  };
+  for (const [id, [cur, prev]] of Object.entries(values)) {
+    const pl = await prisma.player.findUnique({ where: { id } });
+    if (!pl) continue;
+    const at = new Date(now.getTime() - 3 * 24 * H);
+    await prisma.player.update({
+      where: { id },
+      data: { marketValue: cur, marketValueAt: at, listedAt: ['p12', 'q4', 'q9', 'q5'].includes(id) ? new Date(now.getTime() - 24 * H) : null },
+    });
+    await prisma.marketValueLog.createMany({
+      data: [
+        { playerId: id, value: prev, source: 'self', setById: pl.userId, createdAt: new Date(now.getTime() - 40 * 24 * H) },
+        ...(cur !== prev ? [{ playerId: id, value: cur, source: 'self', setById: pl.userId, createdAt: at }] : []),
+      ],
+    });
+  }
+
   console.log(`Seed xong: ${await prisma.user.count()} tài khoản, ${await prisma.team.count()} đội, ${await prisma.match.count()} trận.`);
 }
 
