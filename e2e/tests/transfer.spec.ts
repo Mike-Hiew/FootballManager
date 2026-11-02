@@ -9,7 +9,7 @@ test('BRD 12.1 — thành viên tự định giá (M/B), ĐT nhắc người ch�
   await page.goto('/t/t-domdom/chuyen-nhuong');
   await hydrated(page);
   await closeResultPopup(page);
-  await expect(page.locator('.tm-total')).toContainText('B');
+  await expect(page.locator('.tm-total')).toContainText(/^Tổng giá trị đội hình[\d.]+đ$/);
   const row = page.locator('.tm-row', { hasText: 'Minh Lùn' });
   await expect(row).toContainText('Chưa định giá');
   await row.getByRole('button', { name: 'Nhắc' }).click();
@@ -30,7 +30,7 @@ test('BRD 12.1 — thành viên tự định giá (M/B), ĐT nhắc người ch�
   await me.getByRole('button', { name: 'Đặt giá' }).click();
   await expect(page.locator('.toast')).toContainText('Đã đặt giá trị 1.200.000.000 đ');
   await expect(me.locator('.tm-me-val')).toContainText('1.200.000.000 đ');
-  await expect(page.locator('.tm-row', { hasText: 'Minh Lùn' })).toContainText('1.200.000.000 đ');
+  await expect(page.locator('.tm-row', { hasText: 'Minh Lùn' })).toContainText('1.200.000.000');
 });
 
 test('BRD 12.2 — ĐT đội khác đề nghị → ĐT đội bán trả giá → đồng ý → cầu thủ đồng ý → bảng tin', async ({ page }) => {
@@ -40,11 +40,12 @@ test('BRD 12.2 — ĐT đội khác đề nghị → ĐT đội bán trả giá 
   await hydrated(page);
   await closeResultPopup(page);
   await page.getByRole('tab', { name: /^Thị trường/ }).click();
-  await expect(page.locator('.tm-card', { hasText: 'Việt Kều' })).toContainText('Đội của bạn');
+  await expect(page.locator('.tm-row', { hasText: 'Việt Kều' })).toContainText('Đội của bạn');
+  await expect(page.locator('.tm-row', { hasText: 'Hiếu Còi' })).toContainText('650.000.000');
   await page.getByLabel('Tìm cầu thủ / đội').fill('Huy');
-  const card = page.locator('.tm-card', { hasText: 'Huy Mập' });
+  const card = page.locator('.tm-row', { hasText: 'Huy Mập' });
   await expect(card).toBeVisible();
-  await card.getByRole('button', { name: 'Đề nghị mua' }).click();
+  await card.getByRole('button', { name: 'Đề nghị mua Huy Mập' }).click();
   const dlg = page.getByRole('dialog', { name: 'Đề nghị mua · Huy Mập' });
   await dlg.getByLabel(/Giá đề nghị/).fill('180M');
   await expect(dlg.locator('.tm-diff')).toContainText('Thấp hơn giá trị');
@@ -96,5 +97,5 @@ test('BRD 12.2 — ĐT đội khác đề nghị → ĐT đội bán trả giá 
   await expect(news).toContainText('Huy Mập');
   await expect(news).toContainText('250.000.000 đ');
   await page.getByRole('tab', { name: 'Đội hình' }).click();
-  await expect(page.locator('.tm-row', { hasText: 'Huy Mập' })).toContainText('250.000.000 đ');
+  await expect(page.locator('.tm-row', { hasText: 'Huy Mập' })).toContainText('250.000.000');
 });
