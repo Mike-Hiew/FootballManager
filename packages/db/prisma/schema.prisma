@@ -391,6 +391,8 @@ model Notification {
   text      String
   readAt    DateTime? @db.Timestamptz
   pushedAt  DateTime? @db.Timestamptz
+  /// ĐT bấm nhắc → thành viên thấy popup "Đội trưởng nhắc bạn" lần đầu vào app
+  remind    Boolean   @default(false)
   createdAt DateTime  @default(now()) @db.Timestamptz
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 

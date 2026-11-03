@@ -62,7 +62,7 @@ async function notifyOwed(db: Db, ctx: Ctx | null, r: Req, prefix: string): Prom
   const pend = await pendingIds(db, r.id);
   return emit(db, {
     // không gắn matchId: bấm thông báo mở Của tôi, nơi có nút "Tôi đã đóng"
-    kind: 'fund', teamId: r.teamId, view: 'toi', actorId: ctx?.user.id ?? null,
+    kind: 'fund', teamId: r.teamId, view: 'toi', actorId: ctx?.user.id ?? null, remind: !!ctx,
     recipients: owed.players.filter((p) => !pend.has(p.id)).map((p) => p.userId),
     text: `${prefix} ${owed.label}: ${money(r.amount)}${withNote(r)}`,
   });

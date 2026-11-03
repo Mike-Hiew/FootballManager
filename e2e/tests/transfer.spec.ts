@@ -16,9 +16,18 @@ test('BRD 12.1 — thành viên tự định giá (M/B), ĐT nhắc người ch�
   await row.getByRole('button', { name: 'Nhắc' }).click();
   await expect(page.locator('.toast')).toContainText('Đã nhắc Minh Lùn định giá');
 
+  // Thành viên vào app: popup "Đội trưởng nhắc bạn" → bấm tới đúng tab Chuyển nhượng; đóng rồi không hiện lại
   await logout(page);
   await login(page, P8);
-  await page.goto('/t/t-domdom/chuyen-nhuong');
+  await page.goto('/t/t-domdom/doi');
+  await hydrated(page);
+  await closeResultPopup(page, { reminders: false });
+  const remind = page.getByRole('dialog', { name: 'Đội trưởng nhắc bạn' });
+  await expect(remind).toBeVisible();
+  await expect(remind).toContainText('Tuấn Tạ');
+  await remind.getByRole('button', { name: /^Định giá: .*đặt giá trị chuyển nhượng/ }).click();
+  await expect(page).toHaveURL(/\/t\/t-domdom\/chuyen-nhuong/);
+  await expect(page.locator('.rm-overlay')).toHaveCount(0);
   await hydrated(page);
   await closeResultPopup(page);
   const me = page.locator('.tm-me');

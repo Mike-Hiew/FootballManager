@@ -856,3 +856,10 @@ Tab **Vinh danh** (route `vinh-danh`), công khai như Thống kê. Mỗi lần 
 - **Người được vinh danh / được cập nhật chỉ số** tự mở thẻ (một lần) ở bất kỳ tab nào lần tới vào app.
 - Đồng đội: vào tab Vinh danh thì các thẻ vinh danh mới chưa xem tự mở lần lượt (thẻ chỉ số của người khác chỉ hiện trong danh sách).
 - Tab Vinh danh: thẻ mới nhất, lọc (Tất cả / MVP / Danh hiệu tháng / Đội trưởng / Chỉ số mới), danh sách có nhãn MỚI, **Bảng vàng** đếm số lần vinh danh theo người.
+
+## 14. Popup "Đội trưởng nhắc bạn"
+
+- Mỗi khi **đội trưởng bấm nhắc** (nhắc điểm danh, yêu cầu / nhắc đóng tiền, nhắc chấm chỉ số, trưng cầu chỉ số, nhờ cập nhật hồ sơ, nhắc định giá chuyển nhượng), thông báo được đánh dấu là *lời nhắc*. Nhắc tự động của hệ thống không tính.
+- **Lần đầu thành viên vào app** sau đó (bất kỳ tab nào), hiện popup liệt kê các lời nhắc chưa đọc trong 14 ngày (tối đa 12, mới nhất trước): biểu tượng theo loại, nội dung, thời gian ("2 giờ trước"), tên đội trưởng, và nút đi thẳng tới chỗ cần làm (Điểm danh / Đóng tiền / Chấm chỉ số / Cập nhật / Định giá).
+- Bấm nút đi tới, "Đã hiểu", "Để sau", Esc hoặc bấm nền → các lời nhắc trong popup được đánh dấu đã đọc, không hiện lại (chuông cũng giảm số chưa đọc).
+- Popup đợi popup tỉ số trận và thẻ vinh danh đóng rồi mới hiện. Điện thoại: trượt lên từ dưới; máy tính: giữa màn hình.

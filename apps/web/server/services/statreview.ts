@@ -88,8 +88,8 @@ export async function requestReviewMany(ctx: Ctx, playerIds: string[]) {
     // người nằm trong danh sách được chấm thì không tự chấm mình → ít hơn 1
     const others = members.filter((m) => !chosen.has(m.id)).map((m) => m.userId);
     const inside = members.filter((m) => chosen.has(m.id)).map((m) => m.userId);
-    let notified = await emit(tx, { kind: 'edit', teamId: ctx.teamId, recipients: others, actorId: ctx.user.id, view: 'doi', text: msg(n) });
-    if (n > 1) notified += await emit(tx, { kind: 'edit', teamId: ctx.teamId, recipients: inside, actorId: ctx.user.id, view: 'doi', text: msg(n - 1) });
+    let notified = await emit(tx, { kind: 'edit', teamId: ctx.teamId, recipients: others, actorId: ctx.user.id, view: 'doi', remind: true, text: msg(n) });
+    if (n > 1) notified += await emit(tx, { kind: 'edit', teamId: ctx.teamId, recipients: inside, actorId: ctx.user.id, view: 'doi', remind: true, text: msg(n - 1) });
     await audit(tx, ctx, 'stats.request_review_many', 'team', ctx.teamId, null, { players: subjects.map((p) => p.id) });
     return { rounds: n, notified };
   });
@@ -106,7 +106,7 @@ export async function remindReview(ctx: Ctx, editId: string, voterId?: string | 
   if (!targets.length) throw invalid(voterId ? 'Người này đã chấm rồi' : 'Mọi người đã chấm');
   return prisma.$transaction(async (tx) => {
     await tx.profileEdit.update({ where: { id: e.id }, data: { remindedAt: ctx.now } });
-    return emit(tx, { kind: 'edit', teamId: ctx.teamId, recipients: targets.map((p) => p.userId), actorId: ctx.user.id, view: 'doi', text: `Nhắc: chấm giúp chỉ số của ${name(e.player)}` });
+    return emit(tx, { kind: 'edit', teamId: ctx.teamId, recipients: targets.map((p) => p.userId), actorId: ctx.user.id, view: 'doi', remind: true, text: `Nhắc: chấm giúp chỉ số của ${name(e.player)}` });
   });
 }
 
@@ -116,7 +116,7 @@ export async function remindUpdateStats(ctx: Ctx, playerId: string) {
   const pl = await prisma.player.findFirst({ where: { id: playerId, teamId: ctx.teamId, status: 'active' } });
   if (!pl) throw notFound('Không tìm thấy cầu thủ');
   if (!pl.userId) throw invalid('Cầu thủ này chưa có tài khoản để nhận nhắc');
-  return emit(prisma, { kind: 'edit', teamId: ctx.teamId, recipients: [pl.userId], actorId: ctx.user.id, view: 'toi', text: 'Đội trưởng nhờ bạn cập nhật hồ sơ & chỉ số (tab Của tôi)' });
+  return emit(prisma, { kind: 'edit', teamId: ctx.teamId, recipients: [pl.userId], actorId: ctx.user.id, view: 'toi', remind: true, text: 'Đội trưởng nhờ bạn cập nhật hồ sơ & chỉ số (tab Của tôi)' });
 }
 
 export interface ReviewSummary {

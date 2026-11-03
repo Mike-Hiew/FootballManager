@@ -92,7 +92,7 @@ export async function remindValue(ctx: Ctx, playerId?: string | null) {
   });
   if (!targets.length) throw invalid(playerId ? 'Người này đã định giá hoặc chưa có tài khoản' : 'Mọi người đã định giá');
   return emit(prisma, {
-    kind: 'transfer', teamId: ctx.teamId, recipients: targets.map((t) => t.userId), actorId: ctx.user.id, view: VIEW,
+    kind: 'transfer', teamId: ctx.teamId, recipients: targets.map((t) => t.userId), actorId: ctx.user.id, view: VIEW, remind: true,
     text: 'Đội trưởng nhắc: đặt giá trị chuyển nhượng của bạn (tab Chuyển nhượng)',
   });
 }

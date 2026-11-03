@@ -1,0 +1,56 @@
+/* ===== Popup "Đội trưởng nhắc bạn" ===== */
+.rm-overlay{position:fixed;inset:0;z-index:110;display:grid;place-items:center;padding:16px;background:rgba(4,8,6,.62);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:rm-fade .22s ease-out both}
+.rm-overlay.closing{animation:rm-out .18s ease-in both}
+@keyframes rm-fade{from{opacity:0}to{opacity:1}}
+@keyframes rm-out{to{opacity:0}}
+.rm-sheet{width:min(460px,100%);max-height:min(640px,calc(100dvh - 32px));display:flex;flex-direction:column;overflow:hidden;
+  background:var(--surface);color:var(--ink);border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.35);animation:rm-pop .32s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes rm-pop{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
+.rm-head{display:flex;gap:14px;align-items:center;padding:18px 20px;color:#f3efe7;
+  background:radial-gradient(70% 140% at 100% 0%,rgba(227,191,134,.28),transparent 60%),linear-gradient(135deg,#0b0c0f,#17191e)}
+.rm-head h2{margin:0;font-family:var(--f-display);font-weight:600;font-size:20px;letter-spacing:.06em;text-transform:uppercase;color:#fff}
+.rm-head p{margin:3px 0 0;font-size:13px;color:rgba(243,239,231,.7)}
+.rm-head p b{color:var(--gold,#e3bf86);font-weight:600}
+.rm-mega{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:#141414;background:var(--gold,#e3bf86);
+  box-shadow:0 0 0 0 rgba(227,191,134,.6);animation:rm-ring 1.8s ease-out infinite}
+.rm-mega svg{width:24px;height:24px;animation:rm-shake 1.8s ease-in-out infinite;transform-origin:30% 50%}
+@keyframes rm-ring{0%{box-shadow:0 0 0 0 rgba(227,191,134,.55)}70%,100%{box-shadow:0 0 0 12px rgba(227,191,134,0)}}
+@keyframes rm-shake{0%,60%,100%{transform:rotate(0)}10%,30%{transform:rotate(-12deg)}20%,40%{transform:rotate(12deg)}}
+.rm-list{list-style:none;margin:0;padding:10px 12px;display:grid;gap:8px;overflow:auto}
+.rm-item{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;
+  background:var(--surface);animation:rm-in .35s ease-out both}
+@keyframes rm-in{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+.rm-ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:18px;font-weight:800;font-family:var(--f-display)}
+.rm-item.vote .rm-ic{background:#e7f6ec;color:#1f8a4c}
+.rm-item.fund .rm-ic{background:#fdf1d8;color:#a06a00}
+.rm-item.edit .rm-ic{background:#e9eefc;color:#3655b5}
+.rm-item.transfer .rm-ic{background:#f3e8fb;color:#7a3db0}
+.rm-item.other .rm-ic{background:var(--surface-2);color:var(--muted)}
+.rm-body{min-width:0}
+.rm-body p{margin:0;font-size:14px;font-weight:600;line-height:1.35}
+.rm-body small{display:block;margin-top:3px;color:var(--muted);font-size:12px}
+.rm-go{border:0;border-radius:999px;padding:8px 12px;font-weight:700;font-size:12.5px;white-space:nowrap;cursor:pointer;background:var(--ink);color:var(--bg)}
+.rm-go:hover{filter:brightness(1.15)}
+.rm-go:focus-visible{outline:2px solid var(--gold,#e3bf86);outline-offset:2px}
+.rm-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .rm-item.vote .rm-ic{background:#173826;color:#4cc47e}
+  :root:not([data-theme="light"]) .rm-item.fund .rm-ic{background:#3b2e10;color:#e9b43a}
+  :root:not([data-theme="light"]) .rm-item.edit .rm-ic{background:#1d2540;color:#8aa4ff}
+  :root:not([data-theme="light"]) .rm-item.transfer .rm-ic{background:#2c1d3b;color:#c79bff}}
+/* Điện thoại: trượt lên từ dưới */
+@media (max-width:560px){
+  .rm-overlay{place-items:end stretch;padding:0}
+  .rm-sheet{width:100%;max-height:85dvh;border-radius:20px 20px 0 0;animation:rm-up .34s cubic-bezier(.2,.9,.3,1) both}
+  @keyframes rm-up{from{transform:translateY(100%)}to{transform:none}}
+  .rm-item{grid-template-columns:36px minmax(0,1fr);row-gap:8px}
+  .rm-go{grid-column:2;justify-self:start}
+  .rm-foot .btn{flex:1}
+}
+@media (prefers-reduced-motion:reduce){.rm-overlay,.rm-sheet,.rm-item,.rm-mega,.rm-mega svg{animation:none!important}}
+/* Nền đặc (theme dùng --surface trong suốt kiểu kính) cho dễ đọc */
+.rm-sheet{background:#fbf8f2}
+.rm-item{background:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .rm-sheet{background:#141518}:root:not([data-theme="light"]) .rm-item{background:#1c1d21}}
+:root[data-theme="dark"] .rm-sheet{background:#141518}
+:root[data-theme="dark"] .rm-item{background:#1c1d21}

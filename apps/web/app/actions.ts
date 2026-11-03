@@ -22,7 +22,7 @@ import * as tactics from '@/server/services/tactics';
 import * as transfer from '@/server/services/transfer';
 import * as honors from '@/server/services/honors';
 import * as admin from '@/server/services/admin';
-import { listNotifications, markAllRead } from '@/server/services/notify';
+import { listNotifications, markAllRead, markRemindersSeen } from '@/server/services/notify';
 import { dispatchOutbox, saveSubscription } from '@/server/services/push';
 import { now } from '@/server/clock';
 import { prisma } from '@san7/db';
@@ -338,5 +338,14 @@ export async function markHonorSeenAction(teamId: string, honorId: string) {
   return run(async () => {
     await honors.markHonorSeen(await teamCtx(teamId), honorId);
     return null;
+  });
+}
+
+/* ---------- Popup lời nhắc của đội trưởng ---------- */
+/** Không revalidate: popup đang đóng / đang chuyển trang không bị tải lại giữa chừng. */
+export async function markRemindersSeenAction(ids: string[]) {
+  return run(async () => {
+    const user = await requireUser();
+    return markRemindersSeen(user.id, ids.slice(0, 50), now());
   });
 }

@@ -8,6 +8,7 @@ import { logoutAction, notificationsAction, readAllAction, readOneAction, select
 import { TeamCrest } from './TeamCrest';
 import { Avatar } from './ui';
 import { Bell, TAB_ICONS } from './Icons';
+import { notifHref } from '@/lib/notif';
 
 const TAB_LABEL: Record<string, string> = {
   doi: 'Đội', toi: 'Của tôi', 'chien-thuat': 'Chiến thuật', 'cau-thu': 'Cầu thủ', lich: 'Lịch đấu', 'thong-ke': 'Thống kê', 'vinh-danh': 'Vinh danh', 'chuyen-nhuong': 'Chuyển nhượng',
@@ -70,10 +71,8 @@ export function Header({ team, role, tabs, approvalCount, me, myTeams, initialUn
     start(async () => {
       if (!n.read) await readOneAction(n.id);
       setOpen(false);
-      if (!n.teamId) return;
-      const base = `/t/${n.teamId}`;
-      if (n.matchId) router.push(`${base}/lich?tran=${n.matchId}&tab=${n.kind === 'vote' ? 'att' : n.kind === 'claim' && n.view === 'duyet' ? 'res' : n.kind === 'mvp' || n.kind === 'result' ? 'res' : 'att'}`);
-      else router.push(`${base}/${n.view || 'doi'}`);
+      const to = notifHref(n);
+      if (to) router.push(to);
     });
 
   return (
