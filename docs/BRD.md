@@ -861,5 +861,6 @@ Tab **Vinh danh** (route `vinh-danh`), công khai như Thống kê. Mỗi lần 
 
 - Mỗi khi **đội trưởng bấm nhắc** (nhắc điểm danh, yêu cầu / nhắc đóng tiền, nhắc chấm chỉ số, trưng cầu chỉ số, nhờ cập nhật hồ sơ, nhắc định giá chuyển nhượng), thông báo được đánh dấu là *lời nhắc*. Nhắc tự động của hệ thống không tính.
 - **Lần đầu thành viên vào app** sau đó (bất kỳ tab nào), hiện popup liệt kê các lời nhắc chưa đọc trong 14 ngày (tối đa 12, mới nhất trước): biểu tượng theo loại, nội dung, thời gian ("2 giờ trước"), tên đội trưởng, và nút đi thẳng tới chỗ cần làm (Điểm danh / Đóng tiền / Chấm chỉ số / Cập nhật / Định giá).
+- **Ưu tiên cao nhất: đóng tiền và điểm danh** — luôn lên đầu (đóng tiền → điểm danh → còn lại, trong nhóm mới nhất trước), khung màu (vàng / xanh lá), nhãn "Ưu tiên", icon lắc nhẹ, nút cùng màu; đầu popup ghi "N việc gấp".
 - Bấm nút đi tới, "Đã hiểu", "Để sau", Esc hoặc bấm nền → các lời nhắc trong popup được đánh dấu đã đọc, không hiện lại (chuông cũng giảm số chưa đọc).
 - Popup đợi popup tỉ số trận và thẻ vinh danh đóng rồi mới hiện. Điện thoại: trượt lên từ dưới; máy tính: giữa màn hình.

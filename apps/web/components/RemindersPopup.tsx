@@ -8,6 +8,11 @@ import { markRemindersSeenAction } from '@/app/actions';
 import { notifHref, timeAgo } from '@/lib/notif';
 import type { ReminderDTO } from '@/server/services/notify';
 
+/** Đóng tiền và điểm danh là ưu tiên cao nhất: lên đầu, làm nổi bật. */
+const isPriority = (r: ReminderDTO) => r.kind === 'fund' || r.kind === 'vote';
+/** Thứ tự: đóng tiền → điểm danh → còn lại; trong cùng nhóm mới nhất trước. */
+const rank = (r: ReminderDTO) => (r.kind === 'fund' ? 0 : r.kind === 'vote' ? 1 : 2);
+
 /** Biểu tượng + nhãn nút theo loại lời nhắc. */
 function meta(r: ReminderDTO): { icon: string; tone: string; cta: string } {
   if (r.kind === 'vote') return { icon: '✋', tone: 'vote', cta: 'Điểm danh' };
@@ -38,7 +43,7 @@ export function RemindersPopup() {
   useEffect(() => {
     if (!key || shownFor.current === key) return;
     shownFor.current = key;
-    setItems(list);
+    setItems([...list].sort((a, b) => rank(a) - rank(b) || b.createdAt.localeCompare(a.createdAt)));
     setClosing(false);
   }, [key, list]);
 
@@ -81,6 +86,7 @@ export function RemindersPopup() {
   };
 
   const captains = [...new Set(items.map((r) => r.actor).filter(Boolean))] as string[];
+  const urgent = items.filter(isPriority).length;
 
   return createPortal(
     <div
@@ -97,6 +103,7 @@ export function RemindersPopup() {
             <h2 id="rmTitle">Đội trưởng nhắc bạn</h2>
             <p>
               {items.length} việc cần làm
+              {urgent > 0 && <> · <span className="rm-urgent">{urgent} việc gấp</span></>}
               {captains.length > 0 && <> · từ <b>{captains.join(', ')}</b></>}
             </p>
           </div>
@@ -106,9 +113,10 @@ export function RemindersPopup() {
             const m = meta(r);
             const to = notifHref({ teamId, matchId: r.matchId, view: r.view, kind: r.kind });
             return (
-              <li key={r.id} className={`rm-item ${m.tone}`} style={{ animationDelay: `${80 + i * 60}ms` }}>
+              <li key={r.id} className={`rm-item ${m.tone}${isPriority(r) ? ' hi' : ''}`} style={{ animationDelay: `${80 + i * 60}ms` }}>
                 <span className="rm-ic" aria-hidden>{m.icon}</span>
                 <div className="rm-body">
+                  {isPriority(r) && <span className="rm-flag">Ưu tiên</span>}
                   <p>{r.text}</p>
                   <small>{timeAgo(r.createdAt)}{r.actor ? ` · ${r.actor}` : ''}</small>
                 </div>
