@@ -12,6 +12,7 @@ import { FormulaPopover, TooltipLayer } from '@/components/Overlays';
 import { ResultPopup } from '@/components/matches/ResultPopup';
 import { PushAsk } from '@/components/Pwa';
 import { HonorPopup } from '@/components/honors/HonorsView';
+import { RemindersPopup } from '@/components/RemindersPopup';
 
 export async function generateMetadata({ params }: { params: Promise<{ teamId: string }> }): Promise<Metadata> {
   const { teamId } = await params;
@@ -63,6 +64,7 @@ export default async function TeamLayout({ params, children }: { params: Promise
       <TooltipLayer />
       <ResultPopup />
       {!visit && <HonorPopup />}
+      {!visit && <RemindersPopup />}
       {!visit && <PushAsk />}
       <FormulaPopover />
     </TeamProvider>

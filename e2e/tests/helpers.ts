@@ -35,15 +35,34 @@ export async function hoverStill(page: Page, el: Locator) {
   await el.hover();
 }
 
-/** Đóng popup tỉ số trận vừa kết thúc nếu hiện (test khác có thể vừa nhập tỉ số). */
-export async function closeResultPopup(page: Page) {
+/**
+ * Đóng popup tỉ số trận vừa kết thúc nếu hiện (test khác có thể vừa nhập tỉ số), rồi popup
+ * "Đội trưởng nhắc bạn" nếu có (test khác có thể vừa bấm nhắc). `reminders: false` để giữ popup nhắc.
+ */
+export async function closeResultPopup(page: Page, opts: { reminders?: boolean } = {}) {
   const pop = page.locator('.rp-overlay');
+  let shown = true;
+  try {
+    await pop.waitFor({ state: 'visible', timeout: 2500 });
+  } catch {
+    shown = false;
+  }
+  if (shown) {
+    await pop.locator('.rp-acts').getByRole('button', { name: 'Đóng' }).click();
+    await pop.waitFor({ state: 'detached' });
+  }
+  if (opts.reminders !== false) await closeReminders(page);
+}
+
+/** Đóng popup "Đội trưởng nhắc bạn" nếu hiện. */
+export async function closeReminders(page: Page) {
+  const pop = page.locator('.rm-overlay');
   try {
     await pop.waitFor({ state: 'visible', timeout: 2500 });
   } catch {
     return;
   }
-  await pop.locator('.rp-acts').getByRole('button', { name: 'Đóng' }).click();
+  await pop.getByRole('button', { name: 'Để sau' }).click();
   await pop.waitFor({ state: 'detached' });
 }
 

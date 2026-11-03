@@ -173,7 +173,7 @@ export async function remindVote(ctx: Ctx, matchId: string, auto = false): Promi
   const targets = players.filter((p) => !answered.has(p.id)).map((p) => p.userId);
   const n = await prisma.$transaction(async (tx) => {
     await tx.match.update({ where: { id: matchId }, data: { voteRemindedAt: ctx.now } });
-    return emit(tx, { kind: 'vote', teamId: ctx.teamId, recipients: targets, actorId: auto ? null : ctx.user.id, matchId, text: `Nhắc: bạn chưa vote trận vs ${m.opponent} ngày ${dm(m.date)}` });
+    return emit(tx, { kind: 'vote', teamId: ctx.teamId, recipients: targets, actorId: auto ? null : ctx.user.id, matchId, remind: !auto, text: `Nhắc: bạn chưa vote trận vs ${m.opponent} ngày ${dm(m.date)}` });
   });
   return n;
 }
