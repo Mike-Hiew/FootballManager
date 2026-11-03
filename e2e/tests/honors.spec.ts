@@ -20,7 +20,7 @@ test('BRD 13 — ĐT vinh danh → thẻ lật có hiệu ứng; người đư�
   // ĐT xem ngay thẻ vừa trao: úp → rung → lật
   const reveal = page.getByRole('dialog', { name: /Thẻ Phong Gió: Chiến binh của trận/ });
   await expect(reveal).toBeVisible();
-  await expect(reveal.locator('.hc-stage')).toHaveClass(/reveal/, { timeout: 5000 });
+  await expect(reveal.locator('.hc-scene')).toHaveClass(/done/, { timeout: 12000 });
   await expect(reveal).toContainText('“Chạy không biết mệt”');
   await expect(reveal.locator('.hc-card')).toHaveAttribute('aria-label', /Phong Gió, \w+, điểm \d+, Hạng (Đom Đóm|Vàng|Bạc)/);
   await reveal.getByRole('button', { name: 'Đóng' }).click();
@@ -55,7 +55,7 @@ test('BRD 13.1 — ai cũng mở được thẻ của mình (Của tôi) và c�
   await closeResultPopup(page);
   await page.getByRole('button', { name: 'Mở thẻ của tôi' }).click();
   const mine = page.getByRole('dialog', { name: /Thẻ Phong Gió: Thẻ của tôi/ });
-  await expect(mine.locator('.hc-stage')).toHaveClass(/reveal/, { timeout: 5000 });
+  await expect(mine.locator('.hc-scene')).toHaveClass(/done/, { timeout: 12000 });
   await page.keyboard.press('Escape');
   await expect(mine).toHaveCount(0);
 
