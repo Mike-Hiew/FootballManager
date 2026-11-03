@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { createIntro, type Intro } from './intro-engine';
 import { TIER_NAME, cardOf, cardTier, fillStats, type CardSnapshot, type CardTier, type Stats } from '@san7/core';
 
 /**
@@ -126,12 +127,15 @@ export function PlayerCard({ c, team, tilt = true, onActivate }: { c: CardSnapsh
 
 /* ---------------- Lớp phủ mở thẻ ---------------- */
 
-type Phase = 'down' | 'shake' | 'reveal' | 'static';
 interface Bit { x: number; y: number; vx: number; vy: number; r: number; life: number; c: string }
-interface Fly { x: number; y: number; r: number; a: number; s: number; ph: number; f: number }
 
 const SPRAY: Record<CardTier, [number, string, number]> = { dd: [120, '212,255,58', 9], gold: [65, '255,214,110', 7], silver: [40, '200,225,255', 6] };
 
+/**
+ * Màn mở thẻ theo prototype "Thẻ Đom Đóm FC 2": đường hầm → lửa → giới thiệu vị trí / số áo / đội → lóe sáng →
+ * sân vận động 3D → thẻ xoay bay ra, pháo hoa, kim tuyến. Bấm thẻ / nền / "Bỏ qua" để tới cuối ngay.
+ * Engine vẽ là JS thuần (intro-engine.js); three.js tải động khi mở để không làm nặng trang.
+ */
 export function CardReveal({ c, team, kicker, note, onClose, extra }: {
   c: CardSnapshot;
   team: string;
@@ -142,26 +146,21 @@ export function CardReveal({ c, team, kicker, note, onClose, extra }: {
   extra?: React.ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
-  const [phase, setPhaseState] = useState<Phase>('down');
-  const phaseRef = useRef<Phase>('down');
-  const setPhase = useCallback((p: Phase) => {
-    phaseRef.current = p;
-    setPhaseState(p);
-  }, []);
   const [closing, setClosing] = useState(false);
-  const [run, setRun] = useState(0);
-  const stageRef = useRef<HTMLDivElement>(null);
-  const sky = useRef<HTMLCanvasElement>(null);
+  const [done, setDone] = useState(false);
+  const sceneRef = useRef<HTMLDivElement>(null);
   const fx = useRef<HTMLCanvasElement>(null);
   const bits = useRef<Bit[]>([]);
+  const intro = useRef<Intro | null>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
+  const skipBtn = useRef<HTMLButtonElement>(null);
   const t = cardTier(c.ovr);
   const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
   useEffect(() => setMounted(true), []);
 
   const spray = useCallback(() => {
-    const card = stageRef.current?.querySelector('.hc-card');
+    const card = sceneRef.current?.querySelector('.hc-card');
     if (!card) return;
     const r = card.getBoundingClientRect();
     const cx = r.left + r.width / 2;
@@ -174,78 +173,56 @@ export function CardReveal({ c, team, kicker, note, onClose, extra }: {
     }
   }, [t]);
 
-  const reveal = useCallback(() => {
-    if (phaseRef.current !== 'down' && phaseRef.current !== 'shake') return;
-    setPhase('reveal');
-    setTimeout(spray, 380);
-  }, [spray, setPhase]);
-
-  // Trình tự: úp → rung (1s) → lật (1,55s)
+  // Engine màn mở thẻ + tải three.js cho sân 3D
   useEffect(() => {
-    if (!mounted) return;
-    if (reduce) {
-      setPhase('static');
-      return;
+    if (!mounted || !sceneRef.current) return;
+    let alive = true;
+    const it = createIntro({
+      root: sceneRef.current,
+      tier: t,
+      team,
+      player: { name: c.name, ovr: c.ovr, pos: c.pos, num: c.num },
+      reduce,
+      onStart: () => setDone(false),
+      onLand: spray,
+      onDone: () => {
+        setDone(true);
+        setTimeout(() => closeBtn.current?.focus({ preventScroll: true }), 0);
+      },
+    });
+    intro.current = it;
+    if (!reduce) {
+      import('three')
+        .then((T) => alive && it.attachThree(T))
+        .catch(() => {});
     }
-    setPhase('down');
-    const a = setTimeout(() => phaseRef.current === 'down' && setPhase('shake'), 1000);
-    const b = setTimeout(reveal, 1550);
     return () => {
-      clearTimeout(a);
-      clearTimeout(b);
+      alive = false;
+      it.destroy();
+      intro.current = null;
     };
-  }, [mounted, run, reduce, reveal, setPhase]);
+  }, [mounted, t, team, c.name, c.ovr, c.pos, c.num, reduce, spray]);
 
-  // Đom đóm nền + tia lửa
+  // Tia lửa khi thẻ đáp
   useEffect(() => {
     if (!mounted) return;
-    const s = sky.current;
     const f = fx.current;
-    if (!s || !f) return;
-    const sc = s.getContext('2d');
-    const fc = f.getContext('2d');
-    if (!sc || !fc) return;
+    const fc = f?.getContext('2d');
+    if (!f || !fc) return;
     let W = 0;
     let H = 0;
     const size = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       W = window.innerWidth;
       H = window.innerHeight;
-      for (const cv of [s, f]) {
-        cv.width = W * dpr;
-        cv.height = H * dpr;
-      }
-      sc.setTransform(dpr, 0, 0, dpr, 0, 0);
+      f.width = W * dpr;
+      f.height = H * dpr;
       fc.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     size();
     window.addEventListener('resize', size);
-    const flies: Fly[] = Array.from({ length: Math.round(Math.min(60, (W * H) / 18000)) }, () => ({
-      x: Math.random() * W, y: Math.random() * H, r: 1 + Math.random() * 2.2, a: Math.random() * 6.28, s: 0.15 + Math.random() * 0.45, ph: Math.random() * 6.28, f: 0.6 + Math.random() * 1.4,
-    }));
     let raf = 0;
-    const draw = (time: number) => {
-      sc.clearRect(0, 0, W, H);
-      for (const p of flies) {
-        if (!reduce) {
-          p.a += (Math.random() - 0.5) * 0.12;
-          p.x += Math.cos(p.a) * p.s;
-          p.y += Math.sin(p.a) * p.s - 0.05;
-          if (p.x < -10) p.x = W + 10;
-          if (p.x > W + 10) p.x = -10;
-          if (p.y < -10) p.y = H + 10;
-          if (p.y > H + 10) p.y = -10;
-        }
-        const br = reduce ? 0.7 : 0.25 + 0.75 * Math.pow((Math.sin((time / 1000) * p.f + p.ph) + 1) / 2, 2);
-        const g = sc.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 7);
-        g.addColorStop(0, `rgba(230,255,120,${br})`);
-        g.addColorStop(0.25, `rgba(212,255,58,${br * 0.45})`);
-        g.addColorStop(1, 'rgba(212,255,58,0)');
-        sc.fillStyle = g;
-        sc.beginPath();
-        sc.arc(p.x, p.y, p.r * 7, 0, Math.PI * 2);
-        sc.fill();
-      }
+    const draw = () => {
       fc.clearRect(0, 0, W, H);
       fc.globalCompositeOperation = 'lighter';
       const list = bits.current;
@@ -271,32 +248,36 @@ export function CardReveal({ c, team, kicker, note, onClose, extra }: {
         fc.fill();
       }
       fc.globalCompositeOperation = 'source-over';
-      if (!reduce) raf = requestAnimationFrame(draw);
+      raf = requestAnimationFrame(draw);
     };
     raf = requestAnimationFrame(draw);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', size);
     };
-  }, [mounted, reduce]);
+  }, [mounted]);
 
-  // Khoá cuộn, Esc đóng, giữ focus trong lớp phủ
+  // Khoá cuộn; giữ focus trong lớp phủ
   useEffect(() => {
     if (!mounted) return;
     const prev = document.activeElement as HTMLElement | null;
     document.body.style.overflow = 'hidden';
-    closeBtn.current?.focus({ preventScroll: true });
+    (reduce ? closeBtn : skipBtn).current?.focus({ preventScroll: true });
     return () => {
       document.body.style.overflow = '';
       prev?.focus?.({ preventScroll: true });
     };
-  }, [mounted]);
+  }, [mounted, reduce]);
 
   const close = useCallback(() => {
     if (closing) return;
     setClosing(true);
     setTimeout(onClose, reduce ? 0 : 240);
   }, [closing, onClose, reduce]);
+
+  const skip = () => {
+    if (intro.current && !intro.current.isDone()) intro.current.finish();
+  };
 
   if (!mounted) return null;
   return createPortal(
@@ -305,7 +286,11 @@ export function CardReveal({ c, team, kicker, note, onClose, extra }: {
       role="dialog"
       aria-modal="true"
       aria-label={`Thẻ ${c.name}: ${kicker}`}
-      onMouseDown={(e) => e.target === e.currentTarget && close()}
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest('.hc-card, button')) return;
+        if (done) close();
+        else skip();
+      }}
       onKeyDown={(e) => {
         // lớp phủ có thể nằm trong modal khác (portal vẫn nổi sự kiện React lên cha) — không để Esc đóng luôn modal đó
         if (e.key === 'Escape') {
@@ -313,33 +298,40 @@ export function CardReveal({ c, team, kicker, note, onClose, extra }: {
           close();
         }
         if (e.key === 'Tab') {
-          const els = e.currentTarget.querySelectorAll<HTMLElement>('.hc-card, button');
+          const els = [...e.currentTarget.querySelectorAll<HTMLElement>('.hc-card, button')].filter((x) => x.offsetParent !== null && getComputedStyle(x).visibility !== 'hidden');
           const first = els[0];
           const last = els[els.length - 1];
           if (e.shiftKey && document.activeElement === first) {
             e.preventDefault();
-            last.focus();
+            last?.focus();
           } else if (!e.shiftKey && document.activeElement === last) {
             e.preventDefault();
-            first.focus();
+            first?.focus();
           }
         }
       }}
     >
-      <canvas ref={sky} className="hc-sky" aria-hidden />
+      <div ref={sceneRef} className={`hc-scene${done ? ' done' : ''}`} data-tier={t}>
+        <canvas className="hc-tunnel" aria-hidden />
+        <div className="hc-white" />
+        <div className="hc-slam" aria-live="polite" />
+        <div className="hc-center">
+          <div className="hc-kicker">{kicker}</div>
+          <div className="hc-stage pre" data-tier={t}>
+            <div className="hc-burst" />
+            <PlayerCard c={c} team={team} onActivate={skip} />
+            <div className="hc-tier">{TIER_NAME[t]}</div>
+          </div>
+          {note && <p className="hc-note">“{note}”</p>}
+          <div className="hc-actions">
+            {extra}
+            <button className="hc-btn" type="button" onClick={() => intro.current?.play()}>Xem lại</button>
+            <button ref={closeBtn} className="hc-btn ghost" type="button" onClick={close}>Đóng</button>
+          </div>
+        </div>
+        <button ref={skipBtn} className="hc-btn ghost hc-skip" type="button" onClick={skip}>Bỏ qua</button>
+      </div>
       <canvas ref={fx} className="hc-fx" aria-hidden />
-      <div className="hc-kicker">{kicker}</div>
-      <div ref={stageRef} key={run} className={`hc-stage ${phase}`} data-tier={t}>
-        <div className="hc-burst" />
-        <PlayerCard c={c} team={team} onActivate={reveal} />
-        <div className="hc-tier">{TIER_NAME[t]}</div>
-      </div>
-      {note && <p className="hc-note">“{note}”</p>}
-      <div className="hc-actions">
-        {extra}
-        <button className="hc-btn" type="button" onClick={() => setRun((r) => r + 1)}>Mở lại</button>
-        <button ref={closeBtn} className="hc-btn ghost" type="button" onClick={close}>Đóng</button>
-      </div>
     </div>,
     document.body,
   );

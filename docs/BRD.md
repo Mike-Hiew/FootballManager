@@ -840,7 +840,7 @@ Tab **Vinh danh** (route `vinh-danh`), công khai như Thống kê. Mỗi lần 
 
 - **Hạng thẻ** theo OVR, dùng chung toàn app (cả tab Chuyển nhượng): **Đom Đóm ≥ 85** (xanh dạ quang) · **Vàng 75–84** · **Bạc < 75**. OVR = điểm vị trí tốt nhất × 10.
 - Mặt thẻ: OVR, vị trí, số áo, huy hiệu, ảnh (hoặc hình bóng), tên, vị trí phụ (2 vị trí kế tiếp), 6 chỉ số thang 0–99 (cầu thủ: TỐC, RÊ, SÚT, THỦ, CHUYỀN, THỂ; thủ môn: BẮT, PHẢN, PHÁT, ĐỌC, CHUYỀN, THỂ), chân thuận, phong cách chính.
-- **Hiệu ứng mở thẻ**: thẻ úp bay vào → rung → lật, lóe sáng, tia sáng toả, tia lửa và đom đóm nền; nghiêng theo chuột / ngón tay. Bấm thẻ để lật ngay, "Mở lại" để xem lại. Người dùng bật giảm chuyển động thì hiện thẳng mặt trước.
+- **Hiệu ứng mở thẻ** (theo prototype "Thẻ Đom Đóm FC 2"): đi trong đường hầm có đèn → lóe sáng, lửa hai bên → lần lượt giới thiệu **vị trí**, **số áo**, **đội** (chữ lớn đập vào màn hình) → lóe sáng chói → ra **sân vận động 3D** (khán đài, khán giả nhún nhảy, bảng LED chạy tên đội, màn hình lớn hiện tên cầu thủ, máy quay bay vòng) → thẻ **xoay nhiều vòng bay ra**, đáp xuống kèm pháo hoa, kim tuyến, tia lửa (~7 giây). "Bỏ qua" / bấm thẻ / bấm nền để tới cuối ngay; "Xem lại" chạy lại. three.js chỉ tải khi mở thẻ; thiết bị không có WebGL dùng sân vẽ 2D. Bật giảm chuyển động thì hiện thẳng kết quả.
 
 ### 13.2 Ai được vinh danh
 
