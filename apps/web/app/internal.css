@@ -54,3 +54,12 @@ button.sd-p:hover .sd-mv,button.sd-p:focus-visible .sd-mv{opacity:.7}
 .rp-opp.rp-light{background:#fbf8f1;color:#1b1a17}
 .sp-item input,.sp-row input{border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:9px;padding:7px 10px;width:100%;font:inherit;font-size:13.5px}
 .sp-item input:focus,.sp-row input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.sd-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sd-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
+.sd-out{border:0;background:transparent;color:inherit;opacity:.45;width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:12px}
+.sd-out:hover,.sd-out:focus-visible{opacity:1;background:rgba(229,85,62,.18);color:#e5553e}
+.sd-col li[draggable="true"],.sd-rest .arow[draggable="true"]{cursor:grab}
+.sd-col li.dragging,.sd-rest .arow.dragging{opacity:.4}
+.sd-col.drop,.sd-rest.drop{outline:2px dashed var(--accent);outline-offset:2px}
+.sd-to-a{background:#fbf8f1;color:#1b1a17;border-color:#e5ded0}
+.sd-to-b{background:#18191d;color:#f3efe7;border-color:#2a2b30}

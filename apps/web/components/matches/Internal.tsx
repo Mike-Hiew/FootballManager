@@ -14,11 +14,28 @@ export const SIDE_B = 'Đội B';
 const goersOf = (m: MatchDTO, players: PlayerDTO[]) =>
   players.filter((p) => m.attendance[p.id]?.status === 'di').sort((a, b) => (a.num ?? 99) - (b.num ?? 99));
 
-/** Tab "Chia đội": ĐT bấm chia ngẫu nhiên cân bằng (theo chỉ số + vị trí), bấm người để chuyển đội. */
+type Zone = 'a' | 'b' | 'rest';
+
+/**
+ * Tab "Chia đội": ĐT tự xếp (bấm → A / → B, bấm người trong đội để đổi bên, ✕ để bỏ ra, hoặc kéo-thả),
+ * hoặc bấm chia ngẫu nhiên cân bằng (cả đội / chỉ người chưa xếp). Thanh cân bằng cập nhật ngay.
+ */
 export function SidesTab({ m }: { m: MatchDTO }) {
   const { players, byId, canEdit, act, teamId } = useTeam();
   const goers = goersOf(m, players);
-  const sides = m.sides ?? { a: [], b: [] };
+  const server = m.sides ?? { a: [], b: [] };
+  const serverKey = JSON.stringify(server);
+  // xếp tạm phía client để bấm liên tục không bị giật / ghi đè nhau
+  const [local, setLocal] = useState(server);
+  const [seen, setSeen] = useState(serverKey);
+  if (seen !== serverKey) {
+    setSeen(serverKey);
+    setLocal(server);
+  }
+  const [drag, setDrag] = useState<string | null>(null);
+  const [over, setOver] = useState<Zone | null>(null);
+  const goerIds = new Set(goers.map((p) => p.id));
+  const sides = { a: local.a.filter((id) => goerIds.has(id)), b: local.b.filter((id) => goerIds.has(id)) };
   const inSide = new Set([...sides.a, ...sides.b]);
   const rest = goers.filter((p) => !inSide.has(p.id));
   const map = useMemo(() => new Map<string, SplitPlayer>(players.map((p) => [p.id, { id: p.id, stats: p.stats, foot: p.foot }])), [players]);
@@ -27,18 +44,46 @@ export function SidesTab({ m }: { m: MatchDTO }) {
   const sum = A.total + B.total;
   const pctA = sum ? Math.round((A.total / sum) * 100) : 50;
   const diff = Math.abs(A.avg - B.avg) * 10;
-  const verdict = !sides.a.length || !sides.b.length ? null : diff <= 2 ? 'Rất cân' : diff <= 5 ? 'Khá cân' : 'Lệch — nên chia lại';
+  const verdict = !sides.a.length || !sides.b.length ? null : diff <= 2 && Math.abs(sides.a.length - sides.b.length) <= 1 ? 'Rất cân' : diff <= 5 ? 'Khá cân' : 'Lệch — nên đổi bớt người';
+  const anyAssigned = sides.a.length + sides.b.length > 0;
 
-  const save = (a: string[], b: string[]) => act(() => setSidesAction(teamId, m.id, { a, b }));
-  const move = (id: string, to: 'a' | 'b') => {
+  const move = (id: string, to: Zone) => {
     const a = sides.a.filter((x) => x !== id);
     const b = sides.b.filter((x) => x !== id);
-    (to === 'a' ? a : b).push(id);
-    save(a, b);
+    if (to === 'a') a.push(id);
+    if (to === 'b') b.push(id);
+    setLocal({ a, b });
+    // lỗi thì trả về như trên server
+    void act(() => setSidesAction(teamId, m.id, { a, b })).then((r) => r === undefined && setLocal(server));
   };
+  const name = (id: string) => {
+    const p = byId(id);
+    return p ? shortName(p) : '';
+  };
+  const dropZone = (z: Zone) =>
+    canEdit
+      ? {
+          onDragOver: (e: React.DragEvent) => {
+            if (!drag) return;
+            e.preventDefault();
+            setOver(z);
+          },
+          onDragLeave: () => setOver((o) => (o === z ? null : o)),
+          onDrop: (e: React.DragEvent) => {
+            e.preventDefault();
+            setOver(null);
+            if (drag) move(drag, z);
+            setDrag(null);
+          },
+        }
+      : {};
+  const dragProps = (id: string) =>
+    canEdit
+      ? { draggable: true, onDragStart: (e: React.DragEvent) => { e.dataTransfer.effectAllowed = 'move'; setDrag(id); }, onDragEnd: () => { setDrag(null); setOver(null); } }
+      : {};
 
   const col = (key: 'a' | 'b', ids: string[], s: typeof A) => (
-    <section className={`sd-col sd-${key}`} aria-label={key === 'a' ? `${SIDE_A} · áo sáng` : `${SIDE_B} · áo tối`}>
+    <section className={`sd-col sd-${key}${over === key ? ' drop' : ''}`} aria-label={key === 'a' ? `${SIDE_A} · áo sáng` : `${SIDE_B} · áo tối`} {...dropZone(key)}>
       <header>
         <span className="sd-shirt" aria-hidden>
           <svg viewBox="0 0 24 24"><path d="M8 3 3 6l2 4 2-1v12h10V9l2 1 2-4-5-3a4 4 0 0 1-8 0Z" /></svg>
@@ -65,16 +110,19 @@ export function SidesTab({ m }: { m: MatchDTO }) {
             </>
           );
           return (
-            <li key={id}>
+            <li key={id} className={drag === id ? 'dragging' : undefined} {...dragProps(id)}>
               {canEdit ? (
-                <button type="button" className="sd-p" onClick={() => move(id, key === 'a' ? 'b' : 'a')} aria-label={`Chuyển ${shortName(p)} sang ${key === 'a' ? SIDE_B : SIDE_A}`}>
-                  {body}<span className="sd-mv" aria-hidden>{key === 'a' ? '→' : '←'}</span>
-                </button>
+                <div className="sd-row">
+                  <button type="button" className="sd-p" onClick={() => move(id, key === 'a' ? 'b' : 'a')} aria-label={`Chuyển ${shortName(p)} sang ${key === 'a' ? SIDE_B : SIDE_A}`}>
+                    {body}<span className="sd-mv" aria-hidden>{key === 'a' ? '→' : '←'}</span>
+                  </button>
+                  <button type="button" className="sd-out" onClick={() => move(id, 'rest')} aria-label={`Bỏ ${shortName(p)} ra khỏi ${key === 'a' ? SIDE_A : SIDE_B}`}>✕</button>
+                </div>
               ) : <div className="sd-p">{body}</div>}
             </li>
           );
         })}
-        {!ids.length && <li className="sd-empty">Chưa có ai</li>}
+        {!ids.length && <li className="sd-empty">{canEdit ? 'Bấm → hoặc kéo người vào đây' : 'Chưa có ai'}</li>}
       </ul>
     </section>
   );
@@ -83,15 +131,31 @@ export function SidesTab({ m }: { m: MatchDTO }) {
     <div className="sd">
       <div className="sd-top">
         <p className="hint" style={{ margin: 0 }}>
-          {goers.length} người điểm danh Đi. {canEdit ? 'Bấm chia ngẫu nhiên — mỗi lần ra một đội hình khác, luôn cân theo chỉ số và vị trí. Bấm vào một người để chuyển đội.' : m.sides ? 'Đội trưởng đã chia đội.' : 'Đội trưởng chưa chia đội.'}
+          {goers.length} người điểm danh Đi.{' '}
+          {canEdit
+            ? 'Tự xếp: bấm → A / → B (hoặc kéo-thả), bấm người trong đội để đổi bên. Hoặc để app chia ngẫu nhiên cân bằng theo chỉ số và vị trí.'
+            : m.sides && anyAssigned ? 'Đội trưởng đã chia đội.' : 'Đội trưởng chưa chia đội.'}
         </p>
         {canEdit && (
-          <button type="button" className="btn primary sd-dice" disabled={goers.length < 2} onClick={() => act(() => shuffleSidesAction(teamId, m.id), 'Đã chia đội cân bằng')}>
-            <span aria-hidden>🎲</span> {m.sides ? 'Chia lại ngẫu nhiên' : 'Chia ngẫu nhiên cân bằng'}
-          </button>
+          <div className="sd-acts">
+            <button type="button" className="btn primary sd-dice" disabled={goers.length < 2} onClick={() => act(() => shuffleSidesAction(teamId, m.id), 'Đã chia đội cân bằng')}>
+              <span aria-hidden>🎲</span> {anyAssigned ? 'Chia lại ngẫu nhiên' : 'Chia ngẫu nhiên cân bằng'}
+            </button>
+            {anyAssigned && rest.length > 0 && (
+              <button type="button" className="btn sm" onClick={() => act(() => shuffleSidesAction(teamId, m.id, true), `Đã chia nốt ${rest.length} người, giữ người bạn đã xếp`)}>
+                <span aria-hidden>⚖️</span> Chia nốt {rest.length} người còn lại
+              </button>
+            )}
+            {anyAssigned && (
+              <button type="button" className="btn ghost sm" onClick={() => {
+                setLocal({ a: [], b: [] });
+                void act(() => setSidesAction(teamId, m.id, { a: [], b: [] }), 'Đã bỏ chia đội, xếp lại từ đầu');
+              }}>Xếp lại từ đầu</button>
+            )}
+          </div>
         )}
       </div>
-      {(m.sides || canEdit) && (
+      {(anyAssigned || canEdit) && (
         <>
           <div className="sd-bal" aria-label={`Cân bằng: ${SIDE_A} ${pctA}% – ${SIDE_B} ${100 - pctA}%`}>
             <span className="sd-bar"><i style={{ width: `${pctA}%` }} /></span>
@@ -104,22 +168,26 @@ export function SidesTab({ m }: { m: MatchDTO }) {
           </div>
         </>
       )}
-      {rest.length > 0 && (
-        <div className="box">
-          <h4>Chưa chia ({rest.length})</h4>
-          {rest.map((p) => (
-            <div key={p.id} className="arow">
-              <Avatar p={p} size={30} />
-              <div className="n">{shortName(p)}<small>{overall(p.stats, p.foot).pos} · OVR {overall(p.stats, p.foot).ovr}</small></div>
-              {canEdit && (
-                <div className="ctl">
-                  <button type="button" className="btn sm" onClick={() => move(p.id, 'a')} aria-label={`Cho ${shortName(p)} vào ${SIDE_A}`}>→ A</button>
-                  <button type="button" className="btn sm" onClick={() => move(p.id, 'b')} aria-label={`Cho ${shortName(p)} vào ${SIDE_B}`}>→ B</button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+      {(rest.length > 0 || (canEdit && drag && inSide.has(drag))) && (
+        <section className={`box sd-rest${over === 'rest' ? ' drop' : ''}`} aria-label="Chưa xếp đội" {...dropZone('rest')}>
+          <h4>Chưa xếp đội ({rest.length})</h4>
+          {rest.map((p) => {
+            const o = overall(p.stats, p.foot);
+            return (
+              <div key={p.id} className={`arow${drag === p.id ? ' dragging' : ''}`} {...dragProps(p.id)}>
+                <Avatar p={p} size={30} />
+                <div className="n">{shortName(p)}<small>{o.pos} · OVR {o.ovr}</small></div>
+                {canEdit && (
+                  <div className="ctl">
+                    <button type="button" className="btn sm sd-to-a" onClick={() => move(p.id, 'a')} aria-label={`Cho ${name(p.id)} vào ${SIDE_A}`}>→ A</button>
+                    <button type="button" className="btn sm sd-to-b" onClick={() => move(p.id, 'b')} aria-label={`Cho ${name(p.id)} vào ${SIDE_B}`}>→ B</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {!rest.length && <p className="hint" style={{ margin: 0 }}>Thả vào đây để bỏ ra khỏi đội</p>}
+        </section>
       )}
     </div>
   );

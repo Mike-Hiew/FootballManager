@@ -24,16 +24,20 @@ export const sidesOf = (raw: unknown): Sides => {
 };
 
 
-/** ĐT bấm "Chia ngẫu nhiên cân bằng": chia lại toàn bộ người Đi. */
-export async function shuffleSides(ctx: Ctx, matchId: string) {
+/**
+ * ĐT bấm "Chia ngẫu nhiên cân bằng": chia lại toàn bộ người Đi.
+ * `keep`: giữ người ĐT đã tự xếp, chỉ chia nốt người chưa có đội.
+ */
+export async function shuffleSides(ctx: Ctx, matchId: string, opts: { keep?: boolean } = {}) {
   requireManager(ctx);
   const m = await internalMatch(ctx, matchId);
   const goers = m.attendance.filter((a) => a.status === 'di').map((a) => a.playerId);
   if (goers.length < 2) throw invalid('Cần ít nhất 2 người điểm danh Đi để chia đội');
   const players = await prisma.player.findMany({ where: { id: { in: goers }, teamId: ctx.teamId } });
-  const sides = balanceTeams(players.map((p) => ({ id: p.id, stats: statsOf(p.stats), foot: p.foot })));
+  const fixed = opts.keep && m.sides ? sidesOf(m.sides) : undefined;
+  const sides = balanceTeams(players.map((p) => ({ id: p.id, stats: statsOf(p.stats), foot: p.foot })), Math.random, fixed);
   await prisma.match.update({ where: { id: m.id }, data: { sides: sides as object } });
-  await audit(prisma, ctx, 'internal.shuffle', 'match', m.id, m.sides, sides);
+  await audit(prisma, ctx, opts.keep ? 'internal.fill' : 'internal.shuffle', 'match', m.id, m.sides, sides);
   return sides;
 }
 
@@ -50,6 +54,7 @@ export async function setSides(ctx: Ctx, matchId: string, raw: unknown) {
   if (new Set(all).size !== all.length) throw invalid('Một người không thể ở cả hai đội');
   if (all.some((id) => !goers.has(id))) throw invalid('Chỉ chia những người đã điểm danh Đi');
   await prisma.match.update({ where: { id: m.id }, data: { sides: p.data } });
+  await audit(prisma, ctx, 'internal.sides', 'match', m.id, m.sides, p.data);
 }
 
 /** Người không còn Đi thì gỡ khỏi đội (gọi khi điểm danh đổi). */
