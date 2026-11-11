@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { CAPTAIN, closeResultPopup, hydrated, login } from './helpers';
 
-test('BRD 15 — đá nội bộ: tạo trận, chia tiền (sân + nước), chia ngẫu nhiên 2 đội cân bằng', async ({ page }) => {
+test('BRD 15 — đá nội bộ: tạo trận, chia tiền (sân + nước), ĐT tự xếp đội / chia ngẫu nhiên cân bằng', async ({ page }) => {
   await login(page, CAPTAIN);
   await page.goto('/t/t-domdom/lich');
   await hydrated(page);
@@ -36,19 +36,40 @@ test('BRD 15 — đá nội bộ: tạo trận, chia tiền (sân + nước), ch
   await expect(page.locator('.toast')).toContainText('Đã lưu chia tiền');
   await expect(dlg.locator('.arow').first()).toContainText(/Phần chia · 100\.000\s?đ/);
 
-  // Chia đội ngẫu nhiên cân bằng: 4 – 4, bấm một người để chuyển đội
+  // ĐT tự xếp: 2 người vào A, 1 người vào B, rồi để app chia nốt phần còn lại cho cân
   await dlg.getByRole('tab', { name: 'Chia đội' }).click();
-  await dlg.getByRole('button', { name: 'Chia ngẫu nhiên cân bằng' }).click();
-  await expect(page.locator('.toast')).toContainText('Đã chia đội cân bằng');
   const A = dlg.getByRole('region', { name: 'Đội A · áo sáng' });
   const B = dlg.getByRole('region', { name: 'Đội B · áo tối' });
+  const rest = dlg.getByRole('region', { name: 'Chưa xếp đội' });
+  await expect(rest.locator('.arow')).toHaveCount(8);
+  await rest.getByRole('button', { name: 'Cho Hùng Gôn vào Đội A' }).click();
+  await rest.getByRole('button', { name: 'Cho Đức Cò vào Đội A' }).click();
+  await rest.getByRole('button', { name: 'Cho Tuấn Tạ vào Đội B' }).click();
+  await expect(A.locator('.sd-p')).toHaveCount(2);
+  await expect(B.locator('.sd-p')).toHaveCount(1);
+  await expect(rest.locator('.arow')).toHaveCount(5);
+  // bấm người trong đội để đổi bên, ✕ để bỏ ra
+  await A.getByRole('button', { name: 'Chuyển Đức Cò sang Đội B' }).click();
+  await expect(B.locator('.sd-p')).toHaveCount(2);
+  await B.getByRole('button', { name: 'Bỏ Đức Cò ra khỏi Đội B' }).click();
+  await expect(rest.locator('.arow')).toHaveCount(6);
+  await dlg.getByRole('button', { name: /Chia nốt 6 người còn lại/ }).click();
+  await expect(page.locator('.toast')).toContainText('giữ người bạn đã xếp');
+  await expect(A).toContainText('Hùng Gôn');
+  await expect(B).toContainText('Tuấn Tạ');
   await expect(A.locator('.sd-p')).toHaveCount(4);
   await expect(B.locator('.sd-p')).toHaveCount(4);
+  await expect(rest).toHaveCount(0);
   await expect(dlg.locator('.sd-bal small')).toContainText(/Đội A \d+% · Đội B \d+%/);
-  await A.locator('.sd-p').first().click();
-  await expect(A.locator('.sd-p')).toHaveCount(3);
-  await expect(B.locator('.sd-p')).toHaveCount(5);
-  await expect(dlg.getByRole('button', { name: 'Chia lại ngẫu nhiên' })).toBeVisible();
+
+  // Chia ngẫu nhiên cả đội; xếp lại từ đầu
+  await dlg.getByRole('button', { name: 'Chia lại ngẫu nhiên' }).click();
+  await expect(page.locator('.toast')).toContainText('Đã chia đội cân bằng');
+  await expect(A.locator('.sd-p')).toHaveCount(4);
+  await expect(B.locator('.sd-p')).toHaveCount(4);
+  await dlg.getByRole('button', { name: 'Xếp lại từ đầu' }).click();
+  await expect(rest.locator('.arow')).toHaveCount(8);
+  await expect(dlg.getByRole('button', { name: 'Chia ngẫu nhiên cân bằng' })).toBeVisible();
 
   // Kết quả: Đội A / Đội B thay cho tên đội và đối thủ
   await dlg.getByRole('tab', { name: 'Kết quả' }).click();

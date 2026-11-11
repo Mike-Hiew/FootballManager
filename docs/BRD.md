@@ -868,7 +868,12 @@ Tab **Vinh danh** (route `vinh-danh`), công khai như Thống kê. Mỗi lần 
 ## 15. Đá nội bộ
 
 - Loại trận **"Nội bộ"** (Tạo trận → Loại trận). Không có đối thủ (tên trận điền sẵn "Nội bộ"), không có giá đá lẻ. Người trong đội chia **2 đội**: **Đội A áo sáng** (tỉ số bên trái) và **Đội B áo tối**.
-- **Chia đội** (tab riêng trong modal trận): ĐT bấm 🎲 **"Chia ngẫu nhiên cân bằng"** — chia tất cả người điểm danh Đi; mỗi lần bấm ra một cách chia khác nhưng luôn cân: thủ môn tách hai bên, các tuyến (hậu vệ / tiền vệ / tiền đạo theo vị trí tốt nhất) chia đều, tổng sức mạnh (OVR) gần bằng nhau, quân số lệch tối đa 1. Hiện OVR trung bình, số người theo tuyến, thanh cân bằng ("Rất cân / Khá cân / Lệch"). ĐT bấm một người để chuyển sang đội kia; người mới điểm danh hiện ở "Chưa chia"; người chuyển sang Nghỉ tự rời đội. Thành viên chỉ xem.
+- **Chia đội** (tab riêng trong modal trận) — ĐT chọn một trong hai cách, kết hợp được:
+  - **Tự xếp**: người Đi chưa có đội nằm ở "Chưa xếp đội", bấm **→ A / → B** (hoặc kéo-thả trên máy tính); bấm người trong đội để đổi bên, **✕** để bỏ ra. Thanh cân bằng, OVR trung bình và số người theo tuyến cập nhật ngay khi xếp.
+  - **Chia ngẫu nhiên cân bằng** 🎲: chia lại tất cả người Đi; mỗi lần bấm ra một cách chia khác nhưng luôn cân: thủ môn tách hai bên, các tuyến (hậu vệ / tiền vệ / tiền đạo theo vị trí tốt nhất) chia đều, tổng sức mạnh (OVR) gần bằng nhau, quân số lệch tối đa 1.
+  - **Chia nốt người còn lại** ⚖️: giữ nguyên những người ĐT đã tự xếp (VD tách 2 thủ môn, cặp ăn ý), app chia phần còn lại cho cân.
+  - **Xếp lại từ đầu**: bỏ chia, mọi người về "Chưa xếp đội".
+  - Thanh cân bằng ghi "Rất cân / Khá cân / Lệch". Người chuyển sang Nghỉ tự rời đội. Thành viên chỉ xem.
 - **Chia tiền** (tab Điểm danh & tiền): tất cả người Đi cùng chia — **kể cả người đóng quỹ tháng**. Tổng chi = tiền sân + các khoản thêm do ĐT nhập (Nước, Lôi, Trọng tài, Áo bib, khoản khác; tối đa 12). Mặc định chia đều, làm tròn lên nghìn đồng; ĐT sửa phần riêng từng người (VD người chịu lôi). Hiện tổng các phần và thiếu / dư so với tổng chi. ĐT ✓ "Đã trả" từng người hoặc gửi yêu cầu trả tiền (mỗi người nhận đúng phần của mình, bấm "Tôi đã đóng" như yêu cầu đá lẻ). Thành viên thấy "Phần của bạn".
 - **Sổ quỹ**: tiền sân ghi như trận thường; khoản thêm là một dòng chi "Chi thêm nội bộ dd/mm: Nước, Lôi"; tiền thu là tổng phần đã trả ("Thu đá nội bộ dd/mm · x/y người"). Bảng "Tiền từng trận" đánh dấu Nội bộ.
 - **Thống kê**: bàn thắng, kiến tạo, MVP của trận nội bộ **cộng vào thống kê cá nhân** mùa giải; **không** tính vào thắng / hoà / thua và hiệu số của đội. Popup kết quả trung tính ("Đội A thắng" / "Hoà"), không pháo giấy / mưa.

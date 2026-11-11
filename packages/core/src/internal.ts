@@ -59,23 +59,27 @@ function cost(a: string[], b: string[], byId: Map<string, SplitPlayer>): number 
 
 /**
  * Chia ngẫu nhiên nhưng cân bằng: mỗi lần gọi ra một cách chia khác (nhiễu ngẫu nhiên), luôn gần cân bằng.
+ * `fixed`: người ĐT đã tự xếp — giữ nguyên đội, chỉ chia những người còn lại cho cân.
  * 1) Theo tuyến (GK → DF → MF → FW), người mạnh trước (có nhiễu), xếp vào đội đang thiếu tuyến đó / yếu hơn.
- * 2) Đổi cặp ngẫu nhiên nếu làm giảm độ lệch.
+ * 2) Đổi cặp ngẫu nhiên (chỉ người chưa cố định) nếu làm giảm độ lệch.
  */
-export function balanceTeams(players: readonly SplitPlayer[], rng: () => number = Math.random): Sides {
+export function balanceTeams(players: readonly SplitPlayer[], rng: () => number = Math.random, fixed?: Sides): Sides {
   const byId = new Map(players.map((p) => [p.id, p]));
-  const info = players.map((p) => ({ id: p.id, ...strengthOf(p), noise: (rng() - 0.5) * 1.2 }));
+  const a = (fixed?.a ?? []).filter((id) => byId.has(id));
+  const b = (fixed?.b ?? []).filter((id) => byId.has(id) && !a.includes(id));
+  const locked = new Set([...a, ...b]);
+  const info = players.filter((p) => !locked.has(p.id)).map((p) => ({ id: p.id, ...strengthOf(p), noise: (rng() - 0.5) * 1.2 }));
   const order: Line[] = ['GK', 'DF', 'MF', 'FW'];
   // xáo thứ tự các tuyến sau GK để mỗi lần khác nhau
   const rest = order.slice(1).sort(() => rng() - 0.5);
-  const a: string[] = [];
-  const b: string[] = [];
-  let ta = 0;
-  let tb = 0;
+  const sa = summarize(a, byId);
+  const sb = summarize(b, byId);
+  let ta = sa.total;
+  let tb = sb.total;
   for (const line of ['GK' as Line, ...rest]) {
     const group = info.filter((x) => x.line === line).sort((x, y) => y.score + y.noise - (x.score + x.noise));
-    let la = 0;
-    let lb = 0;
+    let la = sa.lines[line];
+    let lb = sb.lines[line];
     for (const x of group) {
       const toA = la !== lb ? la < lb : a.length !== b.length ? a.length < b.length : ta !== tb ? ta < tb : rng() < 0.5;
       if (toA) {
@@ -89,14 +93,28 @@ export function balanceTeams(players: readonly SplitPlayer[], rng: () => number 
       }
     }
   }
-  // cân quân số (lệch tối đa 1)
-  while (a.length - b.length > 1) b.push(a.pop()!);
-  while (b.length - a.length > 1) a.push(b.pop()!);
+  // cân quân số (lệch tối đa 1) — chỉ dời người chưa cố định
+  const moveFree = (from: string[], to: string[]) => {
+    for (let i = from.length - 1; i >= 0; i--) {
+      if (!locked.has(from[i])) {
+        to.push(from.splice(i, 1)[0]);
+        return true;
+      }
+    }
+    return false;
+  };
+  while (a.length - b.length > 1 && moveFree(a, b));
+  while (b.length - a.length > 1 && moveFree(b, a));
   // đổi cặp ngẫu nhiên nếu cân hơn
+  const freeA = () => a.map((id, i) => [id, i] as const).filter(([id]) => !locked.has(id));
+  const freeB = () => b.map((id, i) => [id, i] as const).filter(([id]) => !locked.has(id));
   let best = cost(a, b, byId);
-  for (let it = 0; it < 400 && a.length && b.length; it++) {
-    const i = Math.floor(rng() * a.length);
-    const j = Math.floor(rng() * b.length);
+  for (let it = 0; it < 400; it++) {
+    const fa = freeA();
+    const fb = freeB();
+    if (!fa.length || !fb.length) break;
+    const i = fa[Math.floor(rng() * fa.length)][1];
+    const j = fb[Math.floor(rng() * fb.length)][1];
     [a[i], b[j]] = [b[j], a[i]];
     const c = cost(a, b, byId);
     if (c < best - 1e-9) best = c;

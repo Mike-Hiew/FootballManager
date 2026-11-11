@@ -41,6 +41,13 @@ describe('Đá nội bộ (BRD 15)', () => {
     const dto = v.matches.find((x) => x.id === m.id)!;
     expect([...dto.sides!.a, ...dto.sides!.b]).not.toContain(gone);
 
+    // ĐT tự xếp 2 người → chia nốt: giữ nguyên 2 người đó
+    await internal.setSides(cap, m.id, { a: ['p1'], b: ['p2'] });
+    const kept = await internal.shuffleSides(cap, m.id, { keep: true });
+    expect(kept.a).toContain('p1');
+    expect(kept.b).toContain('p2');
+    expect(kept.a.length + kept.b.length).toBe(GOERS.length - 1);
+
     // trận thường không có chia đội
     await expectStatus(internal.shuffleSides(cap, 'm5'), 422);
   });

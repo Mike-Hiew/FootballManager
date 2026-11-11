@@ -35,6 +35,22 @@ describe('Chia đội nội bộ cân bằng (BRD 15)', () => {
     expect(r.a.length + r.b.length).toBe(5);
     expect(strengthOf({ id: 'z', foot: 'Phải', stats: fillStats({}) }).line).toBeDefined();
   });
+  it('ĐT tự xếp trước một số người → giữ nguyên, chỉ chia phần còn lại cho cân', () => {
+    const byId = new Map(squad.map((p) => [p.id, p]));
+    for (let s = 1; s <= 15; s++) {
+      const fixed = { a: ['gk1', 'f1'], b: ['m1'] };
+      const { a, b } = balanceTeams(squad, seeded(s), fixed);
+      expect(a).toEqual(expect.arrayContaining(['gk1', 'f1']));
+      expect(b).toContain('m1');
+      expect([...a, ...b].sort()).toEqual(squad.map((p) => p.id).sort());
+      expect(Math.abs(a.length - b.length)).toBeLessThanOrEqual(1);
+      expect(summarize(b, byId).lines.GK).toBe(1); // thủ môn còn lại sang đội B
+      expect(Math.abs(summarize(a, byId).total - summarize(b, byId).total)).toBeLessThan(3);
+    }
+    // người cố định không còn Đi thì bỏ qua
+    const r = balanceTeams(squad.slice(2), seeded(2), { a: ['gk1'], b: [] });
+    expect([...r.a, ...r.b]).not.toContain('gk1');
+  });
   it('chia tiền: tổng = tiền sân + khoản thêm, mặc định chia đều làm tròn lên nghìn; ĐT sửa từng người', () => {
     const total = splitTotal(700000, [{ label: 'Nước', amount: 120000 }, { label: 'Lôi', amount: 50000 }]);
     expect(total).toBe(870000);

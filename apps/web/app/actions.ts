@@ -152,8 +152,8 @@ export async function setAttendanceAction(teamId: string, matchId: string, playe
 export async function setLePaidAction(teamId: string, matchId: string, playerId: string, paid: boolean) {
   return run(() => inTeam(teamId, (c) => fund.setLePaid(c, matchId, playerId, paid).then(() => null)));
 }
-export async function shuffleSidesAction(teamId: string, matchId: string) {
-  return run(() => inTeam(teamId, (c) => internal.shuffleSides(c, matchId).then(() => null)));
+export async function shuffleSidesAction(teamId: string, matchId: string, keep = false) {
+  return run(() => inTeam(teamId, (c) => internal.shuffleSides(c, matchId, { keep }).then(() => null)));
 }
 export async function setSidesAction(teamId: string, matchId: string, sides: { a: string[]; b: string[] }) {
   return run(() => inTeam(teamId, (c) => internal.setSides(c, matchId, sides).then(() => null)));
