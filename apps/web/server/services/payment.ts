@@ -1,12 +1,13 @@
 import { z } from 'zod';
 import { prisma, type Db } from '@san7/db';
-import { currentMonth, dm, money, moneySchema, monthLabel } from '@san7/core';
+import { currentMonth, dm, isInternal, money, moneySchema, monthLabel } from '@san7/core';
 import { type Ctx, requireManager } from '../authz';
 import { audit } from '../audit';
 import { forbidden, invalid, notFound, zodMessage } from '../errors';
 import { captainUserIds, emit } from './notify';
 import { effectivePayType } from './player';
 import { syncDues, syncLe } from './fund';
+import { internalShares } from './internal';
 
 /**
  * Yêu cầu đóng tiền: ĐT gửi yêu cầu đóng quỹ tháng (người Quỹ) hoặc trả tiền một trận (người Đá lẻ có Đi).
@@ -23,7 +24,7 @@ type Req = { id: string; teamId: string; kind: string; key: string; amount: numb
 interface Owed {
   label: string;
   /** người chưa đóng — kể cả người đã báo đóng nhưng ĐT chưa xác nhận */
-  players: Array<{ id: string; userId: string | null; name: string }>;
+  players: Array<{ id: string; userId: string | null; name: string; amount: number }>;
 }
 
 async function owedOf(db: Db, r: Req): Promise<Owed | null> {
@@ -35,17 +36,24 @@ async function owedOf(db: Db, r: Req): Promise<Owed | null> {
     const ok = new Set(paid.map((p) => p.playerId));
     return {
       label: `quỹ ${monthLabel(r.key)}`,
-      players: players.filter((p) => effectivePayType(p, r.key) === 'quy' && !ok.has(p.id)).map((p) => ({ id: p.id, userId: p.userId, name: p.nick || p.fullName })),
+      players: players.filter((p) => effectivePayType(p, r.key) === 'quy' && !ok.has(p.id)).map((p) => ({ id: p.id, userId: p.userId, name: p.nick || p.fullName, amount: r.amount })),
     };
   }
   const m = await db.match.findFirst({
     where: { id: r.key, teamId: r.teamId, deletedAt: null },
-    include: { attendance: { where: { status: 'di', lePaid: false }, include: { player: true } } },
+    include: { attendance: { where: { status: 'di' }, include: { player: true } } },
   });
   if (!m) return null;
+  const unpaid = m.attendance.filter((a) => !a.lePaid);
+  const person = (a: (typeof unpaid)[number], amount: number) => ({ id: a.player.id, userId: a.player.userId, name: a.player.nick || a.player.fullName, amount });
+  if (isInternal(m)) {
+    // đá nội bộ: mọi người Đi cùng chia, mỗi người một phần (ĐT có thể sửa riêng)
+    const shares = internalShares(m);
+    return { label: `đá nội bộ ${dm(m.date)}`, players: unpaid.map((a) => person(a, shares[a.playerId] ?? r.amount)) };
+  }
   return {
     label: `đá lẻ trận vs ${m.opponent} ${dm(m.date)}`,
-    players: m.attendance.filter((a) => effectivePayType(a.player, m.date.slice(0, 7)) === 'le').map((a) => ({ id: a.player.id, userId: a.player.userId, name: a.player.nick || a.player.fullName })),
+    players: unpaid.filter((a) => effectivePayType(a.player, m.date.slice(0, 7)) === 'le').map((a) => person(a, r.amount)),
   };
 }
 
@@ -60,12 +68,19 @@ async function notifyOwed(db: Db, ctx: Ctx | null, r: Req, prefix: string): Prom
   const owed = await owedOf(db, r);
   if (!owed) return 0;
   const pend = await pendingIds(db, r.id);
-  return emit(db, {
-    // không gắn matchId: bấm thông báo mở Của tôi, nơi có nút "Tôi đã đóng"
-    kind: 'fund', teamId: r.teamId, view: 'toi', actorId: ctx?.user.id ?? null, remind: !!ctx,
-    recipients: owed.players.filter((p) => !pend.has(p.id)).map((p) => p.userId),
-    text: `${prefix} ${owed.label}: ${money(r.amount)}${withNote(r)}`,
-  });
+  // nhóm theo số tiền (đá nội bộ mỗi người một phần riêng)
+  const byAmount = new Map<number, Array<string | null>>();
+  for (const p of owed.players) if (!pend.has(p.id)) byAmount.set(p.amount, [...(byAmount.get(p.amount) ?? []), p.userId]);
+  let n = 0;
+  for (const [amount, recipients] of byAmount) {
+    n += await emit(db, {
+      // không gắn matchId: bấm thông báo mở Của tôi, nơi có nút "Tôi đã đóng"
+      kind: 'fund', teamId: r.teamId, view: 'toi', actorId: ctx?.user.id ?? null, remind: !!ctx,
+      recipients,
+      text: `${prefix} ${owed.label}: ${money(amount)}${withNote(r)}`,
+    });
+  }
+  return n;
 }
 
 const duesSchema = z.object({
@@ -102,9 +117,9 @@ export async function requestLe(ctx: Ctx, matchId: string, raw: unknown) {
   const { amount } = p.data;
   const m = await prisma.match.findFirst({ where: { id: matchId, teamId: ctx.teamId, deletedAt: null } });
   if (!m) throw notFound('Không tìm thấy trận');
-  if (m.scoreUs == null) throw invalid('Nhập tỉ số trước rồi mới yêu cầu trả tiền trận');
+  if (m.scoreUs == null && !isInternal(m)) throw invalid('Nhập tỉ số trước rồi mới yêu cầu trả tiền trận');
   return prisma.$transaction(async (tx) => {
-    if (m.fee !== amount) {
+    if (!isInternal(m) && m.fee !== amount) {
       await tx.match.update({ where: { id: matchId }, data: { fee: amount } });
       await syncLe(tx, matchId);
     }
@@ -146,7 +161,7 @@ export async function declarePaid(ctx: Ctx, requestId: string) {
     });
     await emit(tx, {
       kind: 'fund', teamId: ctx.teamId, view: 'duyet', actorId: ctx.user.id, recipients: await captainUserIds(tx, ctx.teamId),
-      text: `${me.name} báo đã đóng ${owed.label} (${money(r.amount)})`,
+      text: `${me.name} báo đã đóng ${owed.label} (${money(me.amount)})`,
     });
   });
 }
@@ -175,6 +190,7 @@ export async function decidePayment(ctx: Ctx, requestId: string, playerId: strin
   });
   if (!n) throw notFound('Báo đóng tiền không còn chờ xác nhận');
   const owed = await owedOf(prisma, n.request);
+  const amount = owed?.players.find((p) => p.id === playerId)?.amount ?? n.request.amount;
   await prisma.$transaction(async (tx) => {
     if (ok && owed?.players.some((p) => p.id === playerId)) await markPaid(tx, n.request, playerId);
     await tx.paymentNotice.update({
@@ -184,7 +200,7 @@ export async function decidePayment(ctx: Ctx, requestId: string, playerId: strin
     const label = owed?.label ?? 'khoản đóng tiền';
     await emit(tx, {
       kind: 'result', teamId: ctx.teamId, view: 'toi', actorId: ctx.user.id, recipients: [n.player.userId],
-      text: ok ? `Đội trưởng đã xác nhận bạn đóng ${label} (${money(n.request.amount)})` : `Đội trưởng chưa nhận được tiền ${label}. Kiểm tra lại rồi báo đóng lại nhé`,
+      text: ok ? `Đội trưởng đã xác nhận bạn đóng ${label} (${money(amount)})` : `Đội trưởng chưa nhận được tiền ${label}. Kiểm tra lại rồi báo đóng lại nhé`,
     });
     await audit(tx, ctx, ok ? 'pay.confirm' : 'pay.reject', 'payment_request', requestId, null, { playerId });
   });
@@ -212,10 +228,11 @@ export async function myPayments(ctx: Ctx): Promise<MyPayment[]> {
   const out: MyPayment[] = [];
   for (const r of reqs) {
     const owed = await owedOf(prisma, r);
-    if (!owed?.players.some((p) => p.id === ctx.playerId)) continue;
+    const mine = owed?.players.find((p) => p.id === ctx.playerId);
+    if (!owed || !mine) continue;
     const st = r.notices[0]?.status;
     out.push({
-      id: r.id, kind: r.kind as MyPayment['kind'], label: owed.label, amount: r.amount, note: r.note, matchId: r.kind === 'le' ? r.key : null,
+      id: r.id, kind: r.kind as MyPayment['kind'], label: owed.label, amount: mine.amount, note: r.note, matchId: r.kind === 'le' ? r.key : null,
       status: st === 'pending' ? 'pending' : st === 'rejected' ? 'rejected' : 'due',
     });
   }
@@ -257,8 +274,9 @@ export async function pendingNotices(teamId: string) {
   for (const n of ns) {
     const owed = await owedOf(prisma, n.request);
     // đã được ✓ tay hoặc trận đã xoá → không còn gì để xác nhận
-    if (!owed?.players.some((p) => p.id === n.playerId)) continue;
-    out.push({ requestId: n.requestId, playerId: n.playerId, label: owed.label, amount: n.request.amount, declaredAt: n.declaredAt.toISOString() });
+    const who = owed?.players.find((p) => p.id === n.playerId);
+    if (!owed || !who) continue;
+    out.push({ requestId: n.requestId, playerId: n.playerId, label: owed.label, amount: who.amount, declaredAt: n.declaredAt.toISOString() });
   }
   return out;
 }

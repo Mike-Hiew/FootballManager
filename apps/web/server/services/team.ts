@@ -163,7 +163,7 @@ export async function exploreTeams(q?: string) {
       _count: { select: { players: { where: { status: 'active' } } } },
       matches: {
         where: { deletedAt: null, scoreUs: { not: null }, date: { startsWith: String(year) } },
-        select: { id: true, date: true, time: true, opponent: true, scoreUs: true, scoreThem: true, mvpPlayerId: true },
+        select: { id: true, date: true, time: true, opponent: true, scoreUs: true, scoreThem: true, mvpPlayerId: true, type: true },
       },
     },
   });

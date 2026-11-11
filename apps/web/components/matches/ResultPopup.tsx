@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { dm, shortName } from '@san7/core';
+import { dm, isInternal, shortName } from '@san7/core';
 import { useTeam } from '../TeamContext';
 import { TeamCrest } from '../TeamCrest';
 import { markResultSeenAction } from '@/app/actions';
@@ -50,7 +50,18 @@ export function ResultPopup() {
   if (!open || !m) return null;
 
   const mood: Mood = m.scoreUs! > m.scoreThem! ? 'win' : m.scoreUs! < m.scoreThem! ? 'loss' : 'draw';
-  const copy = COPY[mood];
+  const internal = isInternal(m);
+  // đá nội bộ: cả hai đội đều là mình → không thắng/thua của đội, chỉ báo đội nào thắng
+  const copy = internal
+    ? {
+        title: 'Đá nội bộ xong!',
+        line: mood === 'draw' ? 'Hai đội hoà nhau — đá vui là chính!' : `${mood === 'win' ? 'Đội A' : 'Đội B'} thắng. Bàn thắng, kiến tạo vẫn cộng vào thống kê mùa.`,
+        badge: mood === 'draw' ? 'Hoà' : `${mood === 'win' ? 'Đội A' : 'Đội B'} thắng`,
+      }
+    : COPY[mood];
+  const fx: Mood = internal ? 'draw' : mood;
+  const usName = internal ? 'Đội A' : view.team.name;
+  const themName = internal ? 'Đội B' : m.opponent;
   const name = (pid: string) => {
     const p = byId(pid);
     return p ? shortName(p) : 'Cầu thủ cũ';
@@ -70,19 +81,19 @@ export function ResultPopup() {
 
   return createPortal(
     <div
-      className={`rp-overlay rp-${mood}`}
+      className={`rp-overlay rp-${fx}`}
       onMouseDown={(e) => e.target === e.currentTarget && close()}
       onKeyDown={(e) => e.key === 'Escape' && close()}
     >
       <div className="rp-fx" aria-hidden="true">
-        {mood === 'win' && CONFETTI.map((c, i) => <i key={i} className={`rp-confetti c${c.c}`} style={{ left: `${c.x}%`, animationDelay: `${c.d}s`, ['--r' as string]: `${c.r}deg` }} />)}
-        {mood !== 'loss' && FIREFLIES.map((f, i) => <i key={i} className="rp-fly" style={{ left: `${f.x}%`, width: f.s, height: f.s, animationDelay: `${f.d}s` }} />)}
-        {mood === 'loss' && RAIN.map((r, i) => <i key={i} className="rp-rain" style={{ left: `${r.x}%`, animationDelay: `${r.d}s` }} />)}
+        {fx === 'win' && CONFETTI.map((c, i) => <i key={i} className={`rp-confetti c${c.c}`} style={{ left: `${c.x}%`, animationDelay: `${c.d}s`, ['--r' as string]: `${c.r}deg` }} />)}
+        {fx !== 'loss' && FIREFLIES.map((f, i) => <i key={i} className="rp-fly" style={{ left: `${f.x}%`, width: f.s, height: f.s, animationDelay: `${f.d}s` }} />)}
+        {fx === 'loss' && RAIN.map((r, i) => <i key={i} className="rp-rain" style={{ left: `${r.x}%`, animationDelay: `${r.d}s` }} />)}
       </div>
       <div className="rp-card" role="dialog" aria-modal="true" aria-labelledby="rpTitle">
         <button ref={closeBtn} type="button" className="rp-x" aria-label="Đóng" onClick={() => close()}>✕</button>
         <div className="rp-kicker">Trận đấu đã kết thúc · {dm(m.date)}{m.time ? ' · ' + m.time : ''}</div>
-        {mood === 'win' && (
+        {fx === 'win' && (
           <svg className="rp-cup" viewBox="0 0 64 64" aria-hidden="true">
             <path d="M18 8h28v10a14 14 0 0 1-28 0z" />
             <path d="M18 12H10a8 8 0 0 0 10 10M46 12h8a8 8 0 0 1-10 10" fill="none" strokeWidth="4" />
@@ -90,18 +101,18 @@ export function ResultPopup() {
           </svg>
         )}
         <h2 id="rpTitle" className="rp-title">{copy.title}</h2>
-        <div className="rp-score" aria-label={`${view.team.name} ${m.scoreUs} – ${m.scoreThem} ${m.opponent}`}>
+        <div className="rp-score" aria-label={`${usName} ${m.scoreUs} – ${m.scoreThem} ${themName}`}>
           <div className="rp-side">
-            <TeamCrest name={view.team.name} photoUrl={view.team.photoUrl} size={52} />
-            <b>{view.team.name}</b>
+            {internal ? <span className="rp-opp rp-light" aria-hidden="true">A</span> : <TeamCrest name={view.team.name} photoUrl={view.team.photoUrl} size={52} />}
+            <b>{usName}</b>
           </div>
           <div className="rp-num"><span>{m.scoreUs}</span><i>–</i><span>{m.scoreThem}</span></div>
           <div className="rp-side">
-            <span className="rp-opp" aria-hidden="true">{m.opponent.slice(0, 1).toUpperCase()}</span>
-            <b>{m.opponent}</b>
+            <span className="rp-opp" aria-hidden="true">{internal ? 'B' : m.opponent.slice(0, 1).toUpperCase()}</span>
+            <b>{themName}</b>
           </div>
         </div>
-        <span className={`rp-badge ${mood}`}>{copy.badge}</span>
+        <span className={`rp-badge ${fx}`}>{copy.badge}</span>
         <p className="rp-line">{copy.line}</p>
         <ul className="rp-facts">
           {scorers.length > 0 && <li><span>Ghi bàn</span>{scorers.join(', ')}</li>}

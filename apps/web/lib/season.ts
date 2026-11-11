@@ -1,4 +1,4 @@
-import { mvpCounts, playerSeason, seasonTable, type SeasonMatch } from '@san7/core';
+import { INTERNAL_TYPE, mvpCounts, playerSeason, seasonTable, type SeasonMatch } from '@san7/core';
 import type { MatchDTO } from './types';
 
 export const toSeason = (m: MatchDTO): SeasonMatch => ({
@@ -9,6 +9,7 @@ export const toSeason = (m: MatchDTO): SeasonMatch => ({
   scoreUs: m.scoreUs,
   scoreThem: m.scoreThem,
   mvpPlayerId: m.mvpPlayerId,
+  internal: m.type === INTERNAL_TYPE,
   attendance: Object.fromEntries(Object.entries(m.attendance).map(([k, a]) => [k, a.status])),
   events: m.events,
 });

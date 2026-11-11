@@ -1,4 +1,4 @@
-export type FundSource = 'dues' | 'pitch' | 'le' | 'manual';
+export type FundSource = 'dues' | 'pitch' | 'le' | 'extra' | 'manual';
 
 export interface LedgerEntry {
   id?: string;
@@ -13,6 +13,7 @@ export const FUND_SOURCE_LABEL: Record<FundSource, string> = {
   dues: 'Quỹ tháng',
   pitch: 'Trận đấu',
   le: 'Đá lẻ',
+  extra: 'Chi thêm',
   manual: 'Ghi tay',
 };
 

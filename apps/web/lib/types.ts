@@ -24,7 +24,15 @@ export interface PlayerDTO {
   phone: string | null;
 }
 
-export interface AttendanceDTO { status: 'di' | 'nghi'; byCaptain: boolean; lePaid: boolean }
+export interface AttendanceDTO {
+  status: 'di' | 'nghi';
+  byCaptain: boolean;
+  lePaid: boolean;
+  /** đá nội bộ: phần tiền của người này (đ) — chỉ thành viên thấy */
+  share?: number | null;
+  /** đá nội bộ: ĐT đặt riêng phần này (không chia đều) */
+  shareSet?: boolean;
+}
 
 export interface MvpVoteDTO {
   status: 'open' | 'done' | 'need';
@@ -56,6 +64,10 @@ export interface MatchDTO {
   formation: string | null;
   lineup: Array<string | null> | null;
   mvpPlayerId: string | null;
+  /** đá nội bộ: Đội A (áo sáng = scoreUs) / Đội B (áo tối = scoreThem) */
+  sides: { a: string[]; b: string[] } | null;
+  /** đá nội bộ: khoản chi thêm ngoài tiền sân (chỉ thành viên thấy) */
+  splitItems: Array<{ label: string; amount: number }>;
   attendance: Record<string, AttendanceDTO>;
   events: Record<string, { goals: number; assists: number }>;
   claims: ClaimDTO[];

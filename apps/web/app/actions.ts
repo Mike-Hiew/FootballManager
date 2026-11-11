@@ -17,6 +17,7 @@ import * as postmatch from '@/server/services/postmatch';
 import * as statreview from '@/server/services/statreview';
 import * as mvp from '@/server/services/mvp';
 import * as fund from '@/server/services/fund';
+import * as internal from '@/server/services/internal';
 import * as payment from '@/server/services/payment';
 import * as tactics from '@/server/services/tactics';
 import * as transfer from '@/server/services/transfer';
@@ -150,6 +151,15 @@ export async function setAttendanceAction(teamId: string, matchId: string, playe
 }
 export async function setLePaidAction(teamId: string, matchId: string, playerId: string, paid: boolean) {
   return run(() => inTeam(teamId, (c) => fund.setLePaid(c, matchId, playerId, paid).then(() => null)));
+}
+export async function shuffleSidesAction(teamId: string, matchId: string) {
+  return run(() => inTeam(teamId, (c) => internal.shuffleSides(c, matchId).then(() => null)));
+}
+export async function setSidesAction(teamId: string, matchId: string, sides: { a: string[]; b: string[] }) {
+  return run(() => inTeam(teamId, (c) => internal.setSides(c, matchId, sides).then(() => null)));
+}
+export async function setSplitAction(teamId: string, matchId: string, input: { items: Array<{ label: string; amount: number }>; shares?: Record<string, number | null> }) {
+  return run(() => inTeam(teamId, (c) => internal.setSplit(c, matchId, input).then(() => null)));
 }
 export async function submitClaimAction(teamId: string, matchId: string, goals: number, assists: number) {
   return run(() => inTeam(teamId, (c) => claim.submitClaim(c, matchId, { goals, assists }).then(() => null)));

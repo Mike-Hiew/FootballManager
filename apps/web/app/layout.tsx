@@ -6,6 +6,7 @@ import './app.css';
 import './transfer.css';
 import './honors.css';
 import './reminders.css';
+import './internal.css';
 import { RegisterSW, UpdateBanner } from '@/components/Pwa';
 import { InstallPrompt } from '@/components/InstallPrompt';
 
