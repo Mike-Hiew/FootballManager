@@ -20,6 +20,7 @@ import * as postmatch from '@/server/services/postmatch';
 import * as statreview from '@/server/services/statreview';
 import * as mvp from '@/server/services/mvp';
 import * as fund from '@/server/services/fund';
+import * as internal from '@/server/services/internal';
 import * as payment from '@/server/services/payment';
 import * as tactics from '@/server/services/tactics';
 import * as admin from '@/server/services/admin';
@@ -163,6 +164,9 @@ const routes: Array<[string, H]> = [
   ['GET /teams/:id/fund', async ({ p }) => fund.fundView(await tc(p[0]))],
   ['PUT /teams/:id/fund/fees', async ({ p, body }) => { await fund.setFees(await tc(p[0]), await body()); return { ok: true }; }],
   ['PUT /teams/:id/dues/:month/:playerId', async ({ p, body }) => { await fund.setDues(await tc(p[0]), p[1], p[2], (await body()).paid !== false); return { ok: true }; }],
+  ['POST /matches/:id/sides/shuffle', async ({ p }) => ({ sides: await internal.shuffleSides(await tc(await teamOf.match(p[0])), p[0]) })],
+  ['PUT /matches/:id/sides', async ({ p, body }) => { await internal.setSides(await tc(await teamOf.match(p[0])), p[0], await body()); return { ok: true }; }],
+  ['PUT /matches/:id/split', async ({ p, body }) => { await internal.setSplit(await tc(await teamOf.match(p[0])), p[0], await body()); return { ok: true }; }],
   ['PUT /matches/:id/le-paid/:playerId', async ({ p, body }) => { await fund.setLePaid(await tc(await teamOf.match(p[0])), p[0], p[1], (await body()).paid !== false); return { ok: true }; }],
   ['POST /teams/:id/fund/entries', async ({ p, body }) => ({ id: (await fund.addManualEntry(await tc(p[0]), await body())).id })],
   ['PATCH /teams/:id/fund/entries/:entryId', async ({ p, body }) => { await fund.updateManualEntry(await tc(p[0]), p[1], await body()); return { ok: true }; }],

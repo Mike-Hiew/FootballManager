@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { prisma, type Db } from '@san7/db';
 import {
-  currentMonth, dateSchema, duesAmount, monthLabel, moneySchema, outstanding, sortLedger, todayVN,
+  currentMonth, dateSchema, dm, duesAmount, isInternal, monthLabel, moneySchema, outstanding, sharesOf, sortLedger, splitItemsOf, splitTotal, todayVN,
 } from '@san7/core';
 import { type Ctx, canManage, requireInsider, requireManager } from '../authz';
 import { audit } from '../audit';
@@ -14,7 +14,7 @@ import { randomUUID } from 'node:crypto';
  * Sổ quỹ có khoá nguồn (ARCHITECTURE 6.4): mọi khoản tự sinh là một dòng fund_entries
  * UNIQUE(team_id, source, source_key); sửa dữ liệu gốc chỉ cập nhật đúng dòng đó.
  */
-async function upsertEntry(db: Db, teamId: string, source: 'dues' | 'pitch' | 'le', sourceKey: string, date: string, amount: number, note: string) {
+async function upsertEntry(db: Db, teamId: string, source: 'dues' | 'pitch' | 'le' | 'extra', sourceKey: string, date: string, amount: number, note: string) {
   if (!amount) {
     await db.fundEntry.deleteMany({ where: { teamId, source, sourceKey } });
     return;
@@ -33,13 +33,27 @@ export async function syncPitch(db: Db, matchId: string, now: Date) {
   const m = await db.match.findUnique({ where: { id: matchId } });
   if (!m) return;
   const amount = !m.deletedAt && settled(m, now) ? -m.cost : 0;
-  await upsertEntry(db, m.teamId, 'pitch', m.id, m.date, amount, `Tiền sân vs ${m.opponent}`);
+  await upsertEntry(db, m.teamId, 'pitch', m.id, m.date, amount, isInternal(m) ? `Tiền sân đá nội bộ ${dm(m.date)}` : `Tiền sân vs ${m.opponent}`);
 }
 
 /** Đá lẻ: số người đã trả × match.fee. */
 export async function syncLe(db: Db, matchId: string) {
-  const m = await db.match.findUnique({ where: { id: matchId } });
+  const m = await db.match.findUnique({ where: { id: matchId }, include: { attendance: true } });
   if (!m) return;
+  if (isInternal(m)) {
+    // Đá nội bộ: mọi người Đi trả phần của mình (ĐT chia); khoản thêm (nước, lôi…) là một dòng chi
+    const goers = m.attendance.filter((a) => a.status === 'di');
+    const items = splitItemsOf(m.splitItems);
+    const shares = sharesOf(goers.map((a) => a.playerId), splitTotal(m.cost, items), Object.fromEntries(goers.map((a) => [a.playerId, a.share])));
+    const paid = goers.filter((a) => a.lePaid);
+    const got = m.deletedAt ? 0 : paid.reduce((s, a) => s + (shares[a.playerId] ?? 0), 0);
+    await upsertEntry(db, m.teamId, 'le', m.id, m.date, got, `Thu đá nội bộ ${dm(m.date)} · ${paid.length}/${goers.length} người`);
+    const extra = m.deletedAt ? 0 : items.reduce((s, x) => s + x.amount, 0);
+    await upsertEntry(db, m.teamId, 'extra', m.id, m.date, -extra, `Chi thêm nội bộ ${dm(m.date)}: ${items.map((x) => x.label).join(', ')}`);
+    return;
+  }
+  // đổi từ nội bộ sang trận thường: bỏ dòng chi thêm cũ
+  if (m.splitItems) await upsertEntry(db, m.teamId, 'extra', m.id, m.date, 0, '');
   const paid = m.deletedAt ? 0 : await db.attendance.count({ where: { matchId, lePaid: true } });
   await upsertEntry(db, m.teamId, 'le', m.id, m.date, paid * m.fee, `Đá lẻ vs ${m.opponent} · ${paid} người`);
 }
@@ -99,7 +113,8 @@ export async function setLePaid(ctx: Ctx, matchId: string, playerId: string, pai
     prisma.attendance.findUnique({ where: { matchId_playerId: { matchId, playerId } } }),
     prisma.player.findFirst({ where: { id: playerId, teamId: ctx.teamId } }),
   ]);
-  if (!player || effectivePayType(player, m.date.slice(0, 7)) !== 'le') throw invalid('Chỉ người đá lẻ mới cần trả tiền trận');
+  // Đá nội bộ: ai Đi cũng trả phần của mình; trận thường: chỉ người đá lẻ
+  if (!player || (!isInternal(m) && effectivePayType(player, m.date.slice(0, 7)) !== 'le')) throw invalid('Chỉ người đá lẻ mới cần trả tiền trận');
   if (!a || a.status !== 'di') throw invalid('Người này chưa điểm danh Đi trận này');
   await prisma.$transaction(async (tx) => {
     await tx.attendance.update({ where: { matchId_playerId: { matchId, playerId } }, data: { lePaid: paid } });
@@ -172,11 +187,19 @@ export async function fundView(ctx: Ctx) {
   ]);
   const paidNow = new Set(dues.filter((d) => d.month === month).map((d) => d.playerId));
   const quyIds = players.filter((p) => effectivePayType(p, month) === 'quy').map((p) => p.id);
-  const leTurns = matches.flatMap((m) =>
-    m.attendance
-      .filter((a) => a.status === 'di' && players.some((p) => p.id === a.playerId && effectivePayType(p, m.date.slice(0, 7)) === 'le'))
-      .map((a) => ({ playerId: a.playerId, matchId: m.id, fee: m.fee, paid: a.lePaid })),
-  );
+  // Phần mỗi người trả cho trận nội bộ (ĐT chia); trận thường: người đá lẻ trả match.fee
+  const shareOf = (m: (typeof matches)[number]) => {
+    const goers = m.attendance.filter((a) => a.status === 'di');
+    return sharesOf(goers.map((a) => a.playerId), splitTotal(m.cost, splitItemsOf(m.splitItems)), Object.fromEntries(goers.map((a) => [a.playerId, a.share])));
+  };
+  const payers = (m: (typeof matches)[number]) =>
+    isInternal(m)
+      ? m.attendance.filter((a) => a.status === 'di' && players.some((p) => p.id === a.playerId))
+      : m.attendance.filter((a) => a.status === 'di' && players.some((p) => p.id === a.playerId && effectivePayType(p, m.date.slice(0, 7)) === 'le'));
+  const leTurns = matches.flatMap((m) => {
+    const sh = isInternal(m) ? shareOf(m) : null;
+    return payers(m).map((a) => ({ playerId: a.playerId, matchId: m.id, fee: sh ? (sh[a.playerId] ?? 0) : m.fee, paid: a.lePaid }));
+  });
   return {
     ...team,
     month,
@@ -185,9 +208,12 @@ export async function fundView(ctx: Ctx) {
     dues: dues.map((d) => ({ playerId: d.playerId, month: d.month, amount: d.amount })),
     debts: outstanding({ month, monthlyFee: team.monthlyFee, quyPlayerIds: quyIds, paidThisMonth: paidNow, leTurns }),
     matchMoney: matches.map((m) => {
-      const le = m.attendance.filter((a) => a.status === 'di' && players.some((p) => p.id === a.playerId && effectivePayType(p, m.date.slice(0, 7)) === 'le'));
-      const paid = le.filter((a) => a.lePaid).length;
-      return { id: m.id, date: m.date, opponent: m.opponent, cost: m.cost, fee: m.fee, lePaid: paid, leTotal: le.length };
+      const le = payers(m);
+      const paid = le.filter((a) => a.lePaid);
+      const sh = isInternal(m) ? shareOf(m) : null;
+      const got = sh ? paid.reduce((s, a) => s + (sh[a.playerId] ?? 0), 0) : paid.length * m.fee;
+      const extra = isInternal(m) ? splitItemsOf(m.splitItems).reduce((s, x) => s + x.amount, 0) : 0;
+      return { id: m.id, date: m.date, opponent: m.opponent, internal: isInternal(m), cost: m.cost + extra, fee: m.fee, lePaid: paid.length, leTotal: le.length, got };
     }),
   };
 }

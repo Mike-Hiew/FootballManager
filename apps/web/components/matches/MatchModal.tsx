@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { mvpQuorum, money, nextHomeDay, shortName, todayVN } from '@san7/core';
+import { useMemo, useRef, useState } from 'react';
+import { INTERNAL_TYPE, dm, isInternal, mvpQuorum, money, nextHomeDay, shortName, todayVN } from '@san7/core';
 import { useTeam } from '../TeamContext';
 import { Avatar, Modal, Tabs, Tip } from '../ui';
 import {
@@ -10,8 +10,9 @@ import {
 } from '@/app/actions';
 import { isSettled } from '@/lib/season';
 import type { MatchDTO, PlayerDTO } from '@/lib/types';
+import { SIDE_A, SIDE_B, SidesTab, SplitBox } from './Internal';
 
-type Tab = 'info' | 'att' | 'res';
+type Tab = 'info' | 'att' | 'side' | 'res';
 
 /** Modal trận 3 tab: Thông tin · Điểm danh & tiền · Kết quả (BRD 6.2–6.6). */
 export function MatchModal({ matchId, initialTab, onClose }: { matchId: string | null; initialTab?: Tab; onClose: () => void }) {
@@ -24,10 +25,10 @@ export function MatchModal({ matchId, initialTab, onClose }: { matchId: string |
 
   return (
     <Modal
-      title={m ? `vs ${m.opponent}` : 'Tạo trận'}
+      title={m ? (isInternal(m) ? `Đá nội bộ · ${dm(m.date)}` : `vs ${m.opponent}`) : 'Tạo trận'}
       onClose={onClose}
       wide={680}
-      tabs={<Tabs<Tab> value={tab} onChange={(t) => m && setTab(t)} items={[['info', 'Thông tin'], ['att', 'Điểm danh & tiền', !m], ['res', 'Kết quả', !m]]} />}
+      tabs={<Tabs<Tab> value={tab} onChange={(t) => m && setTab(t)} items={[['info', 'Thông tin'], ['att', 'Điểm danh & tiền', !m], ...(m && isInternal(m) ? [['side', 'Chia đội'] as [Tab, string]] : []), ['res', 'Kết quả', !m]]} />}
       footer={
         <>
           {m && canEdit && (
@@ -47,6 +48,7 @@ export function MatchModal({ matchId, initialTab, onClose }: { matchId: string |
     >
       {tab === 'info' && <InfoTab m={m} onCreated={(id) => { setCreatedId(id); setTab('att'); }} />}
       {tab === 'att' && m && <AttTab m={m} />}
+      {tab === 'side' && m && isInternal(m) && <SidesTab m={m} />}
       {tab === 'res' && m && <ResTab m={m} />}
     </Modal>
   );
@@ -56,10 +58,13 @@ function InfoTab({ m, onCreated }: { m: MatchDTO | undefined; onCreated: (id: st
   const { view, canEdit, act, teamId } = useTeam();
   const t = view.team;
   const [openVote, setOpenVote] = useState(true);
+  const opp = useRef<HTMLInputElement>(null);
   const d = m ?? {
     opponent: '', type: 'Giao hữu', date: nextHomeDay(t.homeDays, new Date(view.now)), time: t.homeFrom ?? '19:30', venue: t.homeName ?? '',
     cost: t.homeCost || 0, fee: t.perMatchFee ?? 0, note: '',
   };
+  const [type, setType] = useState(d.type);
+  const internal = type === INTERNAL_TYPE;
   return (
     <form
       className="fgrid"
@@ -77,13 +82,19 @@ function InfoTab({ m, onCreated }: { m: MatchDTO | undefined; onCreated: (id: st
       }}
     >
       <fieldset disabled={!canEdit} style={{ display: 'contents' }}>
-        <div className="field c4"><label htmlFor="mOpp">Đối thủ</label><input id="mOpp" name="opponent" maxLength={60} required defaultValue={d.opponent} placeholder="VD: FC Cầu Giấy" /></div>
-        <div className="field c2"><label htmlFor="mType">Loại trận</label><select id="mType" name="type" defaultValue={d.type}><option>Giao hữu</option><option>Giải đấu</option><option>Nội bộ</option></select></div>
+        <div className="field c4"><label htmlFor="mOpp">{internal ? 'Tên trận' : 'Đối thủ'}</label><input ref={opp} id="mOpp" name="opponent" maxLength={60} required defaultValue={d.opponent} placeholder={internal ? 'Nội bộ' : 'VD: FC Cầu Giấy'} /></div>
+        <div className="field c2"><label htmlFor="mType">Loại trận</label><select id="mType" name="type" value={type} onChange={(e) => {
+          setType(e.target.value);
+          // đá nội bộ: không có đối thủ — điền sẵn tên trận
+          if (e.target.value === INTERNAL_TYPE && opp.current && !opp.current.value.trim()) opp.current.value = INTERNAL_TYPE;
+        }}><option>Giao hữu</option><option>Giải đấu</option><option value={INTERNAL_TYPE}>Nội bộ (chia 2 đội)</option></select></div>
         <div className="field c2 h3"><label htmlFor="mDate">Ngày</label><input id="mDate" name="date" type="date" required defaultValue={d.date} /></div>
         <div className="field c2 h3"><label htmlFor="mTime">Giờ đá</label><input id="mTime" name="time" type="time" defaultValue={d.time ?? ''} /></div>
         <div className="field c2"><label htmlFor="mVenue">Sân</label><input id="mVenue" name="venue" maxLength={60} defaultValue={d.venue ?? ''} /></div>
-        <div className="field c3"><label htmlFor="mCost">Tiền sân + nước (đ)</label><input id="mCost" name="cost" type="number" min={0} step={10000} inputMode="numeric" defaultValue={d.cost ?? 0} /></div>
-        <div className="field c3"><label htmlFor="mFee">Giá đá lẻ trận này (đ)</label><input id="mFee" name="fee" type="number" min={0} step={5000} inputMode="numeric" defaultValue={d.fee ?? 0} /></div>
+        <div className="field c3"><label htmlFor="mCost">{internal ? 'Tiền sân (đ)' : 'Tiền sân + nước (đ)'}</label><input id="mCost" name="cost" type="number" min={0} step={10000} inputMode="numeric" defaultValue={d.cost ?? 0} /></div>
+        {internal ? (
+          <p className="hint c3" style={{ margin: 0, alignSelf: 'end' }}>Đá nội bộ: cả người đóng quỹ lẫn đá lẻ cùng chia tiền sân + khoản thêm (nước, lôi…) ở tab Điểm danh & tiền.</p>
+        ) : <div className="field c3"><label htmlFor="mFee">Giá đá lẻ trận này (đ)</label><input id="mFee" name="fee" type="number" min={0} step={5000} inputMode="numeric" defaultValue={d.fee ?? 0} /></div>}
         <div className="field c6"><label htmlFor="mNote">Ghi chú</label><input id="mNote" name="note" maxLength={200} defaultValue={d.note ?? ''} placeholder="VD: Mặc áo vàng, có mặt trước 15 phút" /></div>
         {!m && <div className="c6"><label className="check"><input type="checkbox" checked={openVote} onChange={(e) => setOpenVote(e.target.checked)} /> Mở vote tham gia và gửi thông báo cho thành viên</label></div>}
         {canEdit && <div className="c6"><button className="btn primary" type="submit">{m ? 'Lưu thông tin' : 'Tạo trận và điểm danh'}</button></div>}
@@ -102,19 +113,21 @@ function AttTab({ m }: { m: MatchDTO }) {
   const st = (id: string) => m.attendance[id]?.status;
   const di = ps.filter((p) => st(p.id) === 'di');
   const ng = ps.filter((p) => st(p.id) === 'nghi');
-  const le = di.filter((p) => p.payType === 'le');
+  const internal = isInternal(m);
+  const le = internal ? di : di.filter((p) => p.payType === 'le');
   const paid = le.filter((p) => m.attendance[p.id]?.lePaid);
   const vs = settled ? <span className="chip">Trận đã qua</span> : m.voteState === 'open' ? <span className="chip quy">Vote đang mở</span> : m.voteState === 'closed' ? <span className="chip loss">Vote đã đóng</span> : <span className="chip">Chưa mở vote</span>;
   const vote = (p: PlayerDTO, a: 'di' | 'nghi') => {
     const next = st(p.id) === a ? null : a;
-    act(() => setAttendanceAction(teamId, m.id, p.id, next), p.id === meId ? (next ? `Đã điểm danh: bạn ${next === 'di' ? 'ĐI' : 'NGHỈ'} trận vs ${m.opponent}` : 'Đã bỏ chọn') : undefined);
+    act(() => setAttendanceAction(teamId, m.id, p.id, next), p.id === meId ? (next ? `Đã điểm danh: bạn ${next === 'di' ? 'ĐI' : 'NGHỈ'} trận ${internal ? 'nội bộ' : `vs ${m.opponent}`}` : 'Đã bỏ chọn') : undefined);
   };
   return (
     <div>
       <div className="attsum">
         {vs}
         <span><b>{di.length}</b> đi</span><span><b>{ng.length}</b> nghỉ</span><span><b>{ps.length - di.length - ng.length}</b> chưa trả lời</span>
-        {canEdit && <span>Đá lẻ đã trả <b>{paid.length}/{le.length}</b> · {money(paid.length * (m.fee ?? 0))}</span>}
+        {canEdit && !internal && <span>Đá lẻ đã trả <b>{paid.length}/{le.length}</b> · {money(paid.length * (m.fee ?? 0))}</span>}
+        {internal && <span className="chip int">Đá nội bộ · chia 2 đội</span>}
         {canEdit && !settled && (
           <span className="row-actions" style={{ marginLeft: 'auto' }}>
             <button type="button" className="btn sm" onClick={() => act(() => setVoteStateAction(teamId, m.id, m.voteState === 'open' ? 'closed' : 'open'), m.voteState === 'open' ? 'Đã đóng vote' : 'Đã mở vote')}>
@@ -126,23 +139,26 @@ function AttTab({ m }: { m: MatchDTO }) {
         )}
         {!canEdit && meId && <span className="hint" style={{ margin: 0, flexBasis: '100%' }}>{open ? 'Chọn Đi hoặc Nghỉ ở dòng của bạn.' : 'Vote đang đóng. Cần đổi thì báo đội trưởng.'}</span>}
       </div>
+      {internal && <div style={{ marginTop: 10 }}><SplitBox key={`${m.id}:${di.length}`} m={m} /></div>}
       <div style={{ marginTop: 8 }}>
         {ps.length ? ps.map((p) => {
           const a = m.attendance[p.id];
           const mine = p.id === meId;
           const can = canEdit || (mine && open);
           const isLe = p.payType === 'le';
+          const pays = internal ? a?.status === 'di' : isLe && a?.status === 'di';
+          const amt = internal ? a?.share ?? 0 : m.fee ?? 0;
           return (
             <div key={p.id} className={`arow${mine ? ' mine' : ''}`}>
               <Avatar p={p} size={34} />
               <div className="n">
                 {p.num != null ? `#${p.num} ` : ''}{shortName(p)}{mine && <> <span className="chip le">Bạn</span></>}
-                <small>{isLe ? `Đá lẻ · ${money(m.fee ?? 0)}/trận` : 'Đóng quỹ tháng'}{a?.byCaptain ? ' · đội trưởng chỉnh' : ''}</small>
+                <small>{internal ? (a?.status === 'di' && a.share != null ? `Phần chia · ${money(a.share)}${a.shareSet ? ' (ĐT sửa)' : ''}` : 'Đá nội bộ · cùng chia tiền') : isLe ? `Đá lẻ · ${money(m.fee ?? 0)}/trận` : 'Đóng quỹ tháng'}{a?.byCaptain ? ' · đội trưởng chỉnh' : ''}</small>
               </div>
               <div className="ctl">
-                {canEdit && isLe && a?.status === 'di' && (
-                  <button type="button" className="paybtn" aria-pressed={a.lePaid} onClick={() => act(() => setLePaidAction(teamId, m.id, p.id, !a.lePaid))}>
-                    {a.lePaid ? `Đã trả ${money(m.fee ?? 0)}` : 'Chưa trả'}
+                {canEdit && pays && a && (
+                  <button type="button" className="paybtn" aria-pressed={a.lePaid} aria-label={`${shortName(p)} ${a.lePaid ? 'đã trả' : 'chưa trả'}`} onClick={() => act(() => setLePaidAction(teamId, m.id, p.id, !a.lePaid))}>
+                    {a.lePaid ? `Đã trả ${money(amt)}` : 'Chưa trả'}
                   </button>
                 )}
                 <div className="seg" role="group" aria-label={`Điểm danh ${shortName(p)}`}>
@@ -181,21 +197,26 @@ function ResTab({ m }: { m: MatchDTO }) {
   const g = Object.values(ev).reduce((a, e) => a + e.goals, 0);
   const asg = Object.values(ev).reduce((a, e) => a + e.assists, 0);
   const setE = (id: string, k: 'goals' | 'assists', v: number) => setEv((x) => ({ ...x, [id]: { ...(x[id] ?? { goals: 0, assists: 0 }), [k]: v } }));
+  const internal = isInternal(m);
+  const usName = internal ? `${SIDE_A} (áo sáng)` : view.team.name;
+  const themName = internal ? `${SIDE_B} (áo tối)` : m.opponent;
+  const side = (id: string) => (m.sides?.a.includes(id) ? 'A' : m.sides?.b.includes(id) ? 'B' : null);
+  const goalsExpected = internal ? score.us + score.them : score.us;
 
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <div className="scorebox">
         {canEdit ? (
           <>
-            <div className="team">{view.team.name}<div className="big-step"><button type="button" onClick={() => setScore((s) => ({ ...s, us: Math.max(0, s.us - 1) }))} aria-label={`Bớt 1 bàn cho ${view.team.name}`}>−</button><b>{score.us}</b><button type="button" onClick={() => setScore((s) => ({ ...s, us: s.us + 1 }))} aria-label={`Thêm 1 bàn cho ${view.team.name}`}>+</button></div></div>
+            <div className="team">{usName}<div className="big-step"><button type="button" onClick={() => setScore((s) => ({ ...s, us: Math.max(0, s.us - 1) }))} aria-label={`Bớt 1 bàn cho ${usName}`}>−</button><b>{score.us}</b><button type="button" onClick={() => setScore((s) => ({ ...s, us: s.us + 1 }))} aria-label={`Thêm 1 bàn cho ${usName}`}>+</button></div></div>
             <div className="muted" style={{ fontFamily: 'var(--f-display)', fontSize: 22 }}>–</div>
-            <div className="team">{m.opponent}<div className="big-step"><button type="button" onClick={() => setScore((s) => ({ ...s, them: Math.max(0, s.them - 1) }))} aria-label={`Bớt 1 bàn cho ${m.opponent}`}>−</button><b>{score.them}</b><button type="button" onClick={() => setScore((s) => ({ ...s, them: s.them + 1 }))} aria-label={`Thêm 1 bàn cho ${m.opponent}`}>+</button></div></div>
+            <div className="team">{themName}<div className="big-step"><button type="button" onClick={() => setScore((s) => ({ ...s, them: Math.max(0, s.them - 1) }))} aria-label={`Bớt 1 bàn cho ${themName}`}>−</button><b>{score.them}</b><button type="button" onClick={() => setScore((s) => ({ ...s, them: s.them + 1 }))} aria-label={`Thêm 1 bàn cho ${themName}`}>+</button></div></div>
           </>
         ) : m.scoreUs != null ? (
           <>
-            <div className="team">{view.team.name}<div className="big-step"><b>{m.scoreUs}</b></div></div>
+            <div className="team">{usName}<div className="big-step"><b>{m.scoreUs}</b></div></div>
             <div className="muted" style={{ fontFamily: 'var(--f-display)', fontSize: 22 }}>–</div>
-            <div className="team">{m.opponent}<div className="big-step"><b>{m.scoreThem}</b></div></div>
+            <div className="team">{themName}<div className="big-step"><b>{m.scoreThem}</b></div></div>
           </>
         ) : <p className="hint" style={{ margin: 0 }}>Trận chưa có kết quả.</p>}
       </div>
@@ -207,7 +228,7 @@ function ResTab({ m }: { m: MatchDTO }) {
         <div className="sec-title" style={{ marginBottom: 4 }}>
           Bàn thắng, kiến tạo{' '}
           <span className="warn">
-            {canEdit && g !== score.us ? `Tổng bàn cá nhân là ${g}, tỉ số là ${score.us}. Có thể có bàn phản lưới. ` : ''}
+            {canEdit && g !== goalsExpected ? `Tổng bàn cá nhân là ${g}, ${internal ? 'tổng bàn hai đội' : 'tỉ số'} là ${goalsExpected}. Có thể có bàn phản lưới. ` : ''}
             {canEdit && asg > g ? 'Tổng kiến tạo nhiều hơn tổng bàn.' : ''}
           </span>
         </div>
@@ -219,7 +240,7 @@ function ResTab({ m }: { m: MatchDTO }) {
               return (
                 <div key={p.id} className="arow">
                   <Avatar p={p} size={34} />
-                  <div className="n">{shortName(p)}<small>{p.num != null ? '#' + p.num : ''}</small></div>
+                  <div className="n">{shortName(p)}<small>{[p.num != null ? '#' + p.num : '', internal && side(p.id) ? `Đội ${side(p.id)}` : ''].filter(Boolean).join(' · ')}</small></div>
                   <div className="ctl">
                     <Step label="Bàn" name={shortName(p)} value={e.goals} onChange={(v) => setE(p.id, 'goals', v)} />
                     <Step label="Kiến tạo" name={shortName(p)} value={e.assists} onChange={(v) => setE(p.id, 'assists', v)} />
@@ -264,7 +285,7 @@ function ResTab({ m }: { m: MatchDTO }) {
 function LeRequestBox({ m }: { m: MatchDTO }) {
   const { players, canEdit, act, teamId } = useTeam();
   const [amount, setAmount] = useState(m.fee ?? 0);
-  if (!canEdit || m.scoreUs == null) return null;
+  if (!canEdit || m.scoreUs == null || isInternal(m)) return null;
   const le = players.filter((p) => p.payType === 'le' && m.attendance[p.id]?.status === 'di');
   if (!le.length) return null;
   const unpaid = le.filter((p) => !m.attendance[p.id]?.lePaid);

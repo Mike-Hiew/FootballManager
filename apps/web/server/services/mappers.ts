@@ -1,5 +1,5 @@
 import type { AttStatus, SeasonMatch, Stats } from '@san7/core';
-import { fillStats } from '@san7/core';
+import { INTERNAL_TYPE, fillStats } from '@san7/core';
 
 interface MatchRow {
   id: string;
@@ -9,6 +9,7 @@ interface MatchRow {
   scoreUs: number | null;
   scoreThem: number | null;
   mvpPlayerId: string | null;
+  type?: string;
   attendance: Array<{ playerId: string; status: string }>;
   events: Array<{ playerId: string; goals: number; assists: number }>;
 }
@@ -22,6 +23,7 @@ export function toSeasonMatch(m: MatchRow): SeasonMatch {
     scoreUs: m.scoreUs,
     scoreThem: m.scoreThem,
     mvpPlayerId: m.mvpPlayerId,
+    internal: m.type === INTERNAL_TYPE,
     attendance: Object.fromEntries(m.attendance.map((a) => [a.playerId, a.status as AttStatus])),
     events: Object.fromEntries(m.events.map((e) => [e.playerId, { goals: e.goals, assists: e.assists }])),
   };

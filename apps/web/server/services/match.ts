@@ -1,11 +1,12 @@
 import { z } from 'zod';
 import { prisma } from '@san7/db';
-import { dateSchema, dm, DAY_SHORT, dayOfWeek, moneySchema, timeSchema, todayVN, vnDateTime } from '@san7/core';
+import { dateSchema, dm, DAY_SHORT, dayOfWeek, isInternal, moneySchema, timeSchema, todayVN, vnDateTime } from '@san7/core';
 import { type Ctx, requireManager } from '../authz';
 import { audit } from '../audit';
 import { forbidden, invalid, notFound, zodMessage } from '../errors';
 import { emit } from './notify';
 import { syncLe, syncPitch } from './fund';
+import { dropFromSides } from './internal';
 
 export const matchSchema = z.object({
   date: dateSchema,
@@ -93,7 +94,7 @@ export async function deleteMatch(ctx: Ctx, matchId: string) {
       await syncPitch(tx, matchId, ctx.now);
       await syncLe(tx, matchId);
     } else {
-      await tx.fundEntry.deleteMany({ where: { teamId: ctx.teamId, source: { in: ['pitch', 'le'] }, sourceKey: matchId } });
+      await tx.fundEntry.deleteMany({ where: { teamId: ctx.teamId, source: { in: ['pitch', 'le', 'extra'] }, sourceKey: matchId } });
       await tx.match.delete({ where: { id: matchId } });
     }
     await audit(tx, ctx, 'match.delete', 'match', matchId, m, null);
@@ -209,7 +210,11 @@ export async function setAttendance(ctx: Ctx, matchId: string, playerId: string,
         update: { status, setByCaptain: byCaptain, ...(status === 'nghi' ? { lePaid: false } : {}) },
       });
     }
-    if (before?.lePaid && status !== 'di') await syncLe(tx, matchId);
+    if (isInternal(m)) {
+      // đá nội bộ: số người Đi đổi → phần chia đều đổi; người không còn Đi thì rời đội A/B
+      if (status !== 'di') await dropFromSides(tx, matchId, playerId);
+      await syncLe(tx, matchId);
+    } else if (before?.lePaid && status !== 'di') await syncLe(tx, matchId);
     if (byCaptain) await audit(tx, ctx, 'attendance.set', 'attendance', `${matchId}:${playerId}`, before, { status });
   });
 }

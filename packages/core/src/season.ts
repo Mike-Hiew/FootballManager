@@ -11,6 +11,8 @@ export interface SeasonMatch {
   attendance: Readonly<Record<string, AttStatus>>;
   events: Readonly<Record<string, { goals: number; assists: number }>>;
   mvpPlayerId: string | null;
+  /** trận nội bộ (đội mình đá với đội mình): không tính thành tích đội, vẫn tính số liệu cá nhân */
+  internal?: boolean;
 }
 
 export const isPlayed = (m: Pick<SeasonMatch, 'scoreUs' | 'scoreThem'>) => m.scoreUs != null && m.scoreThem != null;
@@ -51,7 +53,7 @@ export interface TeamSeason {
 
 /** Thành tích + chuỗi mùa (BRD 8.2). */
 export function teamSeason(matches: readonly SeasonMatch[], year: number): TeamSeason {
-  const ms = seasonMatches(matches, year);
+  const ms = seasonMatches(matches, year).filter((m) => !m.internal);
   let w = 0, d = 0, l = 0, gf = 0, ga = 0;
   const seq = ms.map((m) => {
     const r = resultOf(m);

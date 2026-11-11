@@ -15,7 +15,7 @@ export interface FundData {
   entries: Array<{ id: string; date: string; amount: number; source: string; note: string }>;
   dues: Array<{ playerId: string; month: string; amount: number }>;
   debts: { dues: string[]; le: Array<{ playerId: string; matchId: string; fee: number; paid: boolean }>; total: number };
-  matchMoney: Array<{ id: string; date: string; opponent: string; cost: number; fee: number; lePaid: number; leTotal: number }>;
+  matchMoney: Array<{ id: string; date: string; opponent: string; internal: boolean; cost: number; fee: number; lePaid: number; leTotal: number; got: number }>;
   /** yêu cầu đóng tiền còn người nợ (chỉ ĐT) */
   requests: Array<{ id: string; kind: 'dues' | 'le'; label: string; amount: number; createdAt: string; remindedAt: string | null; owed: string[]; pending: string[] }>;
 }
@@ -161,11 +161,11 @@ export function FundView({ data }: { data: FundData }) {
             <div className="twrap">
               {data.matchMoney.length ? (
                 <table className="tbl">
-                  <thead><tr><th>Ngày</th><th>Trận</th><th>Tiền sân</th><th>Đá lẻ trả</th><th>Đã thu</th></tr></thead>
+                  <thead><tr><th>Ngày</th><th>Trận</th><th>Tiền sân</th><th>Đã trả</th><th>Đã thu</th></tr></thead>
                   <tbody>
                     {data.matchMoney.map((m) => (
                       <tr key={m.id} style={{ cursor: 'pointer' }} onClick={() => setOpenMatch(m.id)}>
-                        <td>{dm(m.date)}</td><td>vs {m.opponent}</td><td className="money-out">{money(-m.cost)}</td><td>{m.lePaid}/{m.leTotal}</td><td className="money-in">{money(m.lePaid * m.fee)}</td>
+                        <td>{dm(m.date)}</td><td>{m.internal ? <><span className="chip int">Nội bộ</span> chia tiền</> : `vs ${m.opponent}`}</td><td className="money-out">{money(-m.cost)}</td><td>{m.lePaid}/{m.leTotal}</td><td className="money-in">{money(m.got)}</td>
                       </tr>
                     ))}
                   </tbody>

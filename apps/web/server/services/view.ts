@@ -1,5 +1,5 @@
 import { prisma } from '@san7/db';
-import { currentMonth, seasonYear, tallyVotes } from '@san7/core';
+import { currentMonth, isInternal, seasonYear, splitItemsOf, tallyVotes } from '@san7/core';
 import type { Ctx } from '../authz';
 import { canManage } from '../authz';
 import type { ApprovalsDTO, MatchDTO, MyTeam, PlayerDTO, TeamView } from '@/lib/types';
@@ -11,6 +11,7 @@ import { reviewSummaries } from './statreview';
 import { myPayments, pendingNotices } from './payment';
 import { myHonorPopup, syncHonors } from './honors';
 import { pendingReminders } from './notify';
+import { internalShares, sidesOf } from './internal';
 
 /**
  * Ảnh chụp dữ liệu đội cho giao diện, lọc theo vai trò (BRD 2, 8.5):
@@ -54,6 +55,7 @@ export async function teamView(ctx: Ctx): Promise<TeamView> {
     return pl ? pl.nick || pl.fullName : c.user.name;
   });
 
+  const shares = (m: (typeof matches)[number]) => internalShares(m);
   const matchDTO = (m: (typeof matches)[number]): MatchDTO => {
     const v = m.mvpVote;
     const tally = tallyVotes(m.ballots.map((b) => b.candidateId));
@@ -62,7 +64,12 @@ export async function teamView(ctx: Ctx): Promise<TeamView> {
       cost: insider ? m.cost : null, fee: insider ? m.fee : null, note: insider ? m.note : null, scoreUs: m.scoreUs, scoreThem: m.scoreThem,
       voteState: (m.voteState as MatchDTO['voteState']) ?? null, formation: m.formation, lineup: m.lineup ? lineupOf(m.lineup) : null,
       mvpPlayerId: m.mvpPlayerId,
-      attendance: Object.fromEntries(m.attendance.map((a) => [a.playerId, { status: a.status as 'di' | 'nghi', byCaptain: a.setByCaptain, lePaid: insider ? a.lePaid : false }])),
+      sides: isInternal(m) && m.sides ? sidesOf(m.sides) : null,
+      splitItems: insider && isInternal(m) ? splitItemsOf(m.splitItems) : [],
+      attendance: Object.fromEntries(m.attendance.map((a) => [a.playerId, {
+        status: a.status as 'di' | 'nghi', byCaptain: a.setByCaptain, lePaid: insider ? a.lePaid : false,
+        ...(insider && isInternal(m) && a.status === 'di' ? { share: shares(m)[a.playerId] ?? null, shareSet: a.share != null } : {}),
+      }])),
       events: Object.fromEntries(m.events.map((e) => [e.playerId, { goals: e.goals, assists: e.assists }])),
       claims: insider
         ? (m.claims ?? [])
