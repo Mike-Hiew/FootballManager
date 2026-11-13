@@ -7,8 +7,8 @@ test('11.1 #8 — thành viên chưa vote thấy viền nhấp nháy + "✓ Tôi
   await hydrated(page);
   const box = page.locator('.nxb');
   await expect(box).toHaveClass(/need/);
-  // aria-label của thanh điểm danh luôn là số thật (số lớn có hiệu ứng đếm từ 0)
-  const bar = box.locator('.nx-bar');
+  // aria-label của khối điểm danh luôn là số thật (số lớn có hiệu ứng đếm từ 0)
+  const bar = box.locator('.nx-att');
   const before = Number((await bar.getAttribute('aria-label'))!.match(/^(\d+) đi/)![1]);
   await box.getByRole('button', { name: '✓ Tôi đi' }).click();
   await expect(bar).toHaveAttribute('aria-label', new RegExp(`^${before + 1} đi`));

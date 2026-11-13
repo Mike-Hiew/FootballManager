@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { CAPTAIN, closeResultPopup, hydrated, login, logout } from './helpers';
+import { CAPTAIN, closeResultPopup, hydrated, login, logout, openPlayerCard } from './helpers';
 
 const P7 = ['0901000007', '123456'] as const; // Phong Gió
 
@@ -61,8 +61,7 @@ test('BRD 13.1 — ai cũng mở được thẻ của mình (Của tôi) và c�
 
   await page.goto('/t/t-domdom/cau-thu');
   await hydrated(page);
-  await page.locator('.pcard .who b', { hasText: 'Quang Còi' }).first().click();
-  const profile = page.getByRole('dialog').first();
+  const profile = await openPlayerCard(page, 'Quang Còi');
   await profile.getByRole('button', { name: 'Xem thẻ' }).click();
   const card = page.getByRole('dialog', { name: /Thẻ Quang Còi/ });
   await expect(card.locator('.hc-card')).toHaveAttribute('aria-label', /Quang Còi, ST, điểm \d+/);

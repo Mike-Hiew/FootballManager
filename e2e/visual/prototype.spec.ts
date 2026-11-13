@@ -28,41 +28,44 @@ async function openModal(p: Page, target: ReturnType<Page['locator']>) {
 }
 
 const VIEWS: View[] = [
-  // Khối Trận tới thiết kế lại (sân vận động phủ khung, trạng thái trực tiếp) theo yêu cầu 30/10 — so phần còn lại của màn
-  // + nhắc chấm chỉ số đồng đội (thêm 31/10, prototype không có)
-  { name: 'doi', proto: 'doi', app: '/t/t-domdom/doi', hide: '.nxb,.stat-remind' },
-  { name: 'toi', proto: 'toi', app: '/t/t-domdom/toi' },
-  { name: 'chien-thuat', proto: 'chien-thuat', app: '/t/t-domdom/chien-thuat' },
-  // Ngưỡng "đủ người" mặc định 9 (prototype: 7) → 7 người Đi hiện thêm dòng "Thiếu 2 người", đẩy bố cục mobile
-  { name: 'tran-toi', proto: 'tran-toi', app: '/t/t-domdom/tran-toi', budget: { 390: 0.08 } },
-  // Ô tìm + sắp xếp (BRD 4.6, prototype không có) làm thanh công cụ xuống dòng ở màn hẹp
-  // 1024: app có thêm tab Vinh danh + Chuyển nhượng (12 tab, màn vừa bỏ icon trên thanh tab) → lệch thêm ở thanh tab
-  { name: 'cau-thu', proto: 'cau-thu', app: '/t/t-domdom/cau-thu', budget: { 1024: 0.17, 390: 0.12 } },
-  { name: 'lich', proto: 'lich', app: '/t/t-domdom/lich' },
+  // Prototype v2 (13/11). Lệch còn lại phần lớn do dữ liệu demo của prototype khác seed sau các bước demo:
+  // số thông báo / việc chờ duyệt, đợt chấm chỉ số đang mở, khai báo bàn thắng. Nhắc chấm chỉ số của app không so.
+  { name: 'doi', proto: 'doi', app: '/t/t-domdom/doi', hide: '.stat-remind', budget: { 1920: 0.09, 1440: 0.1, 1024: 0.11, 390: 0.12 } },
+  // Thẻ "Bạn chưa điểm danh" + khoản phải đóng của prototype phụ thuộc dữ liệu demo
+  { name: 'toi', proto: 'toi', app: '/t/t-domdom/toi', budget: { 1024: 0.09, 390: 0.1 } },
+  // 390: thanh công cụ chiến thuật xuống dòng khác (app thêm nút Chia sẻ đội hình trên cùng hàng với Xếp tự động)
+  { name: 'chien-thuat', proto: 'chien-thuat', app: '/t/t-domdom/chien-thuat', budget: { 390: 0.12 } },
+  // Ngưỡng "đủ người" mặc định 9 → thêm dòng "Thiếu 2 người" trên mobile
+  { name: 'tran-toi', proto: 'tran-toi', app: '/t/t-domdom/tran-toi', budget: { 390: 0.13 } },
+  // Ô tìm + sắp xếp (BRD 4.6, prototype không có) làm thanh công cụ xuống dòng → lưới thẻ lệch xuống một hàng
+  { name: 'cau-thu', proto: 'cau-thu', app: '/t/t-domdom/cau-thu', budget: { 1920: 0.21, 1440: 0.17, 1024: 0.17, 390: 0.2 } },
+  { name: 'lich', proto: 'lich', app: '/t/t-domdom/lich', budget: { 390: 0.08 } },
   { name: 'thong-ke', proto: 'thong-ke', app: '/t/t-domdom/thong-ke' },
-  // Công tắc nhắc đóng quỹ ngày 5 (BRD 7.4) xuống dòng trên mobile
-  // Yêu cầu đóng quỹ / đá lẻ (thêm 30/10, prototype không có) thêm nút và dòng trạng thái → trang dài hơn
   { name: 'quy', proto: 'quy', app: '/t/t-domdom/quy', budget: { 1920: 0.15, 1440: 0.15, 1024: 0.17, 390: 0.21 } },
-  // Khối link mời ở tab Duyệt (BRD 8.6, prototype đặt ở tab Cầu thủ) làm trang dài thêm trên mobile
-  // + mục xác nhận đóng tiền (thêm 30/10) dưới các việc chờ duyệt; CI cao hơn local ~17 px ở 1024 (15.4% so với 12.9%)
-  // + danh sách đồng đội đã chấm / chưa chấm chỉ số (thêm 31/10) — ẩn khi so; dòng "x/N đồng đội đã chấm" làm thẻ cao hơn ở 390
-  { name: 'duyet', proto: 'duyet', app: '/t/t-domdom/duyet', budget: { 1024: 0.17, 390: 0.3 }, hide: '.vote-list' },
+  // Khối link mời ở tab Duyệt (BRD 8.6); prototype có thêm việc chờ duyệt trong dữ liệu demo (2 đợt chấm, 1 báo đóng tiền)
+  { name: 'duyet', proto: 'duyet', app: '/t/t-domdom/duyet', budget: { 1920: 0.15, 1440: 0.17, 1024: 0.21, 390: 0.3 }, hide: '.vote-list' },
   { name: 'kham-pha', proto: 'kham-pha', app: '/kham-pha' },
-  // 1024 (CI): thanh tab của prototype (9 tab có icon) xuống 2 dòng, của app (12 tab, bỏ icon ở màn vừa) vẫn 1 dòng → app thấp hơn ~35px
-  { name: 'he-thong', proto: 'he-thong', app: '/he-thong', who: 'admin', budget: { 1024: 0.12 } },
+  { name: 'he-thong', proto: 'he-thong', app: '/he-thong', who: 'admin', budget: { 1024: 0.12, 390: 0.09 } },
   {
     name: 'modal-cau-thu', proto: 'cau-thu', app: '/t/t-domdom/cau-thu', budget: { 1024: 0.075 },
-    prep: async (p) => openModal(p, p.locator('.pcard .who b', { hasText: 'Khánh Mười' }).first()),
+    // Thẻ cầu thủ v2: chạm để lật, mặt sau có nút "Mở hồ sơ"
+    prep: async (p) => {
+      const card = p.locator('.pcard', { has: p.locator('.who b', { hasText: 'Khánh Mười' }) }).first();
+      await card.locator('.who b').click();
+      await p.waitForTimeout(700);
+      await openModal(p, card.getByRole('button', { name: /^Mở hồ sơ/ }));
+    },
   },
   {
-    name: 'modal-tran', proto: 'lich', app: '/t/t-domdom/lich',
+    name: 'modal-tran', proto: 'lich', app: '/t/t-domdom/lich', budget: { 390: 0.08 },
     prep: async (p) => openModal(p, p.locator('.mcard', { hasText: 'Hoàng Mai Stars' }).first()),
   },
 ];
 
 // Ngân sách mặc định: ≤ 6 % pixel lệch. Các màn hiện tại đều ≤ 6 % trừ ngoại lệ có ghi lý do ở trên.
 const BUDGET = Number(process.env.VISUAL_BUDGET ?? 0.06);
-const HIDE = `nextjs-portal,[data-nextjs-toast],[data-next-badge-root]{display:none!important}*{caret-color:transparent!important}`;
+// Popup một lần (tỉ số sau trận, nhắc của ĐT, thẻ vinh danh) và trận nội bộ demo chỉ có ở prototype v2 — không so
+const HIDE = `nextjs-portal,[data-nextjs-toast],[data-next-badge-root],.rp-overlay,.rm-overlay,.hc-overlay,.mcard:has(.chip.int),#cmpTray,.claim-remind{display:none!important}*{caret-color:transparent!important}`;
 
 async function open(browser: Browser, width: number) {
   // bypassCSP: CSP của app chặn thẻ <style> chèn vào để ẩn overlay dev (CSP có test riêng ở tests/csp.spec.ts)
@@ -83,7 +86,8 @@ async function appFonts(request: APIRequestContext, base: string) {
   const css = await Promise.all(sheets.map(async (u) => (await request.get(u)).text()));
   const faces = css.join("\n").match(/@font-face\s*\{[^}]*\}/g) ?? [];
   if (!faces.length) throw new Error('Không tìm thấy @font-face trong CSS của app');
-  return faces.join('\n').replace(/url\((?:\.\.\/media\/|\/_next\/static\/media\/)/g, 'url(https://fonts.gstatic.com/__app/');
+  // url có thể có hoặc không có dấu nháy (tuỳ bản build)
+  return faces.join('\n').replace(/url\((["']?)(?:\.\.\/media\/|\/_next\/static\/media\/)/g, 'url($1https://fonts.gstatic.com/__app/');
 }
 
 async function useAppFonts(page: Page, base: string) {

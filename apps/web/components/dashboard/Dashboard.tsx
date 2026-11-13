@@ -67,7 +67,7 @@ function Donut({ w, d, l }: { w: number; d: number; l: number }) {
 }
 
 /** Đếm ngược 4 ô (ngày · giờ · phút · giây), ô đổi số thì nảy nhẹ. */
-function Countdown2({ m, now }: { m: MatchDTO; now: number }) {
+function Countdown2({ m, now, motion }: { m: MatchDTO; now: number; motion: boolean }) {
   const t = new Date(m.kickoffAt).getTime() - now;
   if (t <= 0) return <span className="cd-now">Đang diễn ra · chờ kết quả</span>;
   const P: Array<[string, number]> = [['ngày', Math.floor(t / 864e5)], ['giờ', Math.floor((t % 864e5) / 36e5)], ['phút', Math.floor((t % 36e5) / 6e4)], ['giây', Math.floor((t % 6e4) / 1e3)]];
@@ -76,7 +76,7 @@ function Countdown2({ m, now }: { m: MatchDTO; now: number }) {
       {P.map(([l, v], i) => (
         <span key={l} style={{ display: 'contents' }}>
           {i > 0 && <em aria-hidden="true">:</em>}
-          <span className="u" style={{ ['--i' as string]: i }}><b key={v} className={reduced() ? undefined : 'tick'}>{String(v).padStart(2, '0')}</b><small>{l}</small></span>
+          <span className="u" style={{ ['--i' as string]: i }}><b key={v} className={motion ? 'tick' : undefined}>{String(v).padStart(2, '0')}</b><small>{l}</small></span>
         </span>
       ))}
     </>
@@ -212,8 +212,10 @@ function NextMatch({ onLocker }: { onLocker?: (matchId: string) => void }) {
     const id = setInterval(() => !document.hidden && setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
-  // Hiệu ứng vào sân chỉ chạy lần đầu mở trang
-  const [intro] = useState(() => !reduced());
+  // Hiệu ứng (vào sân, số nảy) chỉ bật sau khi mount — server không biết reduced-motion, tránh lệch hydrate
+  const [motion, setMotion] = useState(false);
+  useEffect(() => setMotion(!reduced()), []);
+  const intro = motion;
   const mAtt = m ? { ...m, attendance: att } : null;
   const X = mAtt ? projXI(mAtt, players, view.team) : null;
   useBall(lx, X ? X.xi.map((p) => p?.id ?? '').join(',') : '');
@@ -324,7 +326,7 @@ function NextMatch({ onLocker }: { onLocker?: (matchId: string) => void }) {
             <div className="fo-vs"><i>VS</i></div>
             <div className="fo-t them"><Shield name={nT} /><b>{nT}</b></div>
           </div>
-          {phase === 'upcoming' && <div className="nx-cd cd2" role="timer" aria-label="Đếm ngược tới giờ đá"><Countdown2 m={m} now={now} /></div>}
+          {phase === 'upcoming' && <div className="nx-cd cd2" role="timer" aria-label="Đếm ngược tới giờ đá"><Countdown2 m={m} now={now} motion={motion} /></div>}
           {phase === 'live' && (
             <div className="nx-clock" role="timer" aria-label={`Phút ${minute} trên ${dur}`}>
               <b>{minute}<i>'</i></b>
@@ -357,7 +359,7 @@ function NextMatch({ onLocker }: { onLocker?: (matchId: string) => void }) {
           <div className="nx-pitch-cap">{X.set ? 'Đội hình đội trưởng đã xếp' : 'Đội hình dự kiến'} · {X.f}</div>
         </div>
         <div className="nx-r">
-          <div className="nx-att">
+          <div className="nx-att" role="group" aria-label={`${di.length} đi, ${ng.length} nghỉ, ${un} chưa trả lời`}>
             <div className="big"><b><Up to={di.length} /></b><span>/{players.length} đi</span></div>
             <div className={`nx-state ${need ? 'warn' : 'ok'}`} tabIndex={0} data-tt={need ? `Cần tối thiểu ${squad} người, còn thiếu ${need}` : `Đủ ${squad} người${di.length > squad ? `, dư ${di.length - squad} người` : ''}`}>
               {need ? `Thiếu ${need}` : 'Đủ người'}

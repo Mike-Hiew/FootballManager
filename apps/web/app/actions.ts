@@ -103,6 +103,9 @@ export async function rejectJoinAction(teamId: string, id: string, reason?: stri
 export async function inferStatsAction(ratings: Ratings, foot: Foot): Promise<Stats> {
   return inferStats(ratings, foot);
 }
+export async function setPayTypeAction(teamId: string, playerId: string, payType: 'quy' | 'le', from: 'now' | 'next') {
+  return run(() => inTeam(teamId, (c) => player.setPayType(c, playerId, { payType, from }).then(() => null)));
+}
 export async function savePlayerAction(teamId: string, playerId: string | null, input: unknown) {
   return run(
     () => inTeam(teamId, (c) => (playerId ? player.updatePlayer(c, playerId, input) : player.createPlayer(c, input)).then((r) => ({ id: r.player.id, warning: r.warning }))),
