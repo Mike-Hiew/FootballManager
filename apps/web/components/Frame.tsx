@@ -11,12 +11,14 @@ export async function Frame({ active, children }: { active: string; children: Re
   const s = await getSession();
   if (!s) {
     return (
-      <div className="wrap" id="app">
-        <header className="top">
-          <div className="brand"><h1><span className="tname">{process.env.APP_NAME ?? 'Đom Đóm FC'}</span></h1></div>
-          <div className="userbar"><Link className="btn primary sm" href={`/dang-nhap?next=/${active}`}>Đăng nhập</Link></div>
-        </header>
-        {children}
+      <div className="wrap solo" id="app">
+        <div className="main">
+          <header className="top">
+            <div className="brand"><h1><span className="tname">{process.env.APP_NAME ?? 'Đom Đóm FC'}</span></h1></div>
+            <div className="userbar"><Link className="btn primary sm" href={`/dang-nhap?next=/${active}`}>Đăng nhập</Link></div>
+          </header>
+          {children}
+        </div>
         <TooltipLayer />
       </div>
     );
@@ -37,8 +39,9 @@ export async function Frame({ active, children }: { active: string; children: Re
         me={{ id: s.user.id, name: s.user.name, isAdmin: s.user.role === 'admin' }}
         myTeams={teams}
         initialUnread={unread}
-      />
-      {children}
+      >
+        {children}
+      </Header>
       <TooltipLayer />
     </div>
   );

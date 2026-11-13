@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
-  DAY_SHORT, FORMATION_IDS, POS_INFO, ageOf, autoPick, buildPlan, changeFormation, cleanLineup, dayOfWeek, dm, faceStats, fmt1,
+  DAY_SHORT, FORMATION_IDS, isInternal, POS_INFO, ageOf, autoPick, buildPlan, changeFormation, cleanLineup, dayOfWeek, dm, faceStats, fmt1,
   isNatural, lineupSummary, mvpCounts, placeInLineup, planSummary, positionScore, rankedPositions, removeFromLineup, shortName,
   slotGlow, slotsOf, subsOf, suggestForPosition, swapSlots, todayVN, playerSeason, type LineupPlayer, type Position,
 } from '@san7/core';
@@ -17,7 +17,8 @@ import { usePlayerModal } from '../players/PlayersView';
 import { PlanModal } from './PlanModal';
 import { MatchModal } from '../matches/MatchModal';
 
-const lineCls = (pos: string) => (pos === 'GK' ? 'gk' : ['CB', 'LB', 'RB'].includes(pos) ? 'df' : pos === 'ST' ? 'fw' : 'mf');
+import { lineCls } from '@/lib/pos';
+import { XOverlay } from '../v2/XOverlay';
 type Sel = { type: 'slot'; slot: number } | { type: 'bench'; id: string } | null;
 
 export function TacticsView({ mode, matchId }: { mode: 'tong' | 'tran'; matchId?: string }) {
@@ -90,6 +91,42 @@ export function TacticsView({ mode, matchId }: { mode: 'tong' | 'tran'; matchId?
   const selSlot = sel?.type === 'slot' ? sel.slot : -1;
   const focusP = sel ? byId(sel.type === 'bench' ? sel.id : lineup[sel.slot]) : undefined;
   const focusPos = selSlot >= 0 ? slots[selSlot][0] : null;
+  // Liên kết giữa các vị trí gần nhau: xanh = cả hai đúng sở trường và ≥ 6.5, vàng = một người, đỏ = không ai, nét đứt = còn trống
+  const chem = useMemo(() => {
+    const st = slots.map(([pos], i) => {
+      const p = byId(lineup[i]);
+      return p ? { natural: isNatural(p, pos), score: positionScore(p.stats, p.foot, pos) } : null;
+    });
+    const lines: Array<{ c: string; x1: number; y1: number; x2: number; y2: number }> = [];
+    let good = 0;
+    for (let i = 0; i < slots.length; i++) for (let j = i + 1; j < slots.length; j++) {
+      if (Math.hypot(slots[i][1] - slots[j][1], (slots[i][2] - slots[j][2]) * 1.5) > 50) continue;
+      const a = st[i], b = st[j];
+      const c = !a || !b ? 'x' : a.natural && b.natural && a.score >= 6.5 && b.score >= 6.5 ? 'g' : a.natural || b.natural ? 'o' : 'b';
+      if (c === 'g') good++;
+      lines.push({ c, x1: slots[i][1] * 4, y1: slots[i][2] * 6, x2: slots[j][1] * 4, y2: slots[j][2] * 6 });
+    }
+    return { lines, good, tot: lines.length };
+  }, [slots, lineup, byId]);
+  // Cầu thủ trượt từ chỗ cũ sang chỗ mới khi đổi đội hình
+  const slotBox = useRef<HTMLDivElement>(null);
+  const lastPos = useRef<Record<string, [number, number]>>({});
+  useLayoutEffect(() => {
+    const box = slotBox.current;
+    if (!box) return;
+    const now: Record<string, [number, number]> = {};
+    box.querySelectorAll<HTMLElement>('.slot[data-id]').forEach((el) => {
+      const r = el.getBoundingClientRect();
+      now[el.dataset.id!] = [r.left, r.top];
+      const o = lastPos.current[el.dataset.id!];
+      if (!o || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const dx = o[0] - r.left, dy = o[1] - r.top;
+      if (Math.abs(dx) + Math.abs(dy) < 3) return;
+      el.animate({ translate: [`${dx}px ${dy}px`, '0px 0px'] }, { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    });
+    lastPos.current = now;
+  });
+  const [share, setShare] = useState(false);
   const { glow, best: bestSlot } = focusP ? slotGlow(formation, lineup, focusP) : { glow: {} as Record<number, number>, best: -1 };
   const onPitch = new Set(lineup.filter(Boolean) as string[]);
   const bench = pool.filter((p) => !onPitch.has(p.id)).sort((a, b) => (a.num ?? 99) - (b.num ?? 99));
@@ -191,7 +228,11 @@ export function TacticsView({ mode, matchId }: { mode: 'tong' | 'tran'; matchId?
           <span><b style={{ color: sum.avg != null ? tierColor(sum.avg) : 'inherit' }}>{sum.avg != null ? fmt1(sum.avg) : '–'}</b>Điểm đội hình</span>
           <span><b>{sum.filled}/{sum.size}</b>Ra sân</span>
           <span><b>{sum.natural}/{sum.filled}</b>Đúng sở trường</span>
+          <span data-tt="Hai vị trí cạnh nhau cùng đá đúng sở trường và đạt từ 6.5 thì tính là một liên kết tốt" tabIndex={0}>
+            <b style={{ color: chem.tot && chem.good / chem.tot >= 0.6 ? 'var(--good)' : chem.tot && chem.good / chem.tot >= 0.3 ? 'var(--ok)' : 'var(--bad)' }}>{chem.good}/{chem.tot}</b>Liên kết tốt
+          </span>
         </div>
+        <button className="btn sm" type="button" onClick={() => setShare(true)}>Chia sẻ đội hình</button>
         {canEdit && (
           <div className="row-actions">
             <button className="btn sm" type="button" onClick={() => {
@@ -216,7 +257,10 @@ export function TacticsView({ mode, matchId }: { mode: 'tong' | 'tran'; matchId?
               <rect x="100" y="490" width="200" height="96" /><rect x="155" y="552" width="90" height="34" /><circle className="dot" cx="200" cy="518" r="3" />
               <rect x="170" y="4" width="60" height="10" /><rect x="170" y="586" width="60" height="10" />
             </svg>
-            <div>
+            <svg className="chem" viewBox="0 0 400 600" preserveAspectRatio="none" aria-hidden="true">
+              {chem.lines.map((l, i) => <line key={i} className={`c-${l.c}`} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} />)}
+            </svg>
+            <div ref={slotBox}>
               {slots.map(([pos, x, y], i) => {
                 const p = byId(lineup[i]);
                 const isSel = selSlot === i;
@@ -233,7 +277,7 @@ export function TacticsView({ mode, matchId }: { mode: 'tong' | 'tran'; matchId?
                 const nat = isNatural(p, pos);
                 const mv = mvp.get(p.id);
                 return (
-                  <button key={i} type="button" className={`slot filled${pos === 'GK' ? ' gk' : ''}${isSel ? ' sel' : ''}${glowCls(i)}${dropOn === i ? ' drop' : ''}`} style={{ ...style, ['--fit' as string]: tierColor(sc) }} onClick={() => slotClick(i)} aria-label={`${shortName(p)} số ${p.num ?? ''}, ${POS_INFO[pos].vn}, điểm ${fmt1(sc)}`} {...drag(p.id)} {...dropSlot(i)}>
+                  <button key={i} data-id={p.id} type="button" className={`slot filled${pos === 'GK' ? ' gk' : ''}${isSel ? ' sel' : ''}${glowCls(i)}${dropOn === i ? ' drop' : ''}`} style={{ ...style, ['--fit' as string]: tierColor(sc) }} onClick={() => slotClick(i)} aria-label={`${shortName(p)} số ${p.num ?? ''}, ${POS_INFO[pos].vn}, điểm ${fmt1(sc)}`} {...drag(p.id)} {...dropSlot(i)}>
                     {fs}
                     <span className="disc">
                       {p.avatarUrl ? <Avatar p={p} size={44} /> : (p.num ?? '')}
@@ -433,6 +477,7 @@ export function TacticsView({ mode, matchId }: { mode: 'tong' | 'tran'; matchId?
         />
       )}
       {attOpen && match && <MatchModal matchId={match.id} initialTab="att" onClose={() => setAttOpen(false)} />}
+      {share && <Poster formation={formation} slots={slots} lineup={lineup} pool={pool} match={match} onClose={() => setShare(false)} />}
     </section>
   );
 
@@ -496,5 +541,47 @@ function PlayerCard(props: {
         {props.onBench && <button type="button" className="btn ghost sm" onClick={props.onBench}>Cho ra dự bị</button>}
       </div>
     </>
+  );
+}
+
+/** Poster đội hình để chụp màn hình gửi vào nhóm. */
+function Poster({ formation, slots, lineup, pool, match, onClose }: {
+  formation: string; slots: ReturnType<typeof slotsOf>; lineup: Array<string | null>; pool: PlayerDTO[]; match: MatchDTO | null; onClose: () => void;
+}) {
+  const { view, byId, players } = useTeam();
+  const ids = new Set(lineup.filter(Boolean));
+  const bench = pool.filter((p) => !ids.has(p.id)).sort((a, b) => (a.num ?? 99) - (b.num ?? 99));
+  const title = match ? (isInternal(match) ? 'Đá nội bộ' : `vs ${match.opponent}`) : 'Đội hình chính';
+  return (
+    <XOverlay cls="sharebox" label="Poster đội hình" onClose={onClose}>
+      <div className="poster">
+        <div className="po-h"><span className="pmark" aria-hidden="true">7</span><div><b>{view.team.name}</b><span>{title}</span></div><em>{formation}</em></div>
+        <div className="po-meta">
+          {match ? (
+            <>
+              <span>{DAY_SHORT[dayOfWeek(match.date)]}, {dm(match.date)}</span>
+              {match.time && <span>{match.time}</span>}
+              {match.venue && <span>{match.venue}</span>}
+            </>
+          ) : <span>{players.length} thành viên</span>}
+        </div>
+        <div className="po-pitch">
+          {slots.map(([pos, x, y], i) => {
+            const p = byId(lineup[i]);
+            return (
+              <div key={i} className="po-s" style={{ left: `${x}%`, top: `${y}%` }}>
+                <span className={`d${pos === 'GK' ? ' gk' : ''}`}>{p ? p.num ?? '' : ''}</span><b>{p ? shortName(p) : 'Trống'}</b><i>{pos}</i>
+              </div>
+            );
+          })}
+        </div>
+        {bench.length ? (
+          <div className="po-bench"><span>Dự bị</span>{bench.map((p) => <b key={p.id}>{p.num != null ? `${p.num} · ` : ''}{shortName(p)}</b>)}</div>
+        ) : <div />}
+        {match?.note ? <div className="po-note">{match.note}</div> : <div />}
+      </div>
+      <p className="hint" style={{ margin: 0, textAlign: 'center', color: '#c9d3e0' }}>Chụp màn hình để gửi vào nhóm của đội.</p>
+      <button type="button" className="btn" style={{ justifySelf: 'center' }} onClick={onClose}>Đóng</button>
+    </XOverlay>
   );
 }

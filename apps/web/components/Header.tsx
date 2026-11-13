@@ -24,7 +24,22 @@ interface Props {
   me: { id: string; name: string; isAdmin: boolean };
   myTeams: MyTeam[];
   initialUnread: number;
+  children?: React.ReactNode;
 }
+
+/** Thanh điều hướng v2: 4 mục chính (thanh dưới trên điện thoại) + các nhóm còn lại (menu "Thêm"). */
+const PRIMARY = ['doi', 'lich', 'chien-thuat', 'cau-thu'];
+const GROUPS: Array<[string, string[]]> = [
+  ['Cá nhân và số liệu', ['toi', 'thong-ke', 'vinh-danh']],
+  ['Đội bóng', ['chuyen-nhuong', 'quy']],
+  ['Quản trị', ['duyet', 'kham-pha', 'he-thong']],
+];
+const MoreIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><rect x="4" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" /></svg>
+);
+const LogoutIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" /><path d="M10 16l-4-4 4-4M6 12h10" /></svg>
+);
 
 type Notif = { id: string; kind: string; text: string; teamId: string | null; teamName: string | null; matchId: string | null; view: string | null; read: boolean; at: string };
 
@@ -36,7 +51,7 @@ function ago(iso: string) {
   return `${Math.floor(s / 86400)} ngày trước`;
 }
 
-export function Header({ team, role, tabs, approvalCount, me, myTeams, initialUnread }: Props) {
+export function Header({ team, role, tabs, approvalCount, me, myTeams, initialUnread, children }: Props) {
   const path = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -44,6 +59,14 @@ export function Header({ team, role, tabs, approvalCount, me, myTeams, initialUn
   const [unread, setUnread] = useState(initialUnread);
   const [, start] = useTransition();
   const panel = useRef<HTMLDivElement>(null);
+  const [more, setMore] = useState(false);
+  useEffect(() => setMore(false), [path]);
+  useEffect(() => {
+    if (!more) return;
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setMore(false);
+    document.addEventListener('keydown', esc);
+    return () => document.removeEventListener('keydown', esc);
+  }, [more]);
   const roleL = role ? ROLE_LABEL[role] : null;
 
   const load = () =>
@@ -75,8 +98,36 @@ export function Header({ team, role, tabs, approvalCount, me, myTeams, initialUn
       if (to) router.push(to);
     });
 
+  const link = (v: string) => (
+    <Link key={v} href={href(v)} aria-current={active(v) ? 'page' : undefined} prefetch={false}>
+      {TAB_ICONS[v]}
+      {TAB_LABEL[v]}
+      {v === 'duyet' && approvalCount > 0 && <span className="nb" id="duyetBadge">{approvalCount}</span>}
+    </Link>
+  );
+
   return (
     <>
+    <aside className="side">
+      <div className="product"><span className="pmark" aria-hidden="true">7</span><div><b>Sân 7 Manager</b><small>Đội bóng phong trào</small></div></div>
+      <nav className={`tabs${more ? ' open' : ''}`} aria-label="Chức năng" onClick={(e) => e.target === e.currentTarget && setMore(false)}>
+        <div className="nav-pri">
+          {PRIMARY.filter((v) => tabs.includes(v)).map(link)}
+          <button type="button" className="more-btn" aria-expanded={more} aria-controls="navMore" onClick={(e) => { e.stopPropagation(); setMore((o) => !o); }}>
+            <MoreIcon />Thêm
+          </button>
+        </div>
+        <div className="nav-more" id="navMore">
+          {GROUPS.map(([label, vs]) => {
+            const items = vs.filter((v) => tabs.includes(v));
+            return items.length ? (
+              <div key={label} className="nav-grp"><span className="nav-lbl">{label}</span>{items.map(link)}</div>
+            ) : null;
+          })}
+        </div>
+      </nav>
+    </aside>
+    <div className="main">
     <header className="top">
       <div className="brand">
         {team ? <TeamCrest name={team.name} photoUrl={team.photoUrl} /> : <TeamCrest name="San7" />}
@@ -113,24 +164,17 @@ export function Header({ team, role, tabs, approvalCount, me, myTeams, initialUn
           {unread > 0 && <span className="bdg">{unread}</span>}
         </button>
         <span className="me-chip">
-          <Avatar p={{ id: me.id, nick: me.name }} size={30} />
+          <Avatar p={{ id: me.id, nick: me.name }} size={34} />
           <span>
             <b>{me.name}</b>
             {roleL && <span className={`role ${roleL[1]}`}>{roleL[0]}</span>}
           </span>
         </span>
-        <button type="button" className="btn ghost sm" onClick={() => logoutAction()}>Đăng xuất</button>
+        <button type="button" className="ubtn" aria-label="Đăng xuất" data-tt="Đăng xuất" onClick={() => logoutAction()}><LogoutIcon /></button>
       </div>
-      <nav className="tabs" aria-label="Chức năng">
-        {tabs.map((v) => (
-          <Link key={v} href={href(v)} aria-current={active(v) ? 'page' : undefined} prefetch={false}>
-            {TAB_ICONS[v]}
-            {TAB_LABEL[v]}
-            {v === 'duyet' && approvalCount > 0 && <span className="nb">{approvalCount}</span>}
-          </Link>
-        ))}
-      </nav>
     </header>
+    {children}
+    </div>
       <div className="npanel" id="npanel" ref={panel} hidden={!open}>
         <div className="nhead">
           <b>Thông báo</b>

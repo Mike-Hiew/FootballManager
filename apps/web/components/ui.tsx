@@ -6,10 +6,12 @@ import { fmt1, hue, initials, scoreTier } from '@san7/core';
 
 export const tierColor = (s: number) => `var(--${scoreTier(s)})`;
 
-export function Avatar({ p, size = 28 }: { p: { id: string; nick?: string | null; fullName?: string | null; avatarUrl?: string | null }; size?: number }) {
+/** Ảnh đại diện; chưa có ảnh mà có số áo thì hiện áo đấu mang số (giao diện v2). */
+export function Avatar({ p, size = 28 }: { p: { id: string; nick?: string | null; fullName?: string | null; avatarUrl?: string | null; num?: number | null }; size?: number }) {
+  const jersey = !p.avatarUrl && p.num != null;
   return (
-    <span className="av" style={{ width: size, height: size, fontSize: Math.round(size * 0.38), ['--h' as string]: hue(p.id || 'x') }}>
-      {p.avatarUrl ? <img src={p.avatarUrl} alt="" /> : initials(p)}
+    <span className={`av${jersey ? ' jersey' : ''}`} style={{ width: size, height: size, fontSize: Math.round(size * 0.38), ['--h' as string]: hue(p.id || 'x') }}>
+      {p.avatarUrl ? <img src={p.avatarUrl} alt="" /> : jersey ? p.num : initials(p)}
     </span>
   );
 }

@@ -100,6 +100,7 @@ export function FundView({ data }: { data: FundData }) {
             </div>
           </div>
         </div>
+        <BalanceChart entries={data.entries} month={cm} />
 
         <div className="panel">
           <h3 className="st">Mức đóng</h3>
@@ -249,5 +250,26 @@ export function FundView({ data }: { data: FundData }) {
       </div>
       {openMatch && <MatchModal matchId={openMatch} initialTab="att" onClose={() => setOpenMatch(null)} />}
     </section>
+  );
+}
+
+/** Số dư cuối tháng của 6 tháng gần nhất (triệu đồng). */
+function BalanceChart({ entries, month }: { entries: FundData['entries']; month: string }) {
+  const ks = [-5, -4, -3, -2, -1, 0].map((i) => addMonths(month, i));
+  const bal = ks.map((k) => entries.filter((x) => x.date.slice(0, 7) <= k).reduce((a, x) => a + x.amount, 0));
+  const mx = Math.max(1, ...bal.map(Math.abs));
+  return (
+    <div className="panel" id="fChart">
+      <h3 className="st">Số dư cuối tháng (triệu đồng)</h3>
+      <div className="fbars">
+        {ks.map((k, i) => (
+          <div key={k} className="fb">
+            <span className="fv">{(bal[i] / 1e6).toFixed(2)}</span>
+            <i className={bal[i] < 0 ? 'neg' : i === ks.length - 1 ? 'cur' : ''} style={{ height: `${Math.max(2, (Math.abs(bal[i]) / mx) * 100)}%` }} />
+            <em>{monthLabel(k)}</em>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

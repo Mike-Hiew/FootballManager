@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { DAY_SHORT, dayOfWeek, money, resultOf, todayVN } from '@san7/core';
+import { DAY_SHORT, dayOfWeek, money, resultOf, todayVN, isInternal } from '@san7/core';
 import { useTeam } from '../TeamContext';
 import { MatchModal } from './MatchModal';
 import { byKick, isPlayed, isSettled } from '@/lib/season';
@@ -36,7 +36,9 @@ export function ScheduleView({ openId, openTab }: { openId?: string; openTab?: '
           {/* ★ MVP (BRD 6.2) đặt cùng hàng với chip kết quả để giữ chiều cao thẻ như prototype */}
           <span>
             {m.mvpPlayerId && <span className="mvpt" style={{ fontSize: 11.5, marginRight: 6 }}>★ {nameOf(m.mvpPlayerId)}</span>}
-            <span className={`chip ${r === 'T' ? 'win' : r === 'B' ? 'loss' : ''}`}>{r === 'T' ? 'Thắng' : r === 'B' ? 'Thua' : 'Hoà'}</span>
+            {isInternal(m)
+              ? <span className="chip int">{r === 'T' ? 'Đội A thắng' : r === 'B' ? 'Đội B thắng' : 'Hoà'}</span>
+              : <span className={`chip ${r === 'T' ? 'win' : r === 'B' ? 'loss' : ''}`}>{r === 'T' ? 'Thắng' : r === 'B' ? 'Thua' : 'Hoà'}</span>}
           </span>
         </>
       );
@@ -59,7 +61,7 @@ export function ScheduleView({ openId, openTab }: { openId?: string; openTab?: '
       <button key={m.id} type="button" className={`mcard${next ? ' next' : ''}`} onClick={() => setModal({ id: m.id, tab: isSettled(m, today) ? 'res' : 'att' })}>
         <div className="mdate"><span>{DAY_SHORT[dayOfWeek(m.date)]}</span><b>{d}</b><span>Th{mo}</span></div>
         <div className="minfo">
-          <b>vs {m.opponent}</b>
+          <b>{isInternal(m) ? <>Đá nội bộ <span className="chip int">Đội A vs Đội B</span></> : `vs ${m.opponent}`}</b>
           <div className="ln">
             {m.time && <span>{m.time}</span>}
             {m.venue && <span>{m.venue}</span>}

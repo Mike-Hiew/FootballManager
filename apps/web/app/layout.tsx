@@ -1,24 +1,20 @@
 import type { Metadata, Viewport } from 'next';
-import { Be_Vietnam_Pro, Jost } from 'next/font/google';
+import { Barlow_Condensed, Be_Vietnam_Pro } from 'next/font/google';
 import { connection } from 'next/server';
-import './prototype.css';
+import './v2.css';
 import './app.css';
-import './transfer.css';
-import './honors.css';
-import './reminders.css';
-import './internal.css';
 import { RegisterSW, UpdateBanner } from '@/components/Pwa';
 import { InstallPrompt } from '@/components/InstallPrompt';
 
-// Cùng subset và chuỗi font dự phòng với prototype: Jost không có chữ tiếng Việt (Ư, Ộ…) nên các
-// ký tự đó rơi xuống font sau. Font "Fallback" co giãn của next/font sẽ làm chữ khác prototype và khác theo máy.
+// Cùng font với prototype v2: Barlow Condensed (tiêu đề, số, có chữ tiếng Việt và kiểu nghiêng) + Be Vietnam Pro.
+// Tắt font "Fallback" co giãn của next/font để chữ giống prototype trên mọi máy.
 const body = Be_Vietnam_Pro({
-  subsets: ['latin', 'latin-ext', 'vietnamese'], weight: ['300', '400', '500', '600', '700'], variable: '--font-body', display: 'swap',
+  subsets: ['latin', 'latin-ext', 'vietnamese'], weight: ['400', '500', '600', '700'], variable: '--font-body', display: 'swap',
   adjustFontFallback: false, fallback: ['system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
 });
-const display = Jost({
-  subsets: ['latin', 'latin-ext'], weight: ['300', '400', '500', '600', '700'], variable: '--font-display', display: 'swap',
-  adjustFontFallback: false, fallback: ['Futura', 'Century Gothic', 'system-ui', 'sans-serif'],
+const display = Barlow_Condensed({
+  subsets: ['latin', 'latin-ext', 'vietnamese'], weight: ['500', '600', '700'], style: ['normal', 'italic'], variable: '--font-display', display: 'swap',
+  adjustFontFallback: false, fallback: ['Arial Narrow', 'Roboto Condensed', 'system-ui', 'sans-serif'],
 });
 
 export const metadata: Metadata = {
@@ -30,18 +26,14 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: process.env.APP_NAME ?? 'Đom Đóm FC', statusBarStyle: 'black-translucent' },
 };
 
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#08090b' };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#090c12' };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // CSP dùng nonce theo từng request (proxy.ts) nên mọi trang phải render động, không prerender lúc build.
   await connection();
   return (
-    <html lang="vi" data-theme="light" className={`${body.variable} ${display.variable}`}>
+    <html lang="vi" data-theme="dark" className={`${body.variable} ${display.variable}`}>
       <body>
-        <div className="room" aria-hidden="true">
-          <i className="sky" /><i className="roof" /><i className="stand" /><i className="crowd" /><i className="fl l" /><i className="fl r" />
-          <i className="field" /><i className="ring" /><i className="goal" />
-        </div>
         {children}
         <RegisterSW />
         <UpdateBanner />

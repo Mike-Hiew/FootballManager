@@ -44,6 +44,7 @@ export function StatsView({ snapshots }: { snapshots: Snapshot[] }) {
           <div className="tile"><div className="k">Vua phá lưới</div><div className="v">{tg ? nameOf(tg.playerId) : '–'}</div><div className="s">{tg ? tg.goals + ' bàn' : 'Chưa có bàn thắng'}{ta ? ` · Kiến tạo nhiều nhất: ${nameOf(ta.playerId)} (${ta.assists})` : ''}</div></div>
           <div className="tile"><div className="k">MVP nhiều nhất</div><div className="v">{tm ? nameOf(tm.playerId) : '–'}</div><div className="s">{tm ? tm.mvp + ' lần' : 'Chưa bầu MVP'}</div></div>
         </div>
+        <Podium rows={rows} k={sort.k} />
         <div className="grid2">
           <div className="panel">
             <h3 className="st">Bảng cá nhân</h3>
@@ -114,5 +115,33 @@ export function StatsView({ snapshots }: { snapshots: Snapshot[] }) {
         )}
       </div>
     </section>
+  );
+}
+
+/** Bục vinh danh top 3 theo cột đang sắp ở bảng cá nhân (trận / bàn / kiến tạo / MVP…). */
+function Podium({ rows, k }: { rows: PlayerLine[]; k: Key }) {
+  const { byId, nameOf } = useTeam();
+  const LAB: Partial<Record<Key, string>> = { gp: 'trận', goals: 'bàn', assists: 'kiến tạo', ga: 'bàn + kiến tạo', mvp: 'MVP' };
+  const lab = LAB[k];
+  if (!lab) return null;
+  const top = rows.filter((r) => (r[k as keyof PlayerLine] as number) > 0 && byId(r.playerId))
+    .sort((a, b) => (b[k as keyof PlayerLine] as number) - (a[k as keyof PlayerLine] as number) || b.ga - a.ga || b.gp - a.gp).slice(0, 3);
+  if (!top.length) return null;
+  return (
+    <div className="panel" id="sPodium">
+      <h3 className="st">Bục vinh danh · {lab}</h3>
+      <div className="podium">
+        {[1, 0, 2].filter((i) => top[i]).map((i) => {
+          const r = top[i];
+          return (
+            <div key={r.playerId} className={`pod p${i + 1}`}>
+              <Avatar p={byId(r.playerId)!} size={i === 0 ? 76 : 58} />
+              <b>{nameOf(r.playerId)}</b>
+              <div className="step2"><i>{i + 1}</i><span><b>{r[k as keyof PlayerLine] as number}</b> {lab}</span></div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }

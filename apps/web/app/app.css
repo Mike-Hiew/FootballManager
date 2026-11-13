@@ -1,137 +1,8 @@
-/* Bổ sung cho prototype.css: font tự host qua next/font, vài lớp dùng riêng cho bản React. */
-:root {
-  --f-display: var(--font-display), "Jost", "Futura", "Century Gothic", system-ui, sans-serif;
-  --f-body: var(--font-body), "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-body { margin: 0; }
+/* Phần riêng của app, prototype v2 không có (hướng dẫn cài app, ô nhỏ, đổi loại quỹ, a11y). */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
-.ok-msg { color: var(--good); font-size: 13px; }
-a.btn { text-decoration: none; display: inline-flex; align-items: center; }
-.tabs a { text-decoration: none; }
-.pending-overlay { opacity: .6; pointer-events: none; }
-/* .seg dùng cả <a> (Link) như nút */
-.seg a{border:0;background:transparent;padding:6px 10px;border-radius:999px;font-weight:600;font-size:13px;color:var(--muted);text-decoration:none}
-.subtabs a{padding:8px 14px;font-size:13.5px}
-.seg a[aria-pressed="true"]{background:var(--onyx);color:var(--gold)}
-/* Ô tìm/sắp xếp gọn ở thanh công cụ (BRD 4.6 — không có trong prototype) */
-input.mini,select.mini{height:30px;padding:0 10px;border-radius:999px;font-size:12.5px;width:120px;border:1px solid var(--edge,rgba(0,0,0,.1));background:rgba(255,255,255,.5)}
+input.mini,select.mini{height:32px;padding:0 10px;border-radius:3px;font-size:12.5px;width:130px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
 select.mini{width:auto}
 .adm-acts .linkbtn+.linkbtn,.adm-acts .btn+.linkbtn{margin-left:10px}
-.form5.sm .fp{width:20px;height:20px;font-size:10.5px}
-
-/* ===== Popup tỉ số sau trận (BRD 6.8): thắng = ăn mừng, hoà = dịu, thua = trầm ===== */
-.rp-overlay{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;overflow:hidden;
-  background:radial-gradient(120% 90% at 50% 30%,rgba(20,26,22,.55),rgba(6,10,8,.82));animation:rp-in .35s ease-out both}
-.rp-win{background:radial-gradient(90% 70% at 50% 35%,rgba(255,206,92,.42),rgba(40,28,6,.86) 70%)}
-.rp-draw{background:radial-gradient(90% 70% at 50% 35%,rgba(170,190,180,.32),rgba(12,18,16,.84) 70%)}
-.rp-loss{background:radial-gradient(90% 70% at 50% 30%,rgba(70,90,110,.45),rgba(8,12,18,.9) 70%)}
-.rp-fx{position:absolute;inset:0;pointer-events:none}
-.rp-card{position:relative;width:min(440px,100%);max-height:100%;overflow:auto;text-align:center;padding:30px 22px 22px;border-radius:28px;
-  color:#fff;background:linear-gradient(160deg,rgba(46,52,49,.95),rgba(18,22,20,.97));border:1px solid rgba(255,255,255,.22);
-  -webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);box-shadow:0 30px 90px rgba(0,0,0,.45);
-  animation:rp-pop .55s cubic-bezier(.2,1.4,.4,1) both}
-.rp-win .rp-card{background:linear-gradient(160deg,rgba(84,58,12,.96),rgba(30,21,5,.97));border-color:rgba(255,214,120,.6);box-shadow:0 0 0 1px rgba(255,214,120,.25),0 0 60px rgba(255,190,70,.35),0 30px 90px rgba(0,0,0,.45)}
-.rp-loss .rp-card{background:linear-gradient(160deg,rgba(40,50,64,.96),rgba(15,19,27,.97));animation:rp-sink .7s ease-out both}
-.rp-x{position:absolute;z-index:2;top:12px;right:12px;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.3);
-  background:rgba(0,0,0,.25);color:#fff;font-size:16px;cursor:pointer;line-height:1}
-.rp-x:hover,.rp-x:focus-visible{background:rgba(255,255,255,.2);outline:2px solid rgba(255,255,255,.6);outline-offset:2px}
-.rp-kicker{font-size:12px;letter-spacing:.06em;text-transform:uppercase;opacity:.75;padding:0 40px}
-.rp-cup{width:64px;height:64px;margin:10px auto 0;display:block;fill:#ffd36b;stroke:#ffd36b;filter:drop-shadow(0 0 14px rgba(255,200,80,.8));
-  animation:rp-bounce 1.6s ease-in-out .5s infinite}
-.rp-title{margin:8px 0 4px;font-family:var(--f-display);font-weight:800;font-size:34px;text-transform:uppercase;letter-spacing:.04em}
-.rp-win .rp-title{background:linear-gradient(90deg,#fff3c4,#ffc94d,#fff3c4);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
-  animation:rp-shine 2.4s linear infinite}
-.rp-loss .rp-title{color:#c9d4e2}
-.rp-score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:14px 0 10px}
-.rp-side{display:grid;justify-items:center;gap:6px;min-width:0}
-.rp-side b{font-size:13px;line-height:1.25;overflow-wrap:anywhere}
-.rp-opp{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font:800 22px var(--f-display);background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25)}
-.rp-num{display:flex;align-items:center;gap:8px;font:800 54px/1 var(--f-display);font-variant-numeric:tabular-nums}
-.rp-num i{font-style:normal;opacity:.5;font-size:36px}
-.rp-win .rp-num span:first-child{color:#ffd36b;text-shadow:0 0 18px rgba(255,200,80,.9),0 0 40px rgba(255,170,40,.5);animation:rp-pulse 1.8s ease-in-out infinite}
-.rp-loss .rp-num span:last-child{color:#ffb0a6}
-.rp-badge{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
-.rp-badge.win{background:#ffd36b;color:#3a2a00}
-.rp-badge.draw{background:rgba(255,255,255,.2)}
-.rp-badge.loss{background:rgba(160,180,205,.25);color:#dbe4f0}
-.rp-line{margin:12px 0 6px;font-size:15px;opacity:.92}
-.rp-facts{list-style:none;margin:10px 0 0;padding:10px 12px;display:grid;gap:6px;text-align:left;font-size:13px;border-radius:16px;background:rgba(0,0,0,.18)}
-.rp-facts span{display:inline-block;min-width:70px;opacity:.65}
-.rp-acts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin-top:16px}
-.rp-acts .btn{min-height:42px}
-.rp-acts .btn:not(.primary){background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.3)}
-/* pháo giấy */
-.rp-confetti{position:absolute;top:-14px;width:9px;height:14px;border-radius:2px;opacity:.95;transform:rotate(var(--r));animation:rp-fall 3.2s linear infinite}
-.rp-confetti.c0{background:#ffd36b}.rp-confetti.c1{background:#4cc47e}.rp-confetti.c2{background:#fff}.rp-confetti.c3{background:#ff8a5c}
-/* đom đóm bay lên */
-.rp-fly{position:absolute;bottom:-10px;border-radius:50%;background:#fff6b0;box-shadow:0 0 10px 3px rgba(255,230,120,.85);animation:rp-rise 5s ease-in infinite}
-.rp-draw .rp-fly{background:#e6f1ea;box-shadow:0 0 8px 2px rgba(220,240,230,.6);animation-duration:7s;opacity:.7}
-/* mưa nhẹ khi thua */
-.rp-rain{position:absolute;top:-40px;width:1.5px;height:38px;background:linear-gradient(transparent,rgba(190,210,235,.55));animation:rp-drop 1.4s linear infinite}
-@keyframes rp-in{from{opacity:0}to{opacity:1}}
-@keyframes rp-pop{0%{opacity:0;transform:scale(.7) translateY(20px)}100%{opacity:1;transform:none}}
-@keyframes rp-sink{0%{opacity:0;transform:translateY(-14px)}100%{opacity:1;transform:none}}
-@keyframes rp-bounce{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(4deg)}}
-@keyframes rp-shine{to{background-position:-200% 0}}
-@keyframes rp-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-@keyframes rp-fall{0%{transform:translateY(0) rotate(var(--r))}100%{transform:translateY(110vh) rotate(calc(var(--r) + 720deg))}}
-@keyframes rp-rise{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-105vh) translateX(30px);opacity:0}}
-@keyframes rp-drop{to{transform:translateY(110vh)}}
-@media (prefers-reduced-motion:reduce){
-  .rp-overlay,.rp-card,.rp-cup,.rp-title,.rp-num span{animation:none!important}
-  .rp-confetti,.rp-fly,.rp-rain{display:none}
-}
-
-/* ===== Khối Trận tới kiểu sân vận động: sân phủ kín khung, trạng thái theo giờ đá ===== */
-.nxb.stadium{grid-template-columns:minmax(0,1fr) minmax(0,.85fr) minmax(300px,380px);min-height:340px;padding:30px 30px 28px;background:#05070a;
-  border-color:rgba(227,191,134,.42);box-shadow:0 30px 80px rgba(0,0,0,.35),inset 0 0 0 1px rgba(255,255,255,.04)}
-.nxb.stadium::before{display:none}
-.nxb.stadium .nx-pitch{position:absolute;inset:0;z-index:-1;min-height:0;border:0;border-radius:inherit;box-shadow:none;background:#05070a;overflow:hidden}
-.nx-stadium{position:absolute;inset:0;width:100%;height:100%;display:block}
-.nxb.stadium .nx-pitch::after{border-radius:0;box-shadow:inset 0 0 90px rgba(0,0,0,.6);
-  background:linear-gradient(90deg,rgba(5,7,10,.92) 0%,rgba(5,7,10,.62) 28%,rgba(5,7,10,.06) 48%,rgba(5,7,10,.08) 60%,rgba(5,7,10,.72) 100%),
-             linear-gradient(180deg,rgba(5,7,10,.35) 0%,transparent 30%,transparent 75%,rgba(5,7,10,.55) 100%)}
-.nxb.stadium .nx-l{position:relative;z-index:1;text-shadow:0 2px 14px rgba(0,0,0,.6)}
-.nxb.stadium .nx-r{position:relative;z-index:1;background:rgba(8,10,13,.62);border-color:rgba(255,255,255,.14);-webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%)}
-.nxb.stadium .nx-vs{font-size:clamp(30px,3.6vw,50px)}
-.nx-gap{pointer-events:none}
-.pill-today{letter-spacing:.06em;text-transform:none;font-weight:700;font-size:11px;background:rgba(243,197,138,.2);color:#ffd99a;border:1px solid rgba(243,197,138,.5);padding:2px 9px;border-radius:999px}
-/* Trực tiếp */
-.live.red{background:#ff4d4d;animation:livered 1.4s infinite}
-.pill-live{letter-spacing:.06em;text-transform:none;font-weight:700;font-size:11px;background:rgba(255,77,77,.18);color:#ff9d9d;border:1px solid rgba(255,77,77,.55);padding:2px 9px;border-radius:999px}
-.nxb.ph-live{border-color:rgba(255,90,90,.55);animation:liveglow 2.6s ease-in-out infinite}
-.nx-clock{display:grid;gap:8px;margin-top:18px;max-width:300px}
-.nx-clock b{font:300 56px/1 var(--f-display);color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 0 22px rgba(255,90,90,.45)}
-.nx-clock b i{font-style:normal;color:#ff6b6b;margin-left:2px}
-.nx-clock small{color:rgba(243,239,231,.7);font-size:12.5px;letter-spacing:.04em}
-.nx-clock.done small{font-size:13.5px}
-.nx-prog{height:6px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden}
-.nx-prog span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#ff7b5c,#ff4d4d);box-shadow:0 0 12px rgba(255,77,77,.7)}
-.nx-ask.live-now{background:linear-gradient(135deg,rgba(255,77,77,.18),rgba(255,77,77,.04));border-color:rgba(255,90,90,.45)}
-/* Chưa điểm danh: cả khối lắc nhẹ theo nhịp + nút "Tôi đi" nảy */
-.nxb.stadium.need{animation:ringglow 2.4s ease-in-out infinite,attnshake 4.2s ease-in-out infinite!important}
-.nxb.need .nx-ask.pulse .nxbtn.go.big{animation:attnbounce 2.1s ease-in-out infinite}
-/* Nhắc đóng quỹ / đá lẻ cần hành động */
-.note.attn{position:relative;border:1px solid color-mix(in srgb,var(--ok) 55%,transparent);background:linear-gradient(135deg,color-mix(in srgb,var(--ok) 16%,var(--surface)),var(--surface));
-  box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 45%,transparent);animation:attnshake 4.2s ease-in-out infinite,attnring 2.4s ease-out infinite}
-.note.attn .coin{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;color:#3a2a00;
-  background:radial-gradient(circle at 35% 30%,#fff3c4,#ffcf4d 55%,#c98a12);box-shadow:0 2px 8px rgba(201,138,18,.5);animation:coinflip 2.4s ease-in-out infinite}
-@keyframes attnshake{0%,80%,100%{transform:none}83%{transform:translateX(-6px) rotate(-.5deg)}86%{transform:translateX(6px) rotate(.5deg)}89%{transform:translateX(-4px) rotate(-.3deg)}92%{transform:translateX(3px)}95%{transform:translateX(-1px)}}
-@keyframes attnbounce{0%,100%{transform:none}10%{transform:translateY(-4px) scale(1.06)}20%{transform:none}28%{transform:translateY(-2px) scale(1.03)}36%{transform:none}}
-@keyframes attnring{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 45%,transparent)}70%,100%{box-shadow:0 0 0 10px color-mix(in srgb,var(--ok) 0%,transparent)}}
-@keyframes coinflip{0%,60%,100%{transform:rotateY(0)}75%{transform:rotateY(180deg) translateY(-3px)}90%{transform:rotateY(360deg)}}
-@keyframes livered{0%{box-shadow:0 0 0 0 rgba(255,77,77,.75)}70%{box-shadow:0 0 0 10px rgba(255,77,77,0)}100%{box-shadow:0 0 0 0 rgba(255,77,77,0)}}
-@keyframes liveglow{0%,100%{box-shadow:0 30px 80px rgba(0,0,0,.35),0 0 0 1px rgba(255,90,90,.35)}50%{box-shadow:0 30px 80px rgba(0,0,0,.35),0 0 0 1px rgba(255,90,90,.8),0 0 40px 2px rgba(255,77,77,.35)}}
-@media (max-width:1180px){.nxb.stadium{grid-template-columns:minmax(0,1fr) minmax(300px,380px)}.nxb.stadium .nx-gap{display:none}
-  .nxb.stadium .nx-pitch{grid-column:auto;order:0}}
-@media (max-width:900px){
-  .nxb.stadium{grid-template-columns:1fr;padding:200px 18px 18px}
-  .nxb.stadium .nx-pitch{bottom:auto;height:300px}
-  .nxb.stadium .nx-pitch::after{background:linear-gradient(180deg,rgba(5,7,10,.15) 0%,rgba(5,7,10,.25) 45%,#05070a 100%)}
-}
-@media (prefers-reduced-motion:reduce){.nxb.stadium.need,.nxb.ph-live,.note.attn,.note.attn .coin,.nxb .nxbtn.go.big,.live.red{animation:none!important}}
-
-/* ===== Lời mời cài app lên màn hình chính ===== */
 .install-sheet{position:fixed;left:50%;bottom:max(14px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:55;width:min(440px,calc(100vw - 24px));
   padding:16px 16px 14px;border-radius:22px;color:#f3efe7;background:linear-gradient(160deg,rgba(28,30,34,.97),rgba(10,11,13,.98));
   border:1px solid rgba(227,191,134,.45);box-shadow:0 24px 60px rgba(0,0,0,.45),0 0 30px rgba(227,191,134,.18);animation:is-up .45s cubic-bezier(.2,1.2,.4,1) both}
@@ -154,29 +25,14 @@ select.mini{width:auto}
 .install-sheet.k-ipad{animation:none}
 @keyframes is-nudge{0%,100%{margin-bottom:0}50%{margin-bottom:-6px}}
 @media (prefers-reduced-motion:reduce){.install-sheet,.is-arrow{animation:none}}
-
-/* ===== Chấm chỉ số đồng đội (BRD 4.7) ===== */
-.sr-head{display:flex;gap:12px;align-items:center}
-.sr-track{position:relative;display:flex;align-items:center}
-.sr-track input{width:100%}
-.sr-mark{position:absolute;top:50%;width:3px;height:16px;margin-left:-1.5px;transform:translateY(-50%);border-radius:2px;background:var(--accent);opacity:.75;pointer-events:none}
-.sr-row .val small{display:block;font-size:10.5px;font-weight:700}
-.sr-row .val small.up{color:var(--good)}.sr-row .val small.down{color:var(--bad)}
-.sr-diff .code{color:var(--accent)}
-.vote-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.vote-list .chip{display:inline-flex;align-items:center;gap:6px}
-.vote-list .chip.wait{opacity:.75}
-.vote-list .linkbtn{font-size:11.5px}
-.poll-all{display:flex;gap:8px;align-items:center;font-weight:600;margin:4px 0 10px}
-.poll-list{display:grid;gap:4px;max-height:52vh;overflow:auto}
-.poll-row{display:flex;gap:10px;align-items:center;padding:6px 8px;border-radius:12px;cursor:pointer}
-.poll-row:hover{background:var(--surface-2)}
-.poll-row small{color:var(--muted)}
-/* ĐT đổi quỹ ↔ đá lẻ: chọn áp dụng ngay / từ tháng sau */
 .pay-from{display:grid;gap:6px}
 .pay-from .lbl{font-size:12px;font-weight:500;color:var(--muted)}
 .pay-from .seg{width:max-content;max-width:100%}
 .pay-from .hint{margin:0}
-/* Sổ thu chi: đang sửa một khoản */
-.ledger tr.editing td{background:color-mix(in srgb,var(--gold) 14%,transparent)}
-.ledger .row-acts{display:flex;gap:4px;justify-content:flex-end}
+.streak .v{display:flex;align-items:baseline;gap:6px}
+.streak .v small{font-family:var(--f-body);font-size:13px;font-weight:600}
+.wrap.solo{display:block}
+/* tab con dạng link (Chiến thuật tổng / Trận sắp tới) dùng chung kiểu nút của .seg */
+.seg a{display:inline-flex;align-items:center;text-decoration:none;min-height:32px;padding:5px 12px;font-weight:600;font-size:13px;color:var(--muted);border-radius:3px}
+.subtabs a{padding:7px 16px;font-size:13.5px;min-height:36px}
+.seg a[aria-pressed="true"]{background:var(--sel-bg);color:var(--sel-ink)}
