@@ -9,6 +9,7 @@ import { byKick, isPlayed, seasonOf } from '@/lib/season';
 import { Radar } from './Radar';
 import { ViewCardButton } from '../honors/PlayerCard';
 import { XOverlay } from '../v2/XOverlay';
+import { Locker } from '../locker/Locker';
 import { lineCls } from '@/lib/pos';
 import { PlayerModal, blankPlayer, type PlayerDraft } from './PlayerModal';
 import { removePlayerAction, savePlayerAction, submitProfileEditAction, requestStatReviewAction, requestStatReviewManyAction, remindUpdateStatsAction } from '@/app/actions';
@@ -77,6 +78,7 @@ export function PlayersView() {
   const [sort, setSort] = useState<Sort>('num');
   const modal = usePlayerModal();
   const [poll, setPoll] = useState(false);
+  const [locker, setLocker] = useState(false);
   const now = new Date(view.now);
   const season = useMemo(() => seasonOf(view.matches), [view.matches]);
   const played = useMemo(() => view.matches.filter(isPlayed).sort(byKick), [view.matches]);
@@ -125,6 +127,7 @@ export function PlayersView() {
               <option value="best">Điểm cao nhất</option>
               <option value="name">Theo tên</option>
             </select>
+            <button className="btn" type="button" onClick={() => setLocker(true)}>Phòng thay đồ 3D</button>
             {canEdit && <button className="btn" type="button" onClick={() => setPoll(true)}>Trưng cầu chỉ số</button>}
             {canEdit && <button className="btn primary" type="button" onClick={() => modal.open(null)}>+ Thêm cầu thủ</button>}
           </div>
@@ -207,6 +210,7 @@ export function PlayersView() {
       </div>
       {modal.node}
       {poll && <StatPollModal onClose={() => setPoll(false)} />}
+      {locker && <Locker matchId={null} onClose={() => setLocker(false)} />}
       {cmp.length === 1 && byId(cmp[0]) && (
         <div id="cmpTray" role="status">
           <span>So sánh <b>{shortName(byId(cmp[0])!)}</b> với… lật một thẻ khác và bấm So sánh</span>

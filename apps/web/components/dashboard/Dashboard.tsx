@@ -20,6 +20,7 @@ import { remindVoteAction, setAttendanceAction, setVoteStateAction, skipClaimAct
 import { byKick, isPlayed, isSettled, seasonOf } from '@/lib/season';
 import type { MatchDTO, PlayerDTO } from '@/lib/types';
 import { FullTime } from '../v2/FullTime';
+import { Locker } from '../locker/Locker';
 import { lineCls } from '@/lib/pos';
 
 const reduced = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -472,6 +473,7 @@ export function Dashboard({ isNew }: { isNew?: boolean }) {
   const yrs = yearsSince(t.foundedOn, now);
   const played = [...view.matches].filter((m) => isPlayed(m) && !isInternal(m)).sort(byKick);
   const [ft, setFt] = useState<MatchDTO | null>(null);
+  const [locker, setLocker] = useState<string | null>(null);
   const map = isSafeUrl(t.homeMapUrl) ? t.homeMapUrl! : null;
 
   const honor = (cls: string, img: string | null, svg: string, title: string, list: typeof boot, k: 'goals' | 'assists', unit: string, other: 'goals' | 'assists', otherUnit: string) => {
@@ -536,7 +538,7 @@ export function Dashboard({ isNew }: { isNew?: boolean }) {
         </div>
 
         <PaymentReminders />
-        <NextMatch />
+        <NextMatch onLocker={(id) => setLocker(id)} />
 
         <div className="wk">
           <Potw played={played} season={lines} />
@@ -660,6 +662,7 @@ export function Dashboard({ isNew }: { isNew?: boolean }) {
       </div>
       {edit && <TeamInfoModal onClose={() => setEdit(false)} />}
       {ft && <FullTime m={ft} onClose={() => setFt(null)} />}
+      {locker && <Locker matchId={locker} onClose={() => setLocker(null)} />}
     </section>
   );
 }
