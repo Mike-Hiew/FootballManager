@@ -5,7 +5,7 @@ import { FUND_SOURCE_LABEL, addMonths, dm, monthFlow, monthLabel, money, recentM
 import { useTeam } from './TeamContext';
 import { Avatar } from './ui';
 import { MatchModal } from './matches/MatchModal';
-import { addEntryAction, deleteEntryAction, updateEntryAction, remindPaymentAction, requestDuesAction, setDuesAction, setDuesReminderAction, setFeesAction } from '@/app/actions';
+import { addEntryAction, deleteEntryAction, updateEntryAction, remindPaymentAction, requestDuesAction, setDuesAction, setDuesReminderAction, setFeesAction, setPayTypeAction } from '@/app/actions';
 
 export interface FundData {
   monthlyFee: number;
@@ -100,6 +100,7 @@ export function FundView({ data }: { data: FundData }) {
             </div>
           </div>
         </div>
+        <BalanceChart entries={data.entries} month={cm} />
 
         <div className="panel">
           <h3 className="st">Mức đóng</h3>
@@ -175,6 +176,8 @@ export function FundView({ data }: { data: FundData }) {
           </div>
         </div>
 
+        {canEdit && <PaySwitch />}
+
         <div className="panel">
           <h3 className="st">Sổ thu chi</h3>
           {canEdit && (
@@ -249,5 +252,72 @@ export function FundView({ data }: { data: FundData }) {
       </div>
       {openMatch && <MatchModal matchId={openMatch} initialTab="att" onClose={() => setOpenMatch(null)} />}
     </section>
+  );
+}
+
+/** Số dư cuối tháng của 6 tháng gần nhất (triệu đồng). */
+function BalanceChart({ entries, month }: { entries: FundData['entries']; month: string }) {
+  const ks = [-5, -4, -3, -2, -1, 0].map((i) => addMonths(month, i));
+  const bal = ks.map((k) => entries.filter((x) => x.date.slice(0, 7) <= k).reduce((a, x) => a + x.amount, 0));
+  const mx = Math.max(1, ...bal.map(Math.abs));
+  return (
+    <div className="panel" id="fChart">
+      <h3 className="st">Số dư cuối tháng (triệu đồng)</h3>
+      <div className="fbars">
+        {ks.map((k, i) => (
+          <div key={k} className="fb">
+            <span className="fv">{(bal[i] / 1e6).toFixed(2)}</span>
+            <i className={bal[i] < 0 ? 'neg' : i === ks.length - 1 ? 'cur' : ''} style={{ height: `${Math.max(2, (Math.abs(bal[i]) / mx) * 100)}%` }} />
+            <em>{monthLabel(k)}</em>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Quỹ ↔ đá lẻ: ĐT đổi loại đóng tiền của từng người, áp dụng ngay hoặc từ tháng sau (BRD 7.4). */
+function PaySwitch() {
+  const { players, act, teamId } = useTeam();
+  const [open, setOpen] = useState<string | null>(null);
+  const ps = [...players].sort((a, b) => (a.num ?? 99) - (b.num ?? 99));
+  const lb = (t: string) => (t === 'le' ? 'Đá lẻ' : 'Quỹ');
+  const set = (p: (typeof ps)[number], to: 'quy' | 'le', from: 'now' | 'next', msg: string) => {
+    setOpen(null);
+    void act(() => setPayTypeAction(teamId, p.id, to, from), msg);
+  };
+  return (
+    <div className="panel" id="paySw">
+      <h3 className="st">Quỹ ↔ đá lẻ</h3>
+      <div className="psw">
+        {ps.map((p) => {
+          const cur = p.payType as 'quy' | 'le';
+          const to = cur === 'quy' ? 'le' : 'quy';
+          return (
+            <div key={p.id} className={`psw-row${open === p.id ? ' open' : ''}`}>
+              <span className="who"><Avatar p={p} size={26} /><b>{shortName(p)}</b></span>
+              <span className={`chip ${cur}`}>{lb(cur)}</span>
+              {p.nextPayType && <span className="chip" tabIndex={0} data-tt={`Từ tháng sau chuyển sang ${p.nextPayType === 'le' ? 'đá lẻ' : 'quỹ'}`}>→ {p.nextPayType === 'le' ? 'Lẻ' : 'Quỹ'}</span>}
+              <span className="psw-act">
+                {p.nextPayType ? (
+                  <button type="button" className="btn ghost sm" onClick={() => set(p, cur, 'now', `Đã huỷ hẹn đổi của ${shortName(p)}`)}>Huỷ hẹn đổi</button>
+                ) : open === p.id ? (
+                  <>
+                    <span className="seg">
+                      <button type="button" onClick={() => set(p, to, 'now', `${shortName(p)} đã chuyển sang ${to === 'le' ? 'đá lẻ' : 'quỹ'}`)}>Ngay (từ tháng này)</button>
+                      <button type="button" onClick={() => set(p, to, 'next', `${shortName(p)}: từ tháng sau chuyển sang ${to === 'le' ? 'đá lẻ' : 'quỹ'}`)}>Từ tháng sau</button>
+                    </span>
+                    <button type="button" className="btn ghost sm" onClick={() => setOpen(null)}>Huỷ</button>
+                  </>
+                ) : (
+                  <button type="button" className="btn sm" onClick={() => setOpen(p.id)}>Đổi sang {to === 'le' ? 'đá lẻ' : 'quỹ'}</button>
+                )}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <p className="hint"><b>Ngay</b>: tính theo loại mới từ tháng này. <b>Từ tháng sau</b>: tháng này vẫn đóng như cũ, tháng sau mới đổi.</p>
+    </div>
   );
 }

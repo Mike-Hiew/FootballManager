@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { CAPTAIN, closeResultPopup, hydrated, login, logout } from './helpers';
+import { CAPTAIN, closeResultPopup, hydrated, login, logout, openPlayerCard } from './helpers';
 
 // Seed: Quang Còi có bản tự cập nhật chỉ số đang chờ (FIN, ATP = 9.5).
 const P7 = ['0901000007', '123456'] as const;
@@ -47,7 +47,7 @@ test('BRD 4.7 — đồng đội chấm chỉ số, đội trưởng thấy số
   // ĐT nhờ cả đội chấm lại một người từ hồ sơ cầu thủ
   await page.goto('/t/t-domdom/cau-thu');
   await hydrated(page);
-  await page.locator('.pcard .who b', { hasText: 'Khánh Mười' }).first().click();
+  await openPlayerCard(page, 'Khánh Mười');
   await page.getByRole('dialog').getByRole('button', { name: 'Yêu cầu cả đội chấm' }).click();
   await expect(page.locator('.toast')).toContainText(/Đã nhờ \d+ người chấm chỉ số Khánh Mười/);
 

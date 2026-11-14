@@ -23,7 +23,7 @@ test('11.1 #3 — popover công thức chỉ hiện khi hover/focus vào ô đi�
   await hydrated(page);
   await expect(page.locator('.pop:not([hidden])')).toHaveCount(0);
   // Đức Cò thuận chân trái, mạnh nhất ở LB → có điều chỉnh chân thuận +0.3
-  const chip = page.locator('.pcard', { hasText: 'Đức Cò' }).locator('[data-x="p:p4:LB"]');
+  const chip = page.locator('.pcard', { hasText: 'Đức Cò' }).locator('.pchip[data-x="p:p4:LB"]');
   await expect(chip).toContainText('LB');
   await expect(chip).toContainText('7.3');
   await hoverStill(page, chip);

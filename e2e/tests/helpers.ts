@@ -77,3 +77,12 @@ export async function closeHonorPopup(page: Page) {
   await pop.locator('.hc-actions').getByRole('button', { name: 'Đóng' }).click();
   await pop.waitFor({ state: 'detached' });
 }
+
+/** Thẻ cầu thủ (giao diện v2) bấm để lật; mặt sau có nút "Mở hồ sơ". Lật nếu chưa lật rồi mở hồ sơ. */
+export async function openPlayerCard(page: Page, name: string | RegExp) {
+  const card = page.locator('.pcard').filter({ has: page.locator('.who b', { hasText: name }) }).first();
+  if ((await card.getAttribute('aria-pressed')) !== 'true') await card.locator('.who b').click();
+  await expect(card).toHaveAttribute('aria-pressed', 'true');
+  await card.getByRole('button', { name: /^Mở hồ sơ/ }).click();
+  return page.getByRole('dialog').first();
+}

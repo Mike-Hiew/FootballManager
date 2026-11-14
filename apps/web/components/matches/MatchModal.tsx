@@ -11,6 +11,7 @@ import {
 import { isSettled } from '@/lib/season';
 import type { MatchDTO, PlayerDTO } from '@/lib/types';
 import { SIDE_A, SIDE_B, SidesTab, SplitBox } from './Internal';
+import { FullTime } from '../v2/FullTime';
 
 type Tab = 'info' | 'att' | 'side' | 'res';
 
@@ -192,6 +193,7 @@ function ResTab({ m }: { m: MatchDTO }) {
   const goingList = players.filter((p) => m.attendance[p.id]?.status === 'di');
   const list = (goingList.length ? goingList : players).slice().sort((a, b) => (a.num ?? 99) - (b.num ?? 99));
   const [score, setScore] = useState({ us: m.scoreUs ?? 0, them: m.scoreThem ?? 0 });
+  const [ft, setFt] = useState(false);
   const [ev, setEv] = useState<Record<string, { goals: number; assists: number }>>(m.events);
   const dirty = score.us !== (m.scoreUs ?? 0) || score.them !== (m.scoreThem ?? 0) || JSON.stringify(ev) !== JSON.stringify(m.events) || m.scoreUs == null;
   const g = Object.values(ev).reduce((a, e) => a + e.goals, 0);
@@ -221,6 +223,8 @@ function ResTab({ m }: { m: MatchDTO }) {
         ) : <p className="hint" style={{ margin: 0 }}>Trận chưa có kết quả.</p>}
       </div>
 
+      {m.scoreUs != null && <button type="button" className="btn primary" style={{ justifySelf: 'center' }} onClick={() => setFt(true)}>Xem bảng kết quả</button>}
+      {ft && <FullTime m={m} onClose={() => setFt(false)} />}
       <ClaimBox m={m} />
       <LeRequestBox m={m} />
 

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { CAPTAIN, closeResultPopup, hydrated, login } from './helpers';
+import { CAPTAIN, closeResultPopup, hydrated, login, openPlayerCard } from './helpers';
 
 test('BRD 7.4 — ĐT đổi quỹ ↔ đá lẻ áp dụng ngay hoặc từ tháng sau', async ({ page }) => {
   await login(page, CAPTAIN);
@@ -7,10 +7,7 @@ test('BRD 7.4 — ĐT đổi quỹ ↔ đá lẻ áp dụng ngay hoặc từ th�
   await hydrated(page);
   await closeResultPopup(page);
   const card = page.locator('.pcard').filter({ has: page.locator('.who b', { hasText: /^Long Nhạc Trưởng/ }) });
-  const open = async () => {
-    await card.locator('.who b').click();
-    return page.getByRole('dialog');
-  };
+  const open = () => openPlayerCard(page, /^Long Nhạc Trưởng/);
 
   // Chưa đổi thì không hỏi thời điểm áp dụng
   let dlg = await open();

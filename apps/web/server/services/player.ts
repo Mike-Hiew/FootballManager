@@ -86,6 +86,19 @@ export async function updatePlayer(ctx: Ctx, playerId: string, raw: unknown) {
   return { player, warning };
 }
 
+/** ĐT đổi quỹ ↔ đá lẻ ngay ở tab Quỹ: áp dụng từ tháng này hoặc tháng sau; chọn lại loại hiện tại = huỷ hẹn đổi (BRD 7.4). */
+export async function setPayType(ctx: Ctx, playerId: string, raw: unknown) {
+  requireManager(ctx);
+  const p = z.object({ payType: payTypeSchema, from: z.enum(['now', 'next']) }).safeParse(raw);
+  if (!p.success) throw invalid(zodMessage(p.error));
+  const before = await prisma.player.findFirst({ where: { id: playerId, teamId: ctx.teamId, status: 'active' } });
+  if (!before) throw notFound('Không tìm thấy cầu thủ');
+  const change = nextPayState(before, p.data.payType, p.data.from, currentMonth(ctx.now));
+  const after = await prisma.player.update({ where: { id: playerId }, data: change });
+  await audit(prisma, ctx, 'player.pay', 'player', playerId, { payType: before.payType, payTypeFrom: before.payTypeFrom }, change);
+  return after;
+}
+
 /** Loại quỹ/đá lẻ áp dụng cho một tháng. */
 export function effectivePayType(p: { payType: string; payTypeFrom: string | null; prevPayType: string | null }, month: string): string {
   if (p.payTypeFrom && month < p.payTypeFrom && p.prevPayType) return p.prevPayType;

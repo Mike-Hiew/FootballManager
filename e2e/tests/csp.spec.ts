@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { ADMIN, CAPTAIN, hydrated, login } from './helpers';
+import { ADMIN, CAPTAIN, hydrated, login, openPlayerCard } from './helpers';
 
 /** Ghi lại mọi vi phạm CSP trên trang (script/style/ảnh bị chặn). */
 async function watchCsp(page: Page) {
@@ -32,8 +32,7 @@ test('CSP có nonce, mọi màn chạy được và không vi phạm', async ({ 
   // Tương tác client vẫn chạy: mở modal cầu thủ
   await page.goto('/t/t-domdom/cau-thu');
   await hydrated(page);
-  await page.locator('.pcard .who b').first().click();
-  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(await openPlayerCard(page, 'Hùng Gôn')).toBeVisible();
   await page.goto('/kham-pha');
   await page.waitForLoadState('networkidle');
 

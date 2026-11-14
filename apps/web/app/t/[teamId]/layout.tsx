@@ -52,7 +52,7 @@ export default async function TeamLayout({ params, children }: { params: Promise
           me={{ id: ctx.user.id, name: ctx.user.name, isAdmin: ctx.user.role === 'admin' }}
           myTeams={teams}
           initialUnread={unread}
-        />
+        >
         {visit && (
           <div className="note" role="status">
             <span>Bạn đang xem <b>{view.team.name}</b> ở chế độ chỉ xem: lịch sử trận, thành viên và chỉ số.</span>{' '}
@@ -60,6 +60,7 @@ export default async function TeamLayout({ params, children }: { params: Promise
           </div>
         )}
         {children}
+        </Header>
       </div>
       <TooltipLayer />
       <ResultPopup />
