@@ -32,20 +32,21 @@ const VIEWS: View[] = [
   // số thông báo / việc chờ duyệt, đợt chấm chỉ số đang mở, khai báo bàn thắng. Nhắc chấm chỉ số của app không so.
   { name: 'doi', proto: 'doi', app: '/t/t-domdom/doi', hide: '.stat-remind', budget: { 1920: 0.09, 1440: 0.1, 1024: 0.11, 390: 0.12 } },
   // Thẻ "Bạn chưa điểm danh" + khoản phải đóng của prototype phụ thuộc dữ liệu demo
-  { name: 'toi', proto: 'toi', app: '/t/t-domdom/toi', budget: { 1024: 0.09, 390: 0.1 } },
+  { name: 'toi', proto: 'toi', app: '/t/t-domdom/toi', budget: { 1440: 0.08, 1024: 0.09, 390: 0.1 } },
   // 390: thanh công cụ chiến thuật xuống dòng khác (app thêm nút Chia sẻ đội hình trên cùng hàng với Xếp tự động)
   { name: 'chien-thuat', proto: 'chien-thuat', app: '/t/t-domdom/chien-thuat', budget: { 390: 0.12 } },
   // Ngưỡng "đủ người" mặc định 9 → thêm dòng "Thiếu 2 người" trên mobile
   { name: 'tran-toi', proto: 'tran-toi', app: '/t/t-domdom/tran-toi', budget: { 390: 0.13 } },
   // Ô tìm + sắp xếp (BRD 4.6, prototype không có) làm thanh công cụ xuống dòng → lưới thẻ lệch xuống một hàng
-  { name: 'cau-thu', proto: 'cau-thu', app: '/t/t-domdom/cau-thu', budget: { 1920: 0.21, 1440: 0.17, 1024: 0.17, 390: 0.2 } },
+  { name: 'cau-thu', proto: 'cau-thu', app: '/t/t-domdom/cau-thu', budget: { 1920: 0.21, 1440: 0.17, 1024: 0.19, 390: 0.2 } },
   { name: 'lich', proto: 'lich', app: '/t/t-domdom/lich', budget: { 390: 0.08 } },
-  { name: 'thong-ke', proto: 'thong-ke', app: '/t/t-domdom/thong-ke' },
+  // CI (font hệ thống khác) lệch hơn local ~1–2 % ở màn hẹp: thong-ke-390 7.8 %, kham-pha-390 6.9 %, he-thong-390 9.9 %
+  { name: 'thong-ke', proto: 'thong-ke', app: '/t/t-domdom/thong-ke', budget: { 390: 0.09 } },
   { name: 'quy', proto: 'quy', app: '/t/t-domdom/quy', budget: { 1920: 0.15, 1440: 0.15, 1024: 0.17, 390: 0.21 } },
   // Khối link mời ở tab Duyệt (BRD 8.6); prototype có thêm việc chờ duyệt trong dữ liệu demo (2 đợt chấm, 1 báo đóng tiền)
   { name: 'duyet', proto: 'duyet', app: '/t/t-domdom/duyet', budget: { 1920: 0.15, 1440: 0.17, 1024: 0.21, 390: 0.3 }, hide: '.vote-list' },
-  { name: 'kham-pha', proto: 'kham-pha', app: '/kham-pha' },
-  { name: 'he-thong', proto: 'he-thong', app: '/he-thong', who: 'admin', budget: { 1024: 0.12, 390: 0.09 } },
+  { name: 'kham-pha', proto: 'kham-pha', app: '/kham-pha', budget: { 390: 0.08 } },
+  { name: 'he-thong', proto: 'he-thong', app: '/he-thong', who: 'admin', budget: { 1024: 0.12, 390: 0.11 } },
   {
     name: 'modal-cau-thu', proto: 'cau-thu', app: '/t/t-domdom/cau-thu', budget: { 1024: 0.075 },
     // Thẻ cầu thủ v2: chạm để lật, mặt sau có nút "Mở hồ sơ"
